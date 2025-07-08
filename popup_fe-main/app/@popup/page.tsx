@@ -20,6 +20,7 @@ export default function PopUpPage() {
 
   return (
     <Modal isOpen={isOpen} title="Station 1" onClose={onClose}>
+      <div className="freestyle-script">
       <div className="bg-gray-200 flex justify-center items-center h-[10rem]">
         <FlameIcon color="#9ca3af" size={50} />
       </div>
@@ -27,7 +28,7 @@ export default function PopUpPage() {
       <div className="flex gap-4 flex-wrap">
         {[...new Array(total).fill(null)].map((el, i) => (
           <Button
-            key={`popup_icon_${i}`}
+              key={`popup_icon_${i}`}
             color={i < available - 1 ? "primary" : "warning"}
             isIconOnly={true}
             variant="light"
@@ -39,6 +40,7 @@ export default function PopUpPage() {
       <Button color="primary" variant="solid">
         Book now
       </Button>
+      </div>
     </Modal>
   );
 }

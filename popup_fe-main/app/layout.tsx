@@ -51,35 +51,35 @@ export default function RootLayout({
           themeProps={{ attribute: "class", defaultTheme: "light" }}
         >
           <AuthProvider>
-            <div className="relative flex flex-col h-screen">
-              <Navbar />
-              <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
-                {children}
-              </main>
-              <footer className="w-full gap-4 shadow-lg border-t-1 flex items-center justify-center py-3 px-4">
-                <Link href={"/"}>
-                  <Button isIconOnly radius="full">
-                    <Home />
-                  </Button>
-                </Link>
-                <Link href={"/wallet"}>
-                  <Button isIconOnly radius="full" size="md">
-                    <Wallet />
-                  </Button>
-                </Link>
-                <Button isIconOnly radius="full" size="lg">
-                  <Scan />
-                </Button>
-                <Link href="/history">
-                  <Button isIconOnly radius="full">
-                    <History />
-                  </Button>
-                </Link>
+          <div className="relative flex flex-col h-screen">
+            <Navbar />
+            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
+              {children}
+            </main>
+            <footer className="w-full gap-4 shadow-lg border-t-1 flex items-center justify-center py-3 px-4">
+              <Link href={"/"}>
                 <Button isIconOnly radius="full">
-                  <User />
+                  <Home />
                 </Button>
-              </footer>
-            </div>
+              </Link>
+              <Link href={"/wallet"}>
+                <Button isIconOnly radius="full" size="md">
+                  <Wallet />
+                </Button>
+              </Link>
+              <Button isIconOnly radius="full" size="lg">
+                <Scan />
+              </Button>
+              <Link href="/history">
+                <Button isIconOnly radius="full">
+                  <History />
+                </Button>
+              </Link>
+              <Button isIconOnly radius="full">
+                <User />
+              </Button>
+            </footer>
+          </div>
           </AuthProvider>
         </Providers>
       </body>
