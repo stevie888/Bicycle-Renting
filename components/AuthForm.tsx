@@ -27,7 +27,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     e.preventDefault();
     let success = false;
     if (mode === "login") {
-      success = login(email, password);
+      success = login(mobile, password);
       if (!success) setError("Invalid credentials");
     } else {
       if (!name) {
@@ -38,8 +38,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
         setError("Passwords do not match");
         return;
       }
-      success = register(email, password);
-      if (!success) setError("Email already registered");
+      success = register(name, email, mobile, password);
+      if (!success) setError("Mobile number already registered");
     }
     if (success) {
       setError("");
@@ -97,21 +97,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
               required
             />
           )}
-          <div className="flex gap-2">
-            <select className="rounded-lg border-gray-300 bg-gray-100 px-2 py-2 text-sm" style={{ minWidth: 80 }}>
-              <option>+1</option>
-              <option>+44</option>
-              <option>+91</option>
-              <option>+977</option>
-            </select>
-            <Input
-              type="tel"
-              placeholder="Mobile Number"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              required
-            />
-          </div>
+          <Input
+            type="tel"
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={e => setMobile(e.target.value)}
+            required
+          />
           {mode === "signup" && (
             <Input
               type="email"
