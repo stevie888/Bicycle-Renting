@@ -1,119 +1,158 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { api } from '@/lib/api';
 
 interface User {
-  name: string;
+  id: string;
+  username: string;
   email: string;
+  name: string;
   mobile: string;
-  password: string;
+  profileImage?: string;
+  createdAt: string;
 }
 
 interface AuthContextType {
-  user: Omit<User, 'password'> | null;
-  login: (mobile: string, password: string) => boolean;
-  register: (name: string, email: string, mobile: string, password: string) => boolean;
+  user: User | null;
+  login: (username: string, password: string) => Promise<boolean>;
+  register: (userData: {
+    username: string;
+    email: string;
+    password: string;
+    name: string;
+    mobile: string;
+  }) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (profile: { name: string; email: string; mobile: string }) => void;
-  changePassword: (oldPassword: string, newPassword: string) => boolean;
+  updateProfile: (profile: { name?: string; email?: string; mobile?: string; profileImage?: string }) => Promise<boolean>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Persisted user store
-let users: User[] = [];
-
-function loadUsers() {
-  const stored = localStorage.getItem("popup_users");
-  if (stored) {
-    users = JSON.parse(stored);
-  }
-}
-
-function saveUsers() {
-  localStorage.setItem("popup_users", JSON.stringify(users));
-}
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
-  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load user and users from localStorage on mount
+  // Load user from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("popup_user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem("popup_user");
+      }
     }
-    loadUsers();
+    setLoading(false);
   }, []);
 
-  const saveUser = (userObj: Omit<User, 'password'>) => {
+  const saveUser = (userObj: User) => {
     setUser(userObj);
     localStorage.setItem("popup_user", JSON.stringify(userObj));
   };
 
-  // Login with mobile number and password
-  const login = (mobile: string, password: string) => {
-    loadUsers();
-    const found = users.find(u => u.mobile === mobile && u.password === password);
-    if (found) {
-      const userObj = { name: found.name, email: found.email, mobile: found.mobile };
-      saveUser(userObj);
-      setCurrentPassword(found.password);
-      return true;
+  // Login with username/email and password
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const response = await api.auth.login(username, password);
+      if (response.success && response.user) {
+        saveUser(response.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    return false;
   };
 
-  // Register with unique mobile number
-  const register = (name: string, email: string, mobile: string, password: string) => {
-    loadUsers();
-    if (users.find(u => u.mobile === mobile)) return false;
-    users.push({ name, email, mobile, password });
-    saveUsers();
-    const userObj = { name, email, mobile };
-    saveUser(userObj);
-    setCurrentPassword(password);
-    return true;
+  // Register new user
+  const register = async (userData: {
+    username: string;
+    email: string;
+    password: string;
+    name: string;
+    mobile: string;
+  }): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const response = await api.auth.signup(userData);
+      if (response.success && response.user) {
+        saveUser(response.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
     setUser(null);
-    setCurrentPassword("");
     localStorage.removeItem("popup_user");
   };
 
-  const updateProfile = (profile: { name: string; email: string; mobile: string }) => {
-    if (!user) return;
-    loadUsers();
+  const updateProfile = async (profile: { 
+    name?: string; 
+    email?: string; 
+    mobile?: string; 
+    profileImage?: string 
+  }): Promise<boolean> => {
+    if (!user) return false;
     
-    // Find user by current mobile number
-    const idx = users.findIndex(u => u.mobile === user.mobile);
-    if (idx !== -1) {
-      // Update the user in the users array
-      users[idx] = { ...users[idx], ...profile };
-      saveUsers();
-      
-      // Update the current user state
-      saveUser(profile);
+    try {
+      setLoading(true);
+      const response = await api.user.updateProfile(user.id, profile);
+      if (response.success && response.user) {
+        saveUser(response.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const changePassword = (oldPassword: string, newPassword: string) => {
+  const changePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
     if (!user) return false;
-    loadUsers();
-    const idx = users.findIndex(u => u.mobile === user.mobile);
-    if (idx !== -1 && users[idx].password === oldPassword) {
-      users[idx].password = newPassword;
-      saveUsers();
-      setCurrentPassword(newPassword);
-      return true;
+    try {
+      setLoading(true);
+      // Call a backend endpoint for password change (to be implemented)
+      const response = await api.user.updateProfile(user.id, { password: newPassword, oldPassword });
+      if (response.success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Change password error:', error);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    return false;
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, changePassword }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      register, 
+      logout, 
+      updateProfile, 
+      changePassword,
+      loading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

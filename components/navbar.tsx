@@ -74,6 +74,11 @@ export const Navbar = () => {
         {user && (
           <>
             <NavbarItem>
+              <NextLink href="/umbrellas">
+                <Button variant="ghost">Umbrellas</Button>
+              </NextLink>
+            </NavbarItem>
+            <NavbarItem>
               <NextLink href="/profile">
                 <Button variant="ghost">Profile</Button>
               </NextLink>
