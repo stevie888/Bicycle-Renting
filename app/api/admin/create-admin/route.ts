@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/database';
 
-interface SignupRequest {
-  username: string;
-  email: string;
-  password: string;
-  name: string;
-  mobile: string;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const body: SignupRequest = await request.json();
+    const body = await request.json();
     const { username, email, password, name, mobile } = body;
 
     // Validate input
@@ -22,16 +14,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Check if admin already exists
+    const existingAdmins = await executeQuery(
+      'SELECT id FROM users WHERE role = "admin"',
+      []
+    ) as any[];
+
+    if (existingAdmins.length > 0) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
+        { error: 'Admin user already exists' },
+        { status: 409 }
       );
     }
 
-    // Check if username already exists
+    // Check if username or email already exists
     const existingUsers = await executeQuery(
       'SELECT id FROM users WHERE username = ? OR email = ?',
       [username, email]
@@ -44,32 +40,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user
+    // Create admin user
     const userId = Date.now().toString();
     await executeQuery(
       'INSERT INTO users (id, username, email, password, name, mobile, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [userId, username, email, password, name, mobile, 'user']
+      [userId, username, email, password, name, mobile, 'admin']
     );
 
-    // Get the created user
+    // Get the created admin user
     const newUsers = await executeQuery(
-      'SELECT * FROM users WHERE id = ?',
+      'SELECT id, username, email, name, mobile, role, createdAt FROM users WHERE id = ?',
       [userId]
     ) as any[];
 
     const newUser = newUsers[0];
 
-    // Return user data (without password)
-    const { password: _, ...userWithoutPassword } = newUser;
-    
     return NextResponse.json({
       success: true,
-      user: userWithoutPassword,
-      message: 'User registered successfully'
+      user: newUser,
+      message: 'Admin user created successfully'
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error('Create admin error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

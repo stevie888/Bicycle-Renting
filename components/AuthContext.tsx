@@ -10,6 +10,7 @@ interface User {
   name: string;
   mobile: string;
   profileImage?: string;
+  role: 'user' | 'admin';
   createdAt: string;
 }
 
@@ -24,7 +25,12 @@ interface AuthContextType {
     mobile: string;
   }) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (profile: { name?: string; email?: string; mobile?: string; profileImage?: string }) => Promise<boolean>;
+  updateProfile: (profile: { 
+    name?: string; 
+    email?: string; 
+    mobile?: string; 
+    profileImage?: string;
+  }) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
   loading: boolean;
 }
@@ -105,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     name?: string; 
     email?: string; 
     mobile?: string; 
-    profileImage?: string 
+    profileImage?: string;
   }): Promise<boolean> => {
     if (!user) return false;
     
@@ -130,7 +136,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       // Call a backend endpoint for password change (to be implemented)
-      const response = await api.user.updateProfile(user.id, { password: newPassword, oldPassword });
+      const response = await api.user.updateProfile(user.id, { 
+        name: user.name, 
+        email: user.email, 
+        mobile: user.mobile
+      });
       if (response.success) {
         return true;
       }

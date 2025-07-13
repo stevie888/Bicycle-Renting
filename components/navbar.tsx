@@ -43,7 +43,7 @@ export const Navbar = () => {
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex flex-col items-center gap-0" href="/">
             <div className="flex items-center gap-2">
-              <Logo />
+            <Logo />
               <p className="font-bold text-inherit freestyle-script text-2xl mt-2">PopUp</p>
             </div>
             {user && (
@@ -83,6 +83,15 @@ export const Navbar = () => {
                 <Button variant="ghost">Profile</Button>
               </NextLink>
             </NavbarItem>
+            {user.role === 'admin' && (
+              <NavbarItem>
+                <NextLink href="/admin">
+                  <Button variant="ghost" className="bg-red-100 text-red-700 hover:bg-red-200">
+                    Admin
+                  </Button>
+                </NextLink>
+              </NavbarItem>
+            )}
             <NavbarItem>
               <Button variant="ghost" onClick={logout}>Logout</Button>
             </NavbarItem>

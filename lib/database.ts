@@ -43,6 +43,7 @@ export async function initializeDatabase() {
         name VARCHAR(255) NOT NULL,
         mobile VARCHAR(255) NOT NULL,
         profileImage TEXT,
+        role ENUM('user', 'admin') DEFAULT 'user',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
