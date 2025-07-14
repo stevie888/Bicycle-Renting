@@ -9,7 +9,7 @@ interface Umbrella {
 }
 
 interface CreateUmbrellaRequest {
-  description: string;
+  quantity: number;
   location: string;
   status: 'available' | 'rented';
 }
@@ -77,11 +77,11 @@ export async function GET(request: NextRequest) {
 // POST - Create new umbrella (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateUmbrellaRequest = await request.json();
-    const { description, location, status } = body;
+    const body = await request.json();
+    const { description, quantity, location, status } = body;
 
     // Validate input
-    if (!description || !location || !status) {
+    if (!description || !quantity || !location || !status) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -97,15 +97,15 @@ export async function POST(request: NextRequest) {
     // Create new umbrella
     const umbrellaId = Date.now().toString();
     await executeQuery(
-      'INSERT INTO umbrellas (id, description, location, status) VALUES (?, ?, ?, ?)',
-      [umbrellaId, description, location, status]
+      'INSERT INTO umbrellas (id, description, inventory, location, status) VALUES (?, ?, ?, ?, ?)',
+      [umbrellaId, description, quantity, location, status]
     );
 
     // Get the created umbrella
     const newUmbrellas = await executeQuery(
-      'SELECT id, description, location, status FROM umbrellas WHERE id = ?',
+      'SELECT id, description, inventory, location, status FROM umbrellas WHERE id = ?',
       [umbrellaId]
-    ) as Umbrella[];
+    ) as any[];
 
     const newUmbrella = newUmbrellas[0];
 

@@ -78,11 +78,6 @@ export const Navbar = () => {
                 <Button variant="ghost">Umbrellas</Button>
               </NextLink>
             </NavbarItem>
-            <NavbarItem>
-              <NextLink href="/profile">
-                <Button variant="ghost">Profile</Button>
-              </NextLink>
-            </NavbarItem>
             {user.role === 'admin' && (
               <NavbarItem>
                 <NextLink href="/admin">

@@ -90,7 +90,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage users, umbrellas, and system overview</p>
+      
             </div>
             <div className="flex space-x-3">
               <Button
@@ -584,12 +584,27 @@ function AddUserForm({ onSuccess }: { onSuccess: () => void }) {
 
 // Add Umbrella Form Component
 function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
+  const stationOptions = [
+    { station: 'Station 1', location: 'Kathmandu' },
+    { station: 'Station 2', location: 'Lalitpur' },
+    { station: 'Station 3', location: 'Bhaktapur' },
+  ];
   const [formData, setFormData] = useState({
     description: '',
+    quantity: 1,
     location: '',
     status: 'available'
   });
   const [loading, setLoading] = useState(false);
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = stationOptions.find(opt => opt.station === e.target.value);
+    setFormData({
+      ...formData,
+      description: e.target.value,
+      location: selected ? selected.location : ''
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -616,19 +631,41 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700">Description</label>
-        <Input
+        <select
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={handleDescriptionChange}
           required
+          className="w-full border rounded px-3 py-2"
+        >
+          <option value="">Select a station</option>
+          {stationOptions.map(opt => (
+            <option key={opt.station} value={opt.station}>{opt.station}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Quantity</label>
+        <input
+          type="number"
+          min={1}
+          value={formData.quantity}
+          onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
+          required
+          className="w-full border rounded px-3 py-2"
         />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700">Location</label>
-        <Input
+        <select
           value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          required
-        />
+          disabled
+          className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700"
+        >
+          <option value="">Select a location</option>
+          {stationOptions.map(opt => (
+            <option key={opt.location} value={opt.location}>{opt.location}</option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700">Status</label>

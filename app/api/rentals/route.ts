@@ -8,20 +8,26 @@ interface CreateRentalRequest {
   endTime?: string;
 }
 
-// GET - Get rentals (with optional filters)
+// Helper to convert JS date string to MySQL DATETIME format
+function toMySQLDatetime(dateString: string) {
+  const d = new Date(dateString);
+  return d.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+// GET - Get rental history (with optional filters)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const status = searchParams.get('status');
 
-    let query = 'SELECT * FROM rentals';
+    let query = 'SELECT * FROM rental_history';
     const params: any[] = [];
 
     // Build WHERE clause dynamically
     const conditions = [];
     if (userId) {
-      conditions.push('userId = ?');
+      conditions.push('user_id = ?');
       params.push(userId);
     }
     if (status) {
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY createdAt DESC';
+    query += ' ORDER BY rented_at DESC';
 
     const rentals = await executeQuery(query, params) as any[];
 
@@ -44,15 +50,15 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Get rentals error:', error);
+    console.error('Get rental history error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: (error as any).message || 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new rental
+// POST - Create new rental history entry
 export async function POST(request: NextRequest) {
   try {
     const body: CreateRentalRequest = await request.json();
@@ -81,6 +87,14 @@ export async function POST(request: NextRequest) {
 
     const umbrella = umbrellas[0];
 
+    // Check inventory
+    if (umbrella.inventory === undefined || umbrella.inventory <= 0) {
+      return NextResponse.json(
+        { error: 'No umbrellas available for rent at this location' },
+        { status: 409 }
+      );
+    }
+
     if (umbrella.status !== 'available') {
       return NextResponse.json(
         { error: 'Umbrella is not available for rent' },
@@ -90,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an active rental
     const activeRentals = await executeQuery(
-      'SELECT id FROM rentals WHERE userId = ? AND status = "active"',
+      'SELECT id FROM rental_history WHERE user_id = ? AND status = "active"',
       [userId]
     ) as any[];
 
@@ -101,31 +115,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate total amount (simplified calculation)
-    const start = new Date(startTime);
-    const end = endTime ? new Date(endTime) : new Date(start.getTime() + 24 * 60 * 60 * 1000); // Default 24 hours
-    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    const totalAmount = hours * umbrella.hourlyRate;
+    // Insert into rental_history and update inventory/status
+    const rentalId = null; // auto_increment
+    const rentedAt = toMySQLDatetime(startTime);
+    const returnedAt = endTime ? toMySQLDatetime(endTime) : null;
+    const statusValue = 'active';
 
-    // Create rental and update umbrella status in a transaction
-    const rentalId = Date.now().toString();
-    const rentalEndTime = endTime || end.toISOString();
+    // Calculate new inventory and status
+    const newInventory = umbrella.inventory - 1;
+    const newStatus = newInventory === 0 ? 'out_of_stock' : 'available';
 
     await executeTransaction([
       {
-        query: 'INSERT INTO rentals (id, userId, umbrellaId, startTime, endTime, totalAmount) VALUES (?, ?, ?, ?, ?, ?)',
-        params: [rentalId, userId, umbrellaId, startTime, rentalEndTime, totalAmount]
+        query: 'INSERT INTO rental_history (user_id, umbrella_id, station_id, rented_at, returned_at, status) VALUES (?, ?, ?, ?, ?, ?)',
+        params: [userId, umbrellaId, null, rentedAt, returnedAt, statusValue]
       },
       {
-        query: 'UPDATE umbrellas SET status = "rented" WHERE id = ?',
-        params: [umbrellaId]
+        query: 'UPDATE umbrellas SET inventory = ?, status = ? WHERE id = ?',
+        params: [newInventory, newStatus, umbrellaId]
       }
     ]);
 
     // Get the created rental
     const newRentals = await executeQuery(
-      'SELECT * FROM rentals WHERE id = ?',
-      [rentalId]
+      'SELECT * FROM rental_history WHERE user_id = ? AND umbrella_id = ? AND rented_at = ?',
+      [userId, umbrellaId, rentedAt]
     ) as any[];
 
     const newRental = newRentals[0];
@@ -137,9 +151,9 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Create rental error:', error);
+    console.error('Create rental history error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: (error as any).message || 'Internal server error' },
       { status: 500 }
     );
   }

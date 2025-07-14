@@ -11,6 +11,7 @@ import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: {
@@ -56,29 +57,7 @@ export default function RootLayout({
             <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
               {children}
             </main>
-            <footer className="w-full gap-4 shadow-lg border-t-1 flex items-center justify-center py-3 px-4">
-              <Link href={"/"}>
-                <Button isIconOnly radius="full">
-                  <Home />
-                </Button>
-              </Link>
-              <Link href={"/wallet"}>
-                <Button isIconOnly radius="full" size="md">
-                  <Wallet />
-                </Button>
-              </Link>
-              <Button isIconOnly radius="full" size="lg">
-                <Scan />
-              </Button>
-              <Link href="/history">
-                <Button isIconOnly radius="full">
-                  <History />
-                </Button>
-              </Link>
-              <Button isIconOnly radius="full">
-                <User />
-              </Button>
-            </footer>
+            <Footer />
           </div>
           </AuthProvider>
         </Providers>
