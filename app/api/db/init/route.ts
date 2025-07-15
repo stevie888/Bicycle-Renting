@@ -1,50 +1,74 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { initializeDatabase, testConnection } from '@/lib/database';
 
-export async function POST() {
+// GET - Test database connection and initialize tables
+export async function GET(request: NextRequest) {
   try {
-    // Test connection first
+    console.log('Testing database connection...');
+    
+    // Test connection
     const isConnected = await testConnection();
+    
     if (!isConnected) {
-      return NextResponse.json(
-        { error: 'Database connection failed. Please check your MySQL configuration.' },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: false,
+        connected: false,
+        message: 'Database connection failed!'
+      });
     }
-
+    
     // Initialize database tables
     await initializeDatabase();
-
-    return NextResponse.json({
-      success: true,
-      message: 'Database initialized successfully!',
-      tables: ['users', 'umbrellas', 'rentals']
-    });
-
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    return NextResponse.json(
-      { error: 'Database initialization failed. Please check your MySQL setup.' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const isConnected = await testConnection();
     
     return NextResponse.json({
       success: true,
-      connected: isConnected,
-      message: isConnected ? 'Database is connected!' : 'Database connection failed!'
+      connected: true,
+      message: 'Database connected and initialized successfully!'
     });
-
+    
   } catch (error) {
-    console.error('Database test error:', error);
-    return NextResponse.json(
-      { error: 'Database test failed' },
-      { status: 500 }
-    );
+    console.error('Database initialization error:', error);
+    return NextResponse.json({
+      success: false,
+      connected: false,
+      message: 'Database initialization failed!',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
+// POST - Initialize database tables
+export async function POST(request: NextRequest) {
+  try {
+    console.log('Initializing database tables...');
+    
+    // Test connection first
+    const isConnected = await testConnection();
+    
+    if (!isConnected) {
+      return NextResponse.json({
+        success: false,
+        connected: false,
+        message: 'Database connection failed!'
+      });
+    }
+    
+    // Initialize database tables
+    await initializeDatabase();
+    
+    return NextResponse.json({
+      success: true,
+      connected: true,
+      message: 'Database tables initialized successfully!'
+    });
+    
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    return NextResponse.json({
+      success: false,
+      connected: false,
+      message: 'Database initialization failed!',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 } 

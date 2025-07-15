@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
 import Card from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,25 +35,68 @@ interface RecentActivity {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recent, setRecent] = useState<RecentActivity | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'umbrellas'>('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalType, setModalType] = useState<'user' | 'umbrella'>('user');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Check if user is admin, if not redirect to home
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user && user.role !== 'admin') {
+      router.push('/');
+      return;
+    }
+    
+    if (user && user.role === 'admin') {
+      fetchDashboardData();
+    }
+  }, [user, router]);
+
+  // Show loading while checking user role
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for non-admin users
+  if (user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don't have permission to access the admin dashboard.</p>
+          <Button onClick={() => router.push('/')} className="bg-blue-600 hover:bg-blue-700">
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const fetchDashboardData = async () => {
     try {
+      console.log('Fetching dashboard data...');
       const response = await fetch('/api/admin/dashboard');
       const data = await response.json();
+      
+      console.log('Dashboard API response:', data);
       
       if (data.success) {
         setStats(data.stats);
         setRecent(data.recent);
+      } else {
+        console.error('Dashboard API returned error:', data);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -63,6 +108,14 @@ export default function AdminDashboard() {
   const handleAddItem = (type: 'user' | 'umbrella') => {
     setModalType(type);
     setShowAddModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowAddModal(false);
+    // Trigger refresh by incrementing the trigger
+    setRefreshTrigger(prev => prev + 1);
+    // Refresh dashboard data after modal closes
+    fetchDashboardData();
   };
 
   if (loading) {
@@ -199,6 +252,9 @@ export default function AdminDashboard() {
                       <div>
                         <p className="font-medium">{umbrella.description}</p>
                         <p className="text-sm text-gray-600">{umbrella.location}</p>
+                        <p className="text-xs text-gray-500">
+                          {umbrella.updated_at ? `Updated: ${new Date(umbrella.updated_at).toLocaleDateString()}` : ''}
+                        </p>
                       </div>
                       <span className={`px-2 py-1 text-xs rounded ${
                         umbrella.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -232,18 +288,18 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'users' && <UsersManagement />}
-        {activeTab === 'umbrellas' && <UmbrellasManagement />}
+        {activeTab === 'users' && <UsersManagement refreshTrigger={refreshTrigger} />}
+        {activeTab === 'umbrellas' && <UmbrellasManagement refreshTrigger={refreshTrigger} />}
       </div>
 
       {/* Add Modal */}
       {showAddModal && (
         <Modal
           isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
+          onClose={handleModalClose}
           title={`Add New ${modalType === 'user' ? 'User' : 'Umbrella'}`}
         >
-          {modalType === 'user' ? <AddUserForm onSuccess={() => setShowAddModal(false)} /> : <AddUmbrellaForm onSuccess={() => setShowAddModal(false)} />}
+          {modalType === 'user' ? <AddUserForm onSuccess={handleModalClose} /> : <AddUmbrellaForm onSuccess={handleModalClose} />}
         </Modal>
       )}
     </div>
@@ -251,7 +307,7 @@ export default function AdminDashboard() {
 }
 
 // Users Management Component
-function UsersManagement() {
+function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -259,7 +315,7 @@ function UsersManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, roleFilter]);
+  }, [searchTerm, roleFilter, refreshTrigger]);
 
   const fetchUsers = async () => {
     try {
@@ -371,7 +427,7 @@ function UsersManagement() {
 }
 
 // Umbrellas Management Component
-function UmbrellasManagement() {
+function UmbrellasManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [umbrellas, setUmbrellas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -379,7 +435,7 @@ function UmbrellasManagement() {
 
   useEffect(() => {
     fetchUmbrellas();
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, refreshTrigger]);
 
   const fetchUmbrellas = async () => {
     try {
@@ -450,6 +506,8 @@ function UmbrellasManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Umbrella</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inventory</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -468,6 +526,12 @@ function UmbrellasManagement() {
                     }`}>
                       {umbrella.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {umbrella.inventory || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {umbrella.updated_at ? new Date(umbrella.updated_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -596,6 +660,7 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
     status: 'available'
   });
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = stationOptions.find(opt => opt.station === e.target.value);
@@ -618,69 +683,95 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
       });
 
       if (response.ok) {
-        onSuccess();
+        const data = await response.json();
+        setSuccessMessage(data.message);
+        
+        // Reset form
+        setFormData({
+          description: '',
+          quantity: 1,
+          location: '',
+          status: 'available'
+        });
+
+        // Show success message for 3 seconds, then close modal
+        setTimeout(() => {
+          setSuccessMessage('');
+          onSuccess();
+        }, 3000);
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Failed to create umbrella'}`);
       }
     } catch (error) {
       console.error('Error creating umbrella:', error);
+      alert('Error creating umbrella. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
-        <select
-          value={formData.description}
-          onChange={handleDescriptionChange}
-          required
-          className="w-full border rounded px-3 py-2"
-        >
-          <option value="">Select a station</option>
-          {stationOptions.map(opt => (
-            <option key={opt.station} value={opt.station}>{opt.station}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Quantity</label>
-        <input
-          type="number"
-          min={1}
-          value={formData.quantity}
-          onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
-          required
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Location</label>
-        <select
-          value={formData.location}
-          disabled
-          className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700"
-        >
-          <option value="">Select a location</option>
-          {stationOptions.map(opt => (
-            <option key={opt.location} value={opt.location}>{opt.location}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Status</label>
-        <select
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          className="w-full border rounded px-3 py-2"
-        >
-          <option value="available">Available</option>
-          <option value="rented">Rented</option>
-        </select>
-      </div>
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Creating...' : 'Create Umbrella'}
-      </Button>
-    </form>
+    <div>
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <select
+            value={formData.description}
+            onChange={handleDescriptionChange}
+            required
+            className="w-full border rounded px-3 py-2"
+          >
+            <option value="">Select a station</option>
+            {stationOptions.map(opt => (
+              <option key={opt.station} value={opt.station}>{opt.station}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Quantity</label>
+          <input
+            type="number"
+            min={1}
+            value={formData.quantity}
+            onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
+            required
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Location</label>
+          <select
+            value={formData.location}
+            disabled
+            className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700"
+          >
+            <option value="">Select a location</option>
+            {stationOptions.map(opt => (
+              <option key={opt.location} value={opt.location}>{opt.location}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full border rounded px-3 py-2"
+          >
+            <option value="available">Available</option>
+            <option value="rented">Rented</option>
+          </select>
+        </div>
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? 'Creating...' : 'Create Umbrella'}
+        </Button>
+      </form>
+    </div>
   );
 } 

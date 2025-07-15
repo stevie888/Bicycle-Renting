@@ -24,7 +24,7 @@ export default function UmbrellasPage() {
   const [viewUmbrella, setViewUmbrella] = useState<Umbrella | null>(null);
   const [rentingId, setRentingId] = useState<string | null>(null);
   const [rentError, setRentError] = useState("");
-  const [rentSuccess, setRentSuccess] = useState<{ station?: string, time?: string } | null>(null);
+  const [rentSuccess, setRentSuccess] = useState<{ station?: string, startTime?: string, endTime?: string } | null>(null);
   const [rentModal, setRentModal] = useState<{ umbrella: Umbrella | null, start: string, end: string, error: string } | null>(null);
   const { user } = useAuth(); // Get current user
 
@@ -61,7 +61,25 @@ export default function UmbrellasPage() {
       const end = endTime ? new Date(endTime) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
       await api.rental.create({ userId: user.id, umbrellaId: umbrella.id, startTime: start.toISOString(), endTime: end.toISOString() });
       setUmbrellas((prev) => prev.map(u => u.id === umbrella.id ? { ...u, status: 'rented' } : u));
-      setRentSuccess({ station: umbrella.location, time: start.toLocaleString() });
+      setRentSuccess({ 
+        station: umbrella.location, 
+        startTime: start.toLocaleString('en-US', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }), 
+        endTime: end.toLocaleString('en-US', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }) 
+      });
       setRentModal(null);
     } catch (err: any) {
       setRentError(err?.message || "Failed to rent umbrella");
@@ -170,8 +188,14 @@ export default function UmbrellasPage() {
         <Modal isOpen={!!rentSuccess} onClose={() => setRentSuccess(null)} title="Rental Successful!">
           <div className="p-4 text-center">
             <div className="text-lg font-semibold mb-2">Umbrella rented successfully!</div>
-            <div>Station: <span className="font-bold">{rentSuccess.station}</span></div>
-            <div>Time: <span className="font-bold">{rentSuccess.time}</span></div>
+            <div className="mb-2">Station: <span className="font-bold">{rentSuccess.station}</span></div>
+            <div className="mb-2">
+              <div className="text-sm text-gray-600 mb-1">Rental Period:</div>
+              <div className="font-bold">
+                <div>From: {rentSuccess.startTime}</div>
+                <div>To: {rentSuccess.endTime}</div>
+              </div>
+            </div>
             <Button className="mt-4" onClick={() => setRentSuccess(null)}>OK</Button>
           </div>
         </Modal>

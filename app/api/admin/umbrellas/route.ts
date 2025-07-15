@@ -6,6 +6,9 @@ interface Umbrella {
   description: string;
   location: string;
   status: 'available' | 'rented';
+  inventory?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CreateUmbrellaRequest {
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const search = searchParams.get('search');
 
-    let query = 'SELECT id, description, location, status FROM umbrellas';
+    let query = 'SELECT id, description, location, status, inventory, created_at, updated_at FROM umbrellas';
     const params: any[] = [];
 
     // Build WHERE clause dynamically
@@ -94,16 +97,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new umbrella
-    const umbrellaId = Date.now().toString();
-    await executeQuery(
-      'INSERT INTO umbrellas (id, description, inventory, location, status) VALUES (?, ?, ?, ?, ?)',
-      [umbrellaId, description, quantity, location, status]
-    );
+    // Check if an umbrella already exists at this station
+    const existingUmbrella = await executeQuery(
+      'SELECT id, inventory FROM umbrellas WHERE description = ? AND location = ?',
+      [description, location]
+    ) as any[];
 
-    // Get the created umbrella
+    let umbrellaId: string;
+    let message: string;
+
+    if (existingUmbrella.length > 0) {
+      // Update existing umbrella inventory
+      const existing = existingUmbrella[0];
+      const newInventory = existing.inventory + quantity;
+      
+      await executeQuery(
+        'UPDATE umbrellas SET inventory = ?, status = ? WHERE id = ?',
+        [newInventory, status, existing.id]
+      );
+
+      umbrellaId = existing.id;
+      message = `Inventory updated successfully! Added ${quantity} umbrellas to ${description}. Total inventory: ${newInventory}`;
+    } else {
+      // Create new umbrella
+      umbrellaId = Date.now().toString();
+      await executeQuery(
+        'INSERT INTO umbrellas (id, description, inventory, location, status) VALUES (?, ?, ?, ?, ?)',
+        [umbrellaId, description, quantity, location, status]
+      );
+
+      message = `Umbrella created successfully! Added ${quantity} umbrellas to ${description} at ${location}`;
+    }
+
+    // Get the updated/created umbrella
     const newUmbrellas = await executeQuery(
-      'SELECT id, description, inventory, location, status FROM umbrellas WHERE id = ?',
+      'SELECT id, description, inventory, location, status, created_at, updated_at FROM umbrellas WHERE id = ?',
       [umbrellaId]
     ) as any[];
 
@@ -112,7 +140,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       umbrella: newUmbrella,
-      message: 'Umbrella created successfully'
+      message: message
     }, { status: 201 });
 
   } catch (error) {

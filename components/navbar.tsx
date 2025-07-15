@@ -16,6 +16,10 @@ import { useAuth } from "./AuthContext";
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  
+  // More robust role checking
+  const isAdmin = user && user.role === 'admin';
+  
   const searchInput = (
     <Input
       aria-label="Search"
@@ -78,7 +82,7 @@ export const Navbar = () => {
                 <Button variant="ghost">Umbrellas</Button>
               </NextLink>
             </NavbarItem>
-            {user.role === 'admin' && (
+            {isAdmin && (
               <NavbarItem>
                 <NextLink href="/admin">
                   <Button variant="ghost" className="bg-red-100 text-red-700 hover:bg-red-200">

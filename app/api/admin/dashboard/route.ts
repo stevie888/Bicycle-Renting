@@ -4,6 +4,8 @@ import { executeQuery } from '@/lib/database';
 // GET - Get admin dashboard statistics
 export async function GET(request: NextRequest) {
   try {
+    console.log('Dashboard API called - fetching statistics...');
+    
     // Get user statistics
     const userStats = await executeQuery(`
       SELECT 
@@ -12,6 +14,8 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as regularUsers
       FROM users
     `) as any[];
+    
+    console.log('User stats:', userStats);
 
     // Get umbrella statistics
     const umbrellaStats = await executeQuery(`
@@ -21,6 +25,8 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rentedUmbrellas
       FROM umbrellas
     `) as any[];
+    
+    console.log('Umbrella stats:', umbrellaStats);
 
     // Get rental statistics
     const rentalStats = await executeQuery(`
@@ -31,6 +37,8 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelledRentals
       FROM rentals
     `) as any[];
+    
+    console.log('Rental stats:', rentalStats);
 
     // Get recent activities
     const recentUsers = await executeQuery(`
@@ -56,7 +64,7 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `) as any[];
 
-    return NextResponse.json({
+    const response = {
       success: true,
       stats: {
         users: userStats[0],
@@ -68,12 +76,19 @@ export async function GET(request: NextRequest) {
         umbrellas: recentUmbrellas,
         rentals: recentRentals
       }
-    });
+    };
+    
+    console.log('Dashboard API response:', response);
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Dashboard stats error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        success: false,
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

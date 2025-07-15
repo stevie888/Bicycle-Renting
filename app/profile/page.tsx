@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, Mail, Smartphone } from "lucide-react";
+import { User as UserIcon, Mail, Smartphone, ArrowLeft } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, updateProfile, logout, loading, changePassword } = useAuth();
@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
   return (
     <div className="w-full max-w-lg mx-auto bg-white p-0 rounded-2xl shadow-xl flex flex-col gap-0 animate-fade-in">
-      {/* Header with avatar */}
+      {/* Header with back button and avatar */}
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-t-2xl px-6 py-5 flex flex-col items-center relative">
         <div className="w-16 h-16 rounded-full bg-yellow-100 shadow-lg flex items-center justify-center mb-1 border-4 border-yellow-300 overflow-hidden">
           {initials ? (
@@ -179,7 +179,10 @@ export default function ProfilePage() {
           </form>
         </div>
         <div className="flex justify-end mt-2">
-          <Button className="w-32" variant="ghost" onClick={logout}>Logout</Button>
+          <Button className="w-32" variant="ghost" onClick={() => router.push('/')}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
         </div>
       </div>
     </div>
