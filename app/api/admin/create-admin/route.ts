@@ -14,19 +14,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if admin already exists
-    const existingAdmins = await executeQuery(
-      'SELECT id FROM users WHERE role = "admin"',
-      []
-    ) as any[];
-
-    if (existingAdmins.length > 0) {
-      return NextResponse.json(
-        { error: 'Admin user already exists' },
-        { status: 409 }
-      );
-    }
-
     // Check if username or email already exists
     const existingUsers = await executeQuery(
       'SELECT id FROM users WHERE username = ? OR email = ?',
@@ -43,13 +30,13 @@ export async function POST(request: NextRequest) {
     // Create admin user
     const userId = Date.now().toString();
     await executeQuery(
-      'INSERT INTO users (id, username, email, password, name, mobile, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [userId, username, email, password, name, mobile, 'admin']
+      'INSERT INTO users (id, username, email, password, name, mobile, role, credits) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [userId, username, email, password, name, mobile, 'admin', 200]
     );
 
     // Get the created admin user
     const newUsers = await executeQuery(
-      'SELECT id, username, email, name, mobile, role, createdAt FROM users WHERE id = ?',
+      'SELECT id, username, email, name, mobile, role, credits, createdAt FROM users WHERE id = ?',
       [userId]
     ) as any[];
 

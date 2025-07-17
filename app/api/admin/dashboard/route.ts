@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         COUNT(*) as totalUmbrellas,
         SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as availableUmbrellas,
-        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rentedUmbrellas
+        SUM(CASE WHEN status = 'out_of_stock' THEN 1 ELSE 0 END) as outOfStockUmbrellas
       FROM umbrellas
     `) as any[];
     
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activeRentals,
         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completedRentals,
         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelledRentals
-      FROM rentals
+      FROM rental_history
     `) as any[];
     
     console.log('Rental stats:', rentalStats);
@@ -56,11 +56,10 @@ export async function GET(request: NextRequest) {
     `) as any[];
 
     const recentRentals = await executeQuery(`
-      SELECT r.id, r.status, r.createdAt, u.username, um.description
-      FROM rentals r
-      JOIN users u ON r.userId = u.id
-      JOIN umbrellas um ON r.umbrellaId = um.id
-      ORDER BY r.createdAt DESC 
+      SELECT rh.id, rh.status, rh.rented_at as createdAt, rh.user_name as username, um.description
+      FROM rental_history rh
+      JOIN umbrellas um ON rh.umbrella_id = um.id
+      ORDER BY rh.rented_at DESC 
       LIMIT 5
     `) as any[];
 
@@ -83,11 +82,14 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Dashboard stats error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
+    
     return NextResponse.json(
       { 
         success: false,
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Dashboard API error',
+        details: errorMessage
       },
       { status: 500 }
     );

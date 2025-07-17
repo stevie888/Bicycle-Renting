@@ -115,6 +115,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user has enough credits and get user name
+    const userCredits = await executeQuery(
+      'SELECT credits, name FROM users WHERE id = ?',
+      [userId]
+    ) as any[];
+
+    if (userCredits.length === 0) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    const userCreditBalance = userCredits[0].credits;
+    const userName = userCredits[0].name;
+    const rentalCost = 50; // 50 credits per rental
+
+    if (userCreditBalance < rentalCost) {
+      return NextResponse.json(
+        { error: `Insufficient credits. You have ${userCreditBalance} credits but need ${rentalCost} credits to rent an umbrella.` },
+        { status: 402 }
+      );
+    }
+
     // Insert into rental_history and update inventory/status
     const rentalId = null; // auto_increment
     const rentedAt = toMySQLDatetime(startTime);
@@ -124,15 +148,20 @@ export async function POST(request: NextRequest) {
     // Calculate new inventory and status
     const newInventory = umbrella.inventory - 1;
     const newStatus = newInventory === 0 ? 'out_of_stock' : 'available';
+    const newUserCredits = userCreditBalance - rentalCost;
 
     await executeTransaction([
       {
-        query: 'INSERT INTO rental_history (user_id, umbrella_id, station_id, rented_at, returned_at, status) VALUES (?, ?, ?, ?, ?, ?)',
-        params: [userId, umbrellaId, null, rentedAt, returnedAt, statusValue]
+        query: 'INSERT INTO rental_history (user_id, user_name, umbrella_id, rented_at, returned_at, status, credits_used) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        params: [userId, userName, umbrellaId, rentedAt, returnedAt, statusValue, rentalCost]
       },
       {
         query: 'UPDATE umbrellas SET inventory = ?, status = ? WHERE id = ?',
         params: [newInventory, newStatus, umbrellaId]
+      },
+      {
+        query: 'UPDATE users SET credits = ?, total_rentals = total_rentals + 1 WHERE id = ?',
+        params: [newUserCredits, userId]
       }
     ]);
 

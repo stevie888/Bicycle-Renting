@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, Mail, Smartphone, ArrowLeft } from "lucide-react";
+import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, updateProfile, logout, loading, changePassword } = useAuth();
@@ -138,6 +138,13 @@ export default function ProfilePage() {
               onChange={e => setProfile({ ...profile, mobile: e.target.value })}
               readOnly={!edit}
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-yellow-500" /> Credits</label>
+            <div className="border px-3 py-2 rounded-lg bg-gray-50 flex justify-between items-center">
+              <span className="text-gray-700">{user.credits || 0} credits</span>
+              <span className="text-sm text-gray-500">({Math.floor((user.credits || 0) / 50)} rentals available)</span>
+            </div>
           </div>
           {edit ? (
             <button

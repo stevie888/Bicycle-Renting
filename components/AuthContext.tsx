@@ -11,6 +11,8 @@ interface User {
   mobile: string;
   profileImage?: string;
   role: 'user' | 'admin';
+  credits?: number;
+  total_rentals?: number;
   createdAt: string;
 }
 

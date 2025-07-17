@@ -9,6 +9,7 @@ import {
 import { Kbd } from "@heroui/kbd";
 import { Input } from "@heroui/input";
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 
 import { SearchIcon, Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useAuth } from "./AuthContext";
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  const router = useRouter();
   
   // More robust role checking
   const isAdmin = user && user.role === 'admin';
@@ -40,6 +42,11 @@ export const Navbar = () => {
       type="search"
     />
   );
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
@@ -77,11 +84,13 @@ export const Navbar = () => {
         )}
         {user && (
           <>
-            <NavbarItem>
-              <NextLink href="/umbrellas">
-                <Button variant="ghost">Umbrellas</Button>
-              </NextLink>
-            </NavbarItem>
+            {!isAdmin && (
+              <NavbarItem>
+                <NextLink href="/umbrellas">
+                  <Button variant="ghost">Umbrellas</Button>
+                </NextLink>
+              </NavbarItem>
+            )}
             {isAdmin && (
               <NavbarItem>
                 <NextLink href="/admin">
@@ -92,7 +101,7 @@ export const Navbar = () => {
               </NavbarItem>
             )}
             <NavbarItem>
-              <Button variant="ghost" onClick={logout}>Logout</Button>
+              <Button variant="ghost" onClick={handleLogout}>Logout</Button>
             </NavbarItem>
           </>
         )}

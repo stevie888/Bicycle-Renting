@@ -1,68 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/database';
 
-// PUT - Update user (admin only)
-export async function PUT(
+// GET - Get user by ID
+export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-    const body = await request.json();
-    const { username, email, name, mobile, role } = body;
+    const userId = params.id;
 
-    // Validate input
-    if (!username || !email || !name || !mobile || !role) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const existingUser = await executeQuery(
-      'SELECT id FROM users WHERE id = ?',
-      [id]
+    const users = await executeQuery(
+      'SELECT id, username, email, name, mobile, role, credits, total_rentals, createdAt FROM users WHERE id = ?',
+      [userId]
     ) as any[];
 
-    if (existingUser.length === 0) {
+    if (users.length === 0) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Check if username or email already exists for other users
-    const duplicateUsers = await executeQuery(
-      'SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?',
-      [username, email, id]
-    ) as any[];
+    return NextResponse.json({
+      success: true,
+      user: users[0]
+    });
 
-    if (duplicateUsers.length > 0) {
+  } catch (error) {
+    console.error('Get user error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Update user (promote to admin, etc.)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const userId = params.id;
+    const body = await request.json();
+    const { role } = body;
+
+    // Validate input
+    if (!role || !['user', 'admin'].includes(role)) {
       return NextResponse.json(
-        { error: 'Username or email already exists' },
-        { status: 409 }
+        { error: 'Valid role (user or admin) is required' },
+        { status: 400 }
       );
     }
 
-    // Update user
+    // Update user role
     await executeQuery(
-      'UPDATE users SET username = ?, email = ?, name = ?, mobile = ?, role = ? WHERE id = ?',
-      [username, email, name, mobile, role, id]
+      'UPDATE users SET role = ? WHERE id = ?',
+      [role, userId]
     );
 
     // Get the updated user
     const updatedUsers = await executeQuery(
-      'SELECT id, username, email, name, mobile, role, createdAt FROM users WHERE id = ?',
-      [id]
+      'SELECT id, username, email, name, mobile, role, credits, total_rentals, createdAt FROM users WHERE id = ?',
+      [userId]
     ) as any[];
 
-    const updatedUser = updatedUsers[0];
+    if (updatedUsers.length === 0) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      user: updatedUser,
-      message: 'User updated successfully'
+      user: updatedUsers[0],
+      message: `User role updated to ${role}`
     });
 
   } catch (error) {
@@ -74,29 +87,32 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete user (admin only)
+// DELETE - Delete user
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const userId = params.id;
 
     // Check if user exists
-    const existingUser = await executeQuery(
+    const existingUsers = await executeQuery(
       'SELECT id FROM users WHERE id = ?',
-      [id]
+      [userId]
     ) as any[];
 
-    if (existingUser.length === 0) {
+    if (existingUsers.length === 0) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Delete user (this will also delete related rentals due to CASCADE)
-    await executeQuery('DELETE FROM users WHERE id = ?', [id]);
+    // Delete user
+    await executeQuery(
+      'DELETE FROM users WHERE id = ?',
+      [userId]
+    );
 
     return NextResponse.json({
       success: true,

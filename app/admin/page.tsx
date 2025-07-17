@@ -18,7 +18,7 @@ interface DashboardStats {
   umbrellas: {
     totalUmbrellas: number;
     availableUmbrellas: number;
-    rentedUmbrellas: number;
+    outOfStockUmbrellas: number;
   };
   rentals: {
     totalRentals: number;
@@ -96,10 +96,12 @@ export default function AdminDashboard() {
         setStats(data.stats);
         setRecent(data.recent);
       } else {
-        console.error('Dashboard API returned error:', data);
+        console.error('Dashboard API returned error:', data.error, data.details);
+        throw new Error(data.details || data.error || 'Unknown error');
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // You could add a toast notification here to show the error to the user
     } finally {
       setLoading(false);
     }
@@ -210,7 +212,7 @@ export default function AdminDashboard() {
                 <>
                   <div className="text-2xl font-bold">{stats?.umbrellas.totalUmbrellas || 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    {stats?.umbrellas.availableUmbrellas || 0} available, {stats?.umbrellas.rentedUmbrellas || 0} rented
+                    {stats?.umbrellas.availableUmbrellas || 0} available, {stats?.umbrellas.outOfStockUmbrellas || 0} out of stock
                   </p>
                 </>
               }</>} />
@@ -352,6 +354,54 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
     }
   };
 
+  const promoteToAdmin = async (userId: string) => {
+    if (!confirm('Are you sure you want to promote this user to admin?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: 'admin' }),
+      });
+      
+      if (response.ok) {
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to promote user');
+      }
+    } catch (error) {
+      console.error('Error promoting user:', error);
+      alert('Failed to promote user');
+    }
+  };
+
+  const demoteToUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to demote this admin to user?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: 'user' }),
+      });
+      
+      if (response.ok) {
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to demote user');
+      }
+    } catch (error) {
+      console.error('Error demoting user:', error);
+      alert('Failed to demote user');
+    }
+  };
+
   if (loading) {
     return <div className="animate-pulse">Loading users...</div>;
   }
@@ -409,12 +459,32 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => deleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end space-x-2">
+                      {user.role === 'user' ? (
+                        <button
+                          onClick={() => promoteToAdmin(user.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Promote to Admin"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => demoteToUser(user.id)}
+                          className="text-orange-600 hover:text-orange-900"
+                          title="Demote to User"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete User"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

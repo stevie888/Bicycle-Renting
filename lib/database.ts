@@ -44,6 +44,8 @@ export async function initializeDatabase() {
         mobile VARCHAR(255) NOT NULL,
         profileImage TEXT,
         role ENUM('user', 'admin') DEFAULT 'user',
+        credits INT DEFAULT 200, -- 4 rentals at 50 credits each
+        total_rentals INT DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -52,30 +54,28 @@ export async function initializeDatabase() {
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS umbrellas (
         id VARCHAR(255) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
         description TEXT,
         location VARCHAR(255) NOT NULL,
-        status ENUM('available', 'rented', 'maintenance') DEFAULT 'available',
-        hourlyRate DECIMAL(10,2) NOT NULL,
-        dailyRate DECIMAL(10,2) NOT NULL,
-        image TEXT,
+        status ENUM('available', 'rented', 'out_of_stock') DEFAULT 'available',
+        inventory INT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Create rentals table
+    // Create rental_history table
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS rentals (
-        id VARCHAR(255) PRIMARY KEY,
-        userId VARCHAR(255) NOT NULL,
-        umbrellaId VARCHAR(255) NOT NULL,
-        startTime TIMESTAMP NOT NULL,
-        endTime TIMESTAMP,
+      CREATE TABLE IF NOT EXISTS rental_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        user_name VARCHAR(255) NOT NULL,
+        umbrella_id VARCHAR(255) NOT NULL,
+        rented_at TIMESTAMP NOT NULL,
+        returned_at TIMESTAMP NULL,
         status ENUM('active', 'completed', 'cancelled') DEFAULT 'active',
-        totalAmount DECIMAL(10,2) NOT NULL,
+        credits_used INT DEFAULT 50,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (umbrellaId) REFERENCES umbrellas(id) ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (umbrella_id) REFERENCES umbrellas(id) ON DELETE CASCADE
       )
     `);
 

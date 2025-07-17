@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Expired Rentals</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .rental-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .rental-item.expired {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .rental-item.completed {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-completed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕒 Manage Expired Rentals</h1>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button class="button" onclick="checkExpiredRentals()">🔍 Check Expired Rentals</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function checkExpiredRentals() {
+            try {
+                const response = await fetch('/api/rentals/auto-update');
+                const data = await response.json();
+                
+                let html = `<div class="result">
+                    <h3>📊 Expired Rentals (${data.count})</h3>`;
+                
+                if (data.expiredRentals && data.expiredRentals.length > 0) {
+                    data.expiredRentals.forEach(rental => {
+                        const isExpired = new Date(rental.returned_at) < new Date();
+                        const statusClass = isExpired ? 'expired' : 'completed';
+                        const statusBadge = isExpired ? 'EXPIRED' : 'ACTIVE';
+                        const statusBadgeClass = isExpired ? 'status-expired' : 'status-active';
+                        
+                        html += `<div class="rental-item ${statusClass}">
+                            <div style="display: flex; justify-content: between; align-items: center;">
+                                <div>
+                                    <strong>Rental ID:</strong> ${rental.id}<br>
+                                    <strong>User:</strong> ${rental.user_name}<br>
+                                    <strong>Umbrella:</strong> ${rental.umbrella_description} (${rental.location})<br>
+                                    <strong>Rented:</strong> ${new Date(rental.rented_at).toLocaleString()}<br>
+                                    <strong>Deadline:</strong> ${new Date(rental.returned_at).toLocaleString()}
+                                </div>
+                                <span class="status-badge ${statusBadgeClass}">${statusBadge}</span>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    html += '<p>No expired rentals found.</p>';
+                }
+                
+                html += '</div>';
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure the development server is running on port 3000.</p>
+                    </div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

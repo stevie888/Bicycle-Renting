@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const users = await executeQuery(
-      'SELECT * FROM users WHERE id = ?',
+      'SELECT id, username, email, name, mobile, profileImage, role, credits, total_rentals, createdAt FROM users WHERE id = ?',
       [userId]
     ) as any[];
 
@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
 
     const user = users[0];
 
-    // Return user data (without password)
-    const { password: _, ...userWithoutPassword } = user;
+    // Return user data (password is already excluded from query)
+    const userData = user;
     
     return NextResponse.json({
       success: true,
-      user: userWithoutPassword
+      user: userData
     });
 
   } catch (error) {

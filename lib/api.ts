@@ -63,6 +63,13 @@ export const userAPI = {
     });
   },
 
+  // Get all users (admin only)
+  getAll: async () => {
+    return apiCall('/admin/users', {
+      method: 'GET',
+    });
+  },
+
   // Update user profile
   updateProfile: async (userId: string, profileData: {
     name?: string;
@@ -139,12 +146,36 @@ export const rentalAPI = {
   },
 };
 
+// Credits API calls
+export const creditsAPI = {
+  // Get user's credit balance
+  getBalance: async (userId: string) => {
+    return apiCall(`/credits?userId=${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // Add/remove credits (admin only)
+  updateCredits: async (data: {
+    userId: string;
+    credits: number;
+    action: 'add' | 'remove';
+    reason?: string;
+  }) => {
+    return apiCall('/credits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
 // Export the main API object
 export const api = {
   auth: authAPI,
   user: userAPI,
   umbrella: umbrellaAPI,
   rental: rentalAPI,
+  credits: creditsAPI,
 };
 
 export default api; 
