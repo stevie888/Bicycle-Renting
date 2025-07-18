@@ -12,7 +12,7 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ mode }: AuthFormProps) {
-  const { login, register } = useAuth();
+  const { login, register, loading } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,28 +22,55 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [error, setError] = useState("");
   const [showForgot, setShowForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let success = false;
-    if (mode === "login") {
-      success = login(email, password);
-      if (!success) setError("Invalid credentials");
-    } else {
-      if (!name) {
-        setError("Name is required");
-        return;
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      let success = false;
+      
+      if (mode === "login") {
+        success = await login(mobile, password);
+        if (!success) setError("Invalid mobile or password");
+      } else {
+        if (!name) {
+          setError("Name is required");
+          return;
+        }
+        if (!email) {
+          setError("Email is required");
+          return;
+        }
+        if (!mobile) {
+          setError("Mobile number is required");
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          return;
+        }
+        success = await register({
+          username: mobile, // Use mobile as username for legacy compatibility
+          email,
+          password,
+          name,
+          mobile
+        });
+        if (!success) setError("Mobile or email already exists");
       }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
+      
+      if (success) {
+        setError("");
+        router.push("/");
       }
-      success = register(email, password);
-      if (!success) setError("Email already registered");
-    }
-    if (success) {
-      setError("");
-      router.push("/");
+    } catch (error) {
+      console.error('Auth error:', error);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,30 +115,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white p-8 rounded-2xl shadow-xl relative z-20 mt-12">
           <h1 className="text-2xl font-bold text-center mb-2 mt-8">{mode === "login" ? "Log In" : "Sign Up"}</h1>
+          
           {mode === "signup" && (
             <Input
               type="text"
-              placeholder="Username"
+              placeholder="Full Name"
               value={name}
               onChange={e => setName(e.target.value)}
               required
             />
           )}
-          <div className="flex gap-2">
-            <select className="rounded-lg border-gray-300 bg-gray-100 px-2 py-2 text-sm" style={{ minWidth: 80 }}>
-              <option>+1</option>
-              <option>+44</option>
-              <option>+91</option>
-              <option>+977</option>
-            </select>
-            <Input
-              type="tel"
-              placeholder="Mobile Number"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              required
-            />
-          </div>
+          
           {mode === "signup" && (
             <Input
               type="email"
@@ -121,6 +135,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
               required
             />
           )}
+          
+          <Input
+            type="tel"
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={e => setMobile(e.target.value)}
+            required
+          />
+          
           <Input
             type="password"
             placeholder="Password"
@@ -128,6 +151,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             onChange={e => setPassword(e.target.value)}
             required
           />
+          
           {mode === "signup" && (
             <Input
               type="password"
@@ -137,10 +161,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
               required
             />
           )}
+          
           {error && <div className="text-red-500 text-center">{error}</div>}
-          <Button type="submit" className="mt-2 w-full bg-[#FFD600] text-black rounded-xl shadow-md hover:bg-yellow-400 transition-colors">
-            {mode === "login" ? "Log In" : "Sign Up"}
+          
+          <Button 
+            type="submit" 
+            className="mt-2 w-full bg-[#FFD600] text-black rounded-xl shadow-md hover:bg-yellow-400 transition-colors"
+            disabled={isSubmitting || loading}
+          >
+            {isSubmitting ? "Loading..." : mode === "login" ? "Log In" : "Sign Up"}
           </Button>
+          
           {mode === "login" && (
             <div className="text-right mt-1 text-sm">
               <button type="button" className="text-yellow-600 font-semibold" onClick={() => setShowForgot(true)}>
@@ -148,12 +179,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </button>
             </div>
           )}
+          
           {/* Social login icons */}
           <div className="flex justify-center gap-4 mt-2">
             <button type="button" className="bg-gray-100 p-2 rounded-full shadow hover:bg-gray-200"><FaGoogle size={20} /></button>
             <button type="button" className="bg-gray-100 p-2 rounded-full shadow hover:bg-gray-200"><FaFacebook size={20} /></button>
             <button type="button" className="bg-gray-100 p-2 rounded-full shadow hover:bg-gray-200"><FaApple size={20} /></button>
           </div>
+          
           <div className="text-center mt-2 text-sm">
             {mode === "login" ? (
               <>Do not have an account? <Link href="/signup" className="text-yellow-600 font-semibold">Sign up</Link></>

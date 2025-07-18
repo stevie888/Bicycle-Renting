@@ -1,42 +1,65 @@
 "use client";
 import { EyeIcon, RouteIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import Card from "@/components/ui/card";
 
+interface Station {
+  id: number;
+  name: string;
+  location: string;
+  distance: string;
+  available: number;
+  occupied: number;
+  total: number;
+}
+
 export default function Home() {
   const router = useRouter();
-  const items = [
-    {
-      id: 1,
-      name: "Station 1",
-      distance: "14 km",
-      available: 5,
-      occupied: 4,
-    },
-    {
-      id: 2,
-      name: "Station 2",
-      distance: "1 km",
-      available: 2,
-      occupied: 4,
-    },
-    {
-      id: 3,
-      name: "Station 3",
-      distance: "2 km",
-      available: 2,
-      occupied: 4,
-    },
-    {
-      id: 4,
-      name: "Station 4",
-      distance: "1 km",
-      available: 5,
-      occupied: 4,
-    },
-  ];
+  const [items, setItems] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchStations();
+  }, []);
+
+  const fetchStations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/stations');
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        setItems(data);
+      } else {
+        setError('Failed to load stations');
+      }
+    } catch (error) {
+      console.error('Error fetching stations:', error);
+      setError('Failed to load stations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+        <div className="text-center">Loading stations...</div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+        <div className="text-center text-red-600">{error}</div>
+      </section>
+    );
+  }
 
   return (
     <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">

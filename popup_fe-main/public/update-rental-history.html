@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Rental History Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Update Rental History Table</h1>
+        
+        <div class="info">
+            <h3>What this will do:</h3>
+            <ul>
+                <li>✅ Add <strong>user_name</strong> column to rental_history table</li>
+                <li>✅ Populate user_name with actual user names from users table</li>
+                <li>✅ Remove <strong>station_id</strong> column (no longer needed)</li>
+                <li>✅ Update credits_used default to 50 (matching current rental cost)</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button class="button" onclick="checkStructure()">🔍 Check Current Structure</button>
+            <button class="button danger" onclick="updateTable()">🔄 Update Table Structure</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function checkStructure() {
+            try {
+                const response = await fetch('/api/debug/update-rental-history');
+                const data = await response.json();
+                
+                let html = `<div class="result">
+                    <h3>📊 Current Table Structure</h3>
+                    <div style="margin-top: 10px;">`;
+                
+                if (data.structure) {
+                    html += '<h4>Columns:</h4><ul>';
+                    data.structure.forEach(col => {
+                        html += `<li><strong>${col.Field}</strong> - ${col.Type} ${col.Null === 'NO' ? '(NOT NULL)' : ''}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                if (data.sampleData && data.sampleData.length > 0) {
+                    html += '<h4>Sample Data:</h4><ul>';
+                    data.sampleData.forEach(row => {
+                        html += `<li>ID: ${row.id}, User: ${row.user_name || 'N/A'}, Status: ${row.status}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                html += '</div></div>';
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure the development server is running on port 3000.</p>
+                    </div>`;
+            }
+        }
+
+        async function updateTable() {
+            if (!confirm('This will modify the rental_history table structure. Are you sure you want to proceed?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/debug/update-rental-history', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = `<div class="result success">
+                    <h3>✅ Update Complete</h3>
+                    <p><strong>${data.message}</strong></p>
+                </div>`;
+                
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

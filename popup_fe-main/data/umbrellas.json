@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1703123456789",
+    "name": "Premium Umbrella",
+    "description": "High-quality umbrella for rent",
+    "location": "Central Park",
+    "status": "available",
+    "hourlyRate": 5,
+    "dailyRate": 20,
+    "createdAt": "2024-01-01T10:00:00.000Z"
+  },
+  {
+    "id": "1703123456790",
+    "name": "Standard Umbrella",
+    "description": "Reliable umbrella for everyday use",
+    "location": "Times Square",
+    "status": "rented",
+    "hourlyRate": 3,
+    "dailyRate": 15,
+    "createdAt": "2024-01-01T11:00:00.000Z"
+  }
+] 

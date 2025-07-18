@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Freestyle Script';
+  src: url('/fonts/FREESCPT.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.freestyle-script {
+  font-family: 'Freestyle Script', cursive;
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Cleanup Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .umbrella-list {
+            margin-top: 10px;
+        }
+        .umbrella-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Database Cleanup Tool</h1>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button class="button" onclick="checkUmbrellas()">🔍 Check Current Umbrellas</button>
+            <button class="button danger" onclick="cleanupUmbrellas()">🗑️ Remove Extra Umbrellas</button>
+            <button class="button success" onclick="resetUmbrellas()">🔄 Reset to 3 Stations</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function checkUmbrellas() {
+            try {
+                const response = await fetch('/api/debug/cleanup-umbrellas');
+                const data = await response.json();
+                
+                let html = `<div class="result">
+                    <h3>📊 Current Umbrellas (${data.count})</h3>
+                    <div class="umbrella-list">`;
+                
+                data.umbrellas.forEach(umbrella => {
+                    html += `<div class="umbrella-item">
+                        <strong>${umbrella.description}</strong> - ${umbrella.location} 
+                        (${umbrella.status}, ${umbrella.inventory} available)
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure the development server is running on port 3000.</p>
+                    </div>`;
+            }
+        }
+
+        async function cleanupUmbrellas() {
+            try {
+                const response = await fetch('/api/debug/cleanup-umbrellas', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = `<div class="result success">
+                    <h3>✅ Cleanup Complete</h3>
+                    <p><strong>${data.message}</strong></p>
+                    <p>Deleted: ${data.deletedCount} umbrellas</p>
+                    <p>Remaining: ${data.remainingCount} umbrellas</p>
+                    <h4>Final Umbrellas:</h4>
+                    <div class="umbrella-list">`;
+                
+                data.remainingUmbrellas.forEach(umbrella => {
+                    html += `<div class="umbrella-item">
+                        <strong>${umbrella.description}</strong> - ${umbrella.location} 
+                        (${umbrella.status}, ${umbrella.inventory} available)
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>`;
+            }
+        }
+
+        async function resetUmbrellas() {
+            if (!confirm('This will delete ALL umbrellas and create exactly 3 new stations. Are you sure?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/debug/reset-umbrellas', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = `<div class="result success">
+                    <h3>✅ Reset Complete</h3>
+                    <p><strong>${data.message}</strong></p>
+                    <p>Total umbrellas: ${data.count}</p>
+                    <h4>New Umbrellas:</h4>
+                    <div class="umbrella-list">`;
+                
+                data.umbrellas.forEach(umbrella => {
+                    html += `<div class="umbrella-item">
+                        <strong>${umbrella.description}</strong> - ${umbrella.location} 
+                        (${umbrella.status}, ${umbrella.inventory} available)
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+                document.getElementById('result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>`;
+            }
+        }
+    </script>
+</body>
+</html> 
