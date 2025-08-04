@@ -6,6 +6,7 @@ import * as React from "react";
 import { HeroUIProvider } from "@heroui/system";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useEffect, useState } from "react";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -24,14 +25,20 @@ declare module "@react-types/shared" {
 export function Providers({ children, themeProps, popup }: ProvidersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const [id, setId] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    setId(searchParams.get("id"));
+  }, [searchParams]);
 
   return (
     <HeroUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <>
           {children}
-          {id ? popup : <></>}
+          {isClient && id ? popup : null}
         </>
       </NextThemesProvider>
     </HeroUIProvider>

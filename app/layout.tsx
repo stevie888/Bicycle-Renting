@@ -1,17 +1,15 @@
 import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
 import clsx from "clsx";
-import { History, Home, Scan, User, Wallet } from "lucide-react";
 
 import { Providers } from "./providers";
 import { AuthProvider } from "@/components/AuthContext";
+import { Navbar } from "@/components/navbar";
+import Footer from "@/components/Footer";
+import AuthWrapper from "@/components/AuthWrapper";
 
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: {
@@ -42,6 +40,7 @@ export default function RootLayout({
     <html suppressHydrationWarning lang="en">
       <head />
       <body
+        suppressHydrationWarning
         className={clsx(
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
@@ -52,13 +51,9 @@ export default function RootLayout({
           themeProps={{ attribute: "class", defaultTheme: "light" }}
         >
           <AuthProvider>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
+            <AuthWrapper navbar={<Navbar />} footer={<Footer />}>
               {children}
-            </main>
-            <Footer />
-          </div>
+            </AuthWrapper>
           </AuthProvider>
         </Providers>
       </body>

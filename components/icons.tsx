@@ -5,15 +5,20 @@ import Image, { ImageProps } from "next/image";
 import { IconSvgProps } from "@/types";
 
 export const Logo: React.FC<{ size?: number } & Omit<ImageProps, 'src' | 'alt' | 'width' | 'height'>> = ({
-  size = 36,
+  size = 80,
   ...props
 }) => (
   <Image
-    src="/umbrella-logo.png"
-    alt="Umbrella Logo"
+    src="/Paddle Nepal logo.png"
+    alt="PaddleNepal Logo"
     width={size}
     height={size}
-    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    style={{ 
+      display: 'inline-block', 
+      verticalAlign: 'middle',
+      borderRadius: '50%',
+      objectFit: 'contain'
+    }}
     priority
     {...props}
     />
