@@ -19,7 +19,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     email: "",
     password: "",
     name: "",
-    phone: "",
+    mobile: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -38,7 +38,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === "login") {
-        await login(formData.email, formData.password);
+        await login(formData.mobile, formData.password);
         setSuccess("Login successful! Redirecting...");
         setTimeout(() => router.push("/"), 1000);
       } else {
@@ -50,11 +50,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
         }
 
         await register({
-          username: formData.phone,
+          mobile: formData.mobile,
           email: formData.email,
           password: formData.password,
           name: formData.name,
-          mobile: formData.phone,
         });
         setSuccess("Account created successfully! Your ID will be verified within 24 hours.");
         setTimeout(() => router.push("/"), 2000);
@@ -145,10 +144,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
                   type="tel"
-                  name="phone"
-                  value={formData.phone}
+                  name="mobile"
+                  value={formData.mobile}
                   onChange={handleInputChange}
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your mobile number"
                   className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
                   required
                 />
@@ -238,23 +237,43 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </div>
         )}
 
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
-            Email Address
-          </label>
-          <div className="relative">
-            <MailIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
-            <Input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter your email"
-              className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
-              required
-            />
+        {mode === "login" ? (
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Mobile Number
+            </label>
+            <div className="relative">
+              <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
+              <Input
+                type="tel"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleInputChange}
+                placeholder="Enter your mobile number"
+                className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
+                required
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <MailIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
+                required
+              />
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-2">

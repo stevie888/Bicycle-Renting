@@ -18,13 +18,12 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (mobile: string, password: string) => Promise<boolean>;
   register: (userData: {
-    username: string;
+    mobile: string;
     email: string;
     password: string;
     name: string;
-    mobile: string;
   }) => Promise<boolean>;
   logout: () => void;
   updateProfile: (profile: { 
@@ -62,11 +61,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("popup_user", JSON.stringify(userObj));
   };
 
-  // Login with username/email and password
-  const login = async (username: string, password: string): Promise<boolean> => {
+  // Login with mobile number and password
+  const login = async (mobile: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await api.auth.login(username, password);
+      const response = await api.auth.login(mobile, password);
       if (response.success && response.user) {
         saveUser(response.user);
         return true;
@@ -82,11 +81,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Register new user
   const register = async (userData: {
-    username: string;
+    mobile: string;
     email: string;
     password: string;
     name: string;
-    mobile: string;
   }): Promise<boolean> => {
     try {
       setLoading(true);

@@ -1,53 +1,241 @@
-// API utility functions for making requests to our backend
+// LocalStorage-based API for persistent data storage
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-// Generic API call function
-async function apiCall(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-
+// Helper functions for localStorage
+const getStorageData = (key: string) => {
+  if (typeof window === 'undefined') return null;
   try {
-    const response = await fetch(url, defaultOptions);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'API request failed');
-    }
-
-    return data;
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error('API call error:', error);
+    console.error('Error reading from localStorage:', error);
+    return null;
+  }
+};
+
+const setStorageData = (key: string, data: any) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error writing to localStorage:', error);
+  }
+};
+
+// Initialize default data if not exists
+const initializeStorage = () => {
+  if (typeof window === 'undefined') return;
+
+  // Initialize users if not exists
+  if (!getStorageData('paddlenepal_users')) {
+    const defaultUsers = [
+      {
+        id: '1',
+        mobile: '+977-9841234567',
+        email: 'john@example.com',
+        name: 'John Doe',
+        role: 'user',
+        credits: 100,
+        profileImage: null,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        mobile: '+977-9841234568',
+        email: 'admin@paddlenepal.com',
+        name: 'Admin User',
+        role: 'admin',
+        credits: 1000,
+        profileImage: null,
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    setStorageData('paddlenepal_users', defaultUsers);
+  }
+
+  // Initialize bicycles if not exists
+  if (!getStorageData('paddlenepal_bicycles')) {
+    const defaultBicycles = [
+      {
+        id: '1',
+        name: 'Mountain Bike 1',
+        description: 'High-quality mountain bike for adventure trails',
+        location: 'Basantapur, Kathmandu',
+        status: 'available',
+        hourlyRate: 200,
+        dailyRate: 1500,
+        image: '/bicycle1.jpg',
+      },
+      {
+        id: '2',
+        name: 'City Bike 1',
+        description: 'Comfortable city bike for urban exploration',
+        location: 'Patan, Lalitpur',
+        status: 'available',
+        hourlyRate: 150,
+        dailyRate: 1200,
+        image: '/bicycle2.jpg',
+      },
+      {
+        id: '3',
+        name: 'Hybrid Bike 1',
+        description: 'Versatile hybrid bike for all terrains',
+        location: 'Durbar Square, Bhaktapur',
+        status: 'rented',
+        hourlyRate: 180,
+        dailyRate: 1400,
+        image: '/bicycle3.jpg',
+      },
+    ];
+    setStorageData('paddlenepal_bicycles', defaultBicycles);
+  }
+
+  // Initialize rentals if not exists
+  if (!getStorageData('paddlenepal_rentals')) {
+    const defaultRentals = [
+      {
+        id: '1',
+        userId: '1',
+        bicycleId: '3',
+        startTime: '2024-01-15T10:00:00Z',
+        endTime: null,
+        status: 'active',
+        totalCost: 360,
+      },
+    ];
+    setStorageData('paddlenepal_rentals', defaultRentals);
+  }
+};
+
+// Initialize storage on module load (client-side only)
+if (typeof window !== 'undefined') {
+  initializeStorage();
+  console.log('LocalStorage initialized with default data');
+  
+  // Add a function to clear and reinitialize storage (for debugging)
+  (window as any).clearPaddleNepalStorage = () => {
+    localStorage.removeItem('paddlenepal_users');
+    localStorage.removeItem('paddlenepal_bicycles');
+    localStorage.removeItem('paddlenepal_rentals');
+    initializeStorage();
+    console.log('Storage cleared and reinitialized');
+  };
+}
+
+// LocalStorage API call function
+async function localStorageApiCall(endpoint: string, options: RequestInit = {}) {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  const method = options.method || 'GET';
+  
+  try {
+    // Handle different endpoints
+    if (endpoint.includes('/auth/login')) {
+      const { mobile, password } = JSON.parse(options.body as string);
+      console.log('Login attempt with mobile:', mobile);
+      
+      const users = getStorageData('paddlenepal_users') || [];
+      console.log('Available users in localStorage:', users);
+      
+      const user = users.find((u: any) => u.mobile === mobile);
+      console.log('Found user:', user);
+      
+      if (user && password === 'password') {
+        console.log('Login successful for user:', user);
+        return { success: true, user, token: 'local-token-' + user.id };
+      } else {
+        console.log('Login failed - invalid credentials');
+        throw new Error('Invalid mobile number or password');
+      }
+    }
+    
+    if (endpoint.includes('/auth/signup')) {
+      const userData = JSON.parse(options.body as string);
+      console.log('Signup attempt with data:', userData);
+      
+      const users = getStorageData('paddlenepal_users') || [];
+      console.log('Current users in localStorage:', users);
+      console.log('Looking for mobile:', userData.mobile);
+      
+      // Check if mobile number already exists
+      const existingUser = users.find((u: any) => u.mobile === userData.mobile);
+      console.log('Existing user found:', existingUser);
+      
+      if (existingUser) {
+        console.log('Mobile number already exists:', userData.mobile);
+        throw new Error(`Mobile number ${userData.mobile} already registered`);
+      }
+      
+      const newUser = {
+        id: (users.length + 1).toString(),
+        ...userData,
+        role: 'user',
+        credits: 50,
+        profileImage: null,
+        createdAt: new Date().toISOString(),
+      };
+      
+      users.push(newUser);
+      setStorageData('paddlenepal_users', users);
+      console.log('New user saved to localStorage:', newUser);
+      console.log('Updated users list:', getStorageData('paddlenepal_users'));
+      
+      return { success: true, user: newUser, token: 'local-token-' + newUser.id };
+    }
+    
+    if (endpoint.includes('/users/profile')) {
+      const userId = endpoint.match(/userId=(\d+)/)?.[1];
+      const users = getStorageData('paddlenepal_users') || [];
+      const user = users.find((u: any) => u.id === userId);
+      return user || { error: 'User not found' };
+    }
+    
+    if (endpoint.includes('/admin/users')) {
+      return getStorageData('paddlenepal_users') || [];
+    }
+    
+    if (endpoint.includes('/bicycles') || endpoint.includes('/umbrellas')) {
+      return getStorageData('paddlenepal_bicycles') || [];
+    }
+    
+    if (endpoint.includes('/rentals')) {
+      return getStorageData('paddlenepal_rentals') || [];
+    }
+    
+    if (endpoint.includes('/credits')) {
+      const userId = endpoint.match(/userId=(\d+)/)?.[1];
+      const users = getStorageData('paddlenepal_users') || [];
+      const user = users.find((u: any) => u.id === userId);
+      return { credits: user?.credits || 0 };
+    }
+    
+    // Default response for unknown endpoints
+    return { success: true, message: 'LocalStorage API response' };
+    
+  } catch (error) {
+    console.error('LocalStorage API call error:', error);
     throw error;
   }
 }
 
 // Authentication API calls
 export const authAPI = {
-  // Login user
-  login: async (username: string, password: string) => {
-    return apiCall('/auth/login', {
+  // Login user with mobile number
+  login: async (mobile: string, password: string) => {
+    return localStorageApiCall('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ mobile, password }),
     });
   },
 
   // Signup user
   signup: async (userData: {
-    username: string;
+    mobile: string;
     email: string;
     password: string;
     name: string;
-    mobile: string;
   }) => {
-    return apiCall('/auth/signup', {
+    return localStorageApiCall('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -58,14 +246,14 @@ export const authAPI = {
 export const userAPI = {
   // Get user profile
   getProfile: async (userId: string) => {
-    return apiCall(`/users/profile?userId=${userId}`, {
+    return localStorageApiCall(`/users/profile?userId=${userId}`, {
       method: 'GET',
     });
   },
 
   // Get all users (admin only)
   getAll: async () => {
-    return apiCall('/admin/users', {
+    return localStorageApiCall('/admin/users', {
       method: 'GET',
     });
   },
@@ -77,31 +265,38 @@ export const userAPI = {
     mobile?: string;
     profileImage?: string;
   }) => {
-    return apiCall(`/users/profile?userId=${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(profileData),
-    });
+    const users = getStorageData('paddlenepal_users') || [];
+    const userIndex = users.findIndex((u: any) => u.id === userId);
+    
+    if (userIndex !== -1) {
+      users[userIndex] = { ...users[userIndex], ...profileData };
+      setStorageData('paddlenepal_users', users);
+      return { success: true, user: users[userIndex] };
+    }
+    
+    return { error: 'User not found' };
   },
 };
 
-// Umbrella API calls
-export const umbrellaAPI = {
-  // Get all umbrellas
+// Bicycle API calls
+export const bicycleAPI = {
+  // Get all bicycles
   getAll: async (filters?: { status?: string; location?: string }) => {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.location) params.append('location', filters.location);
+    const bicycles = getStorageData('paddlenepal_bicycles') || [];
     
-    const queryString = params.toString();
-    const endpoint = queryString ? `/umbrellas?${queryString}` : '/umbrellas';
+    if (filters) {
+      return bicycles.filter((bike: any) => {
+        if (filters.status && bike.status !== filters.status) return false;
+        if (filters.location && !bike.location.includes(filters.location)) return false;
+        return true;
+      });
+    }
     
-    return apiCall(endpoint, {
-      method: 'GET',
-    });
+    return bicycles;
   },
 
-  // Create new umbrella
-  create: async (umbrellaData: {
+  // Create new bicycle
+  create: async (bicycleData: {
     name: string;
     description: string;
     location: string;
@@ -109,10 +304,17 @@ export const umbrellaAPI = {
     dailyRate: number;
     image?: string;
   }) => {
-    return apiCall('/umbrellas', {
-      method: 'POST',
-      body: JSON.stringify(umbrellaData),
-    });
+    const bicycles = getStorageData('paddlenepal_bicycles') || [];
+    const newBicycle = {
+      id: (bicycles.length + 1).toString(),
+      ...bicycleData,
+      status: 'available',
+    };
+    
+    bicycles.push(newBicycle);
+    setStorageData('paddlenepal_bicycles', bicycles);
+    
+    return { success: true, bicycle: newBicycle };
   },
 };
 
@@ -120,29 +322,53 @@ export const umbrellaAPI = {
 export const rentalAPI = {
   // Get rentals
   getAll: async (filters?: { userId?: string; status?: string }) => {
-    const params = new URLSearchParams();
-    if (filters?.userId) params.append('userId', filters.userId);
-    if (filters?.status) params.append('status', filters.status);
+    const rentals = getStorageData('paddlenepal_rentals') || [];
     
-    const queryString = params.toString();
-    const endpoint = queryString ? `/rentals?${queryString}` : '/rentals';
+    if (filters) {
+      return rentals.filter((rental: any) => {
+        if (filters.userId && rental.userId !== filters.userId) return false;
+        if (filters.status && rental.status !== filters.status) return false;
+        return true;
+      });
+    }
     
-    return apiCall(endpoint, {
-      method: 'GET',
-    });
+    return rentals;
   },
 
   // Create new rental
   create: async (rentalData: {
     userId: string;
-    umbrellaId: string;
+    bicycleId: string;
     startTime: string;
     endTime?: string;
   }) => {
-    return apiCall('/rentals', {
-      method: 'POST',
-      body: JSON.stringify(rentalData),
-    });
+    const rentals = getStorageData('paddlenepal_rentals') || [];
+    const bicycles = getStorageData('paddlenepal_bicycles') || [];
+    
+    // Find the bicycle to get its rate
+    const bicycle = bicycles.find((b: any) => b.id === rentalData.bicycleId);
+    if (!bicycle) {
+      throw new Error('Bicycle not found');
+    }
+    
+    const newRental = {
+      id: (rentals.length + 1).toString(),
+      ...rentalData,
+      status: 'active',
+      totalCost: bicycle.hourlyRate * 2, // Calculate based on duration
+    };
+    
+    rentals.push(newRental);
+    setStorageData('paddlenepal_rentals', rentals);
+    
+    // Update bicycle status to rented
+    const bicycleIndex = bicycles.findIndex((b: any) => b.id === rentalData.bicycleId);
+    if (bicycleIndex !== -1) {
+      bicycles[bicycleIndex].status = 'rented';
+      setStorageData('paddlenepal_bicycles', bicycles);
+    }
+    
+    return { success: true, rental: newRental };
   },
 };
 
@@ -150,9 +376,9 @@ export const rentalAPI = {
 export const creditsAPI = {
   // Get user's credit balance
   getBalance: async (userId: string) => {
-    return apiCall(`/credits?userId=${userId}`, {
-      method: 'GET',
-    });
+    const users = getStorageData('paddlenepal_users') || [];
+    const user = users.find((u: any) => u.id === userId);
+    return { credits: user?.credits || 0 };
   },
 
   // Add/remove credits (admin only)
@@ -162,10 +388,21 @@ export const creditsAPI = {
     action: 'add' | 'remove';
     reason?: string;
   }) => {
-    return apiCall('/credits', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const users = getStorageData('paddlenepal_users') || [];
+    const userIndex = users.findIndex((u: any) => u.id === data.userId);
+    
+    if (userIndex !== -1) {
+      if (data.action === 'add') {
+        users[userIndex].credits += data.credits;
+      } else {
+        users[userIndex].credits = Math.max(0, users[userIndex].credits - data.credits);
+      }
+      
+      setStorageData('paddlenepal_users', users);
+      return { success: true, user: users[userIndex] };
+    }
+    
+    return { error: 'User not found' };
   },
 };
 
@@ -173,7 +410,7 @@ export const creditsAPI = {
 export const api = {
   auth: authAPI,
   user: userAPI,
-  umbrella: umbrellaAPI,
+  bicycle: bicycleAPI,
   rental: rentalAPI,
   credits: creditsAPI,
 };
