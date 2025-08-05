@@ -5,7 +5,6 @@ import { api } from '@/lib/api';
 
 interface User {
   id: string;
-  username: string;
   email: string;
   name: string;
   mobile: string;
@@ -41,24 +40,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("popup_user");
+    if (!mounted) return;
+    
+    console.log('AuthContext - Loading user from localStorage...');
+    
+    const storedUser = localStorage.getItem("paddlenepal_current_user");
+    console.log('AuthContext - Stored user data:', storedUser);
+    
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        console.log('AuthContext - Parsed user:', parsedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
-        localStorage.removeItem("popup_user");
+        localStorage.removeItem("paddlenepal_current_user");
       }
+    } else {
+      console.log('AuthContext - No stored user found');
     }
+    
+    // Always set loading to false after attempting to load
     setLoading(false);
-  }, []);
+  }, [mounted]);
 
   const saveUser = (userObj: User) => {
+    console.log('AuthContext - Saving user:', userObj);
     setUser(userObj);
-    localStorage.setItem("popup_user", JSON.stringify(userObj));
+    localStorage.setItem("paddlenepal_current_user", JSON.stringify(userObj));
+    console.log('AuthContext - User saved to localStorage');
   };
 
   // Login with mobile number and password
@@ -104,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("popup_user");
+    localStorage.removeItem("paddlenepal_current_user");
   };
 
   const updateProfile = async (profile: { 

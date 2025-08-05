@@ -23,8 +23,6 @@ const setStorageData = (key: string, data: any) => {
 
 // Initialize default data if not exists
 const initializeStorage = () => {
-  if (typeof window === 'undefined') return;
-
   // Initialize users if not exists
   if (!getStorageData('paddlenepal_users')) {
     const defaultUsers = [
@@ -106,23 +104,39 @@ const initializeStorage = () => {
   }
 };
 
-// Initialize storage on module load (client-side only)
-if (typeof window !== 'undefined') {
+// Initialize storage on first client-side access
+let isInitialized = false;
+
+const ensureInitialized = () => {
+  if (typeof window === 'undefined') return;
+  if (isInitialized) return;
+  
   initializeStorage();
   console.log('LocalStorage initialized with default data');
+  isInitialized = true;
   
   // Add a function to clear and reinitialize storage (for debugging)
   (window as any).clearPaddleNepalStorage = () => {
     localStorage.removeItem('paddlenepal_users');
     localStorage.removeItem('paddlenepal_bicycles');
     localStorage.removeItem('paddlenepal_rentals');
+    localStorage.removeItem('paddlenepal_current_user');
+    isInitialized = false;
     initializeStorage();
     console.log('Storage cleared and reinitialized');
   };
-}
+};
 
 // LocalStorage API call function
 async function localStorageApiCall(endpoint: string, options: RequestInit = {}) {
+  // Only run on client-side
+  if (typeof window === 'undefined') {
+    throw new Error('API calls can only be made on the client-side');
+  }
+  
+  // Ensure storage is initialized
+  ensureInitialized();
+  
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 100));
   
@@ -137,14 +151,30 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       const users = getStorageData('paddlenepal_users') || [];
       console.log('Available users in localStorage:', users);
       
-      const user = users.find((u: any) => u.mobile === mobile);
+      // Try to find user with exact match first
+      let user = users.find((u: any) => u.mobile === mobile);
+      
+      // If not found, try to find by mobile number without country code
+      if (!user && mobile.startsWith('+977-')) {
+        const mobileWithoutCode = mobile.replace('+977-', '');
+        user = users.find((u: any) => u.mobile === mobileWithoutCode);
+      }
+      
+      // If still not found, try to find by mobile number with country code
+      if (!user && !mobile.startsWith('+977-')) {
+        const mobileWithCode = `+977-${mobile}`;
+        user = users.find((u: any) => u.mobile === mobileWithCode);
+      }
+      
       console.log('Found user:', user);
       
-      if (user && password === 'password') {
+      if (user && user.password === password) {
         console.log('Login successful for user:', user);
         return { success: true, user, token: 'local-token-' + user.id };
       } else {
         console.log('Login failed - invalid credentials');
+        console.log('Available mobile numbers:', users.map((u: any) => u.mobile));
+        console.log('User found but password mismatch. Expected:', user?.password, 'Got:', password);
         throw new Error('Invalid mobile number or password');
       }
     }
@@ -194,7 +224,7 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       return getStorageData('paddlenepal_users') || [];
     }
     
-    if (endpoint.includes('/bicycles') || endpoint.includes('/umbrellas')) {
+            if (endpoint.includes('/bicycles')) {
       return getStorageData('paddlenepal_bicycles') || [];
     }
     

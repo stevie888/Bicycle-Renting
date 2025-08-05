@@ -90,12 +90,12 @@ export default function ProfilePage() {
   return (
     <div className="w-full max-w-lg mx-auto bg-white p-0 rounded-2xl shadow-xl flex flex-col gap-0 animate-fade-in">
       {/* Header with back button and avatar */}
-      <div className="bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-t-2xl px-6 py-5 flex flex-col items-center relative">
-        <div className="w-16 h-16 rounded-full bg-yellow-100 shadow-lg flex items-center justify-center mb-1 border-4 border-yellow-300 overflow-hidden">
+      <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl px-6 py-5 flex flex-col items-center relative">
+        <div className="w-16 h-16 rounded-full bg-primary-100 shadow-lg flex items-center justify-center mb-1 border-4 border-primary-300 overflow-hidden">
           {initials ? (
-            <span className="text-2xl font-bold text-yellow-600">{initials}</span>
+            <span className="text-2xl font-bold text-primary-700">{initials}</span>
           ) : (
-            <UserIcon className="w-8 h-8 text-yellow-400" />
+            <UserIcon className="w-8 h-8 text-primary-500" />
           )}
         </div>
         {/* Removed name from header */}
@@ -140,7 +140,7 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-yellow-500" /> Credits</label>
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-primary-500" /> Credits</label>
             <div className="border px-3 py-2 rounded-lg bg-gray-50 flex justify-between items-center">
               <span className="text-gray-700">{user.credits || 0} credits</span>
               <span className="text-sm text-gray-500">({Math.floor((user.credits || 0) / 50)} rentals available)</span>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
           {edit ? (
             <button
               onClick={handleSave}
-              className="w-full mt-2 bg-blue-600 text-white rounded-lg py-2 font-semibold hover:bg-blue-700 transition disabled:bg-gray-400"
+              className="w-full mt-2 bg-primary-600 text-white rounded-lg py-2 font-semibold hover:bg-primary-700 transition disabled:bg-gray-400"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Saving..." : "Save"}
@@ -157,7 +157,7 @@ export default function ProfilePage() {
           ) : (
             <button
               type="button"
-              className="w-full mt-2 bg-gray-200 text-gray-800 rounded-lg py-2 font-semibold hover:bg-gray-300 transition"
+              className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
               onClick={handleEditClick}
             >
               Edit
@@ -181,15 +181,25 @@ export default function ProfilePage() {
               onChange={e => setNewPassword(e.target.value)}
               className="rounded-lg"
             />
-            <Button type="submit" className="w-full mt-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400" disabled={!oldPassword || !newPassword}>Change Password</Button>
+            <button
+              type="submit"
+              className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
+              disabled={!oldPassword || !newPassword}
+            >
+              Change Password
+            </button>
             {pwMsg && <div className="text-center text-sm text-green-600">{pwMsg}</div>}
           </form>
         </div>
         <div className="flex justify-end mt-2">
-          <Button className="w-32" variant="ghost" onClick={() => router.push('/')}>
+          <button
+            type="button"
+            className="w-32 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition flex items-center justify-center"
+            onClick={() => router.push('/')}
+          >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
-          </Button>
+          </button>
         </div>
       </div>
     </div>

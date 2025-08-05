@@ -112,11 +112,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
             : "Join thousands of cyclists exploring Nepal"
           }
         </p>
-      </div>
-
+        </div>
+          
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {mode === "signup" && (
+          {mode === "signup" && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -124,15 +124,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </label>
               <div className="relative">
                 <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                <Input
-                  type="text"
+            <Input
+              type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
                   className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
-                  required
-                />
+              required
+            />
               </div>
             </div>
 
@@ -142,15 +142,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </label>
               <div className="relative">
                 <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                <Input
+            <Input
                   type="tel"
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleInputChange}
                   placeholder="Enter your mobile number"
                   className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
-                  required
-                />
+              required
+            />
               </div>
             </div>
 
@@ -244,15 +244,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </label>
             <div className="relative">
               <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
-              <Input
-                type="tel"
+          <Input
+            type="tel"
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleInputChange}
                 placeholder="Enter your mobile number"
                 className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
-                required
-              />
+            required
+          />
             </div>
           </div>
         ) : (
@@ -262,15 +262,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </label>
             <div className="relative">
               <MailIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
-              <Input
+          <Input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter your email"
                 className="pl-10 bg-white/50 border-neutral-200 focus:border-primary-500 focus:ring-primary-500 transition-all duration-200"
-                required
-              />
+            required
+          />
             </div>
           </div>
         )}
@@ -303,8 +303,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </button>
           </div>
         </div>
-
-        {mode === "login" && (
+          
+          {mode === "login" && (
           <div className="flex items-center justify-between">
             <label className="flex items-center">
               <input
@@ -326,9 +326,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
         {error && (
           <div className="bg-warning-50 border border-warning-200 text-warning-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
             {error}
-          </div>
-        )}
-
+            </div>
+          )}
+          
         {success && (
           <div className="bg-primary-50 border border-primary-200 text-primary-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
             {success}
@@ -354,7 +354,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 </>
               ) : (
                 <>
-                  {mode === "login" ? (
+            {mode === "login" ? (
                     <>
                       <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                         <ArrowRightIcon className="w-4 h-4 text-white" />
@@ -376,8 +376,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
             {/* Shine Effect */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </button>
-        </div>
-      </form>
+          </div>
+        </form>
 
       {/* Social Login */}
       <div className="relative">

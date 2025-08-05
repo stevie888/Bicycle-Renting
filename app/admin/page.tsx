@@ -7,7 +7,7 @@ import Card from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Modal from '@/components/ui/modal';
-import { Users, Umbrella, BarChart3, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Users, Bike, BarChart3, Plus, Search, Edit, Trash2 } from 'lucide-react';
 
 interface DashboardStats {
   users: {
@@ -15,10 +15,10 @@ interface DashboardStats {
     adminUsers: number;
     regularUsers: number;
   };
-  umbrellas: {
-    totalUmbrellas: number;
-    availableUmbrellas: number;
-    outOfStockUmbrellas: number;
+  bicycles: {
+    totalBicycles: number;
+    availableBicycles: number;
+    outOfStockBicycles: number;
   };
   rentals: {
     totalRentals: number;
@@ -30,7 +30,7 @@ interface DashboardStats {
 
 interface RecentActivity {
   users: any[];
-  umbrellas: any[];
+  bicycles: any[];
   rentals: any[];
 }
 
@@ -40,9 +40,9 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recent, setRecent] = useState<RecentActivity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'umbrellas'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bicycles'>('overview');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [modalType, setModalType] = useState<'user' | 'umbrella'>('user');
+  const [modalType, setModalType] = useState<'user' | 'bicycle'>('user');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Check if user is admin, if not redirect to home
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAddItem = (type: 'user' | 'umbrella') => {
+  const handleAddItem = (type: 'user' | 'bicycle') => {
     setModalType(type);
     setShowAddModal(true);
   };
@@ -156,11 +156,11 @@ export default function AdminDashboard() {
                 Add User
               </Button>
               <Button
-                onClick={() => handleAddItem('umbrella')}
+                onClick={() => handleAddItem('bicycle')}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Umbrella
+                Add Bicycle
               </Button>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'users', label: 'Users', icon: Users },
-              { id: 'umbrellas', label: 'Umbrellas', icon: Umbrella },
+              { id: 'bicycles', label: 'Bicycles', icon: Bike },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -208,11 +208,11 @@ export default function AdminDashboard() {
                 </>
               }</>} />
 
-              <Card titleRender={<div>Total Umbrellas</div>} bodyRender={<>{
+              <Card titleRender={<div>Total Bicycles</div>} bodyRender={<>{
                 <>
-                  <div className="text-2xl font-bold">{stats?.umbrellas.totalUmbrellas || 0}</div>
+                  <div className="text-2xl font-bold">{stats?.bicycles.totalBicycles || 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    {stats?.umbrellas.availableUmbrellas || 0} available, {stats?.umbrellas.outOfStockUmbrellas || 0} out of stock
+                    {stats?.bicycles.availableBicycles || 0} available, {stats?.bicycles.outOfStockBicycles || 0} out of stock
                   </p>
                 </>
               }</>} />
@@ -247,21 +247,21 @@ export default function AdminDashboard() {
                 </div>
               }</>} />
 
-              <Card titleRender={<div>Recent Umbrellas</div>} bodyRender={<>{
+              <Card titleRender={<div>Recent Bicycles</div>} bodyRender={<>{
                 <div className="space-y-3">
-                  {recent?.umbrellas.map((umbrella: any) => (
-                    <div key={umbrella.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                  {recent?.bicycles.map((bicycle: any) => (
+                    <div key={bicycle.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                       <div>
-                        <p className="font-medium">{umbrella.description}</p>
-                        <p className="text-sm text-gray-600">{umbrella.location}</p>
+                        <p className="font-medium">{bicycle.description}</p>
+                        <p className="text-sm text-gray-600">{bicycle.location}</p>
                         <p className="text-xs text-gray-500">
-                          {umbrella.updated_at ? `Updated: ${new Date(umbrella.updated_at).toLocaleDateString()}` : ''}
+                          {bicycle.updated_at ? `Updated: ${new Date(bicycle.updated_at).toLocaleDateString()}` : ''}
                         </p>
                       </div>
                       <span className={`px-2 py-1 text-xs rounded ${
-                        umbrella.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        bicycle.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {umbrella.status}
+                        {bicycle.status}
                       </span>
                     </div>
                   ))}
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'users' && <UsersManagement refreshTrigger={refreshTrigger} />}
-        {activeTab === 'umbrellas' && <UmbrellasManagement refreshTrigger={refreshTrigger} />}
+        {activeTab === 'bicycles' && <BicyclesManagement refreshTrigger={refreshTrigger} />}
       </div>
 
       {/* Add Modal */}
@@ -299,9 +299,9 @@ export default function AdminDashboard() {
         <Modal
           isOpen={showAddModal}
           onClose={handleModalClose}
-          title={`Add New ${modalType === 'user' ? 'User' : 'Umbrella'}`}
+          title={`Add New ${modalType === 'user' ? 'User' : 'Bicycle'}`}
         >
-          {modalType === 'user' ? <AddUserForm onSuccess={handleModalClose} /> : <AddUmbrellaForm onSuccess={handleModalClose} />}
+          {modalType === 'user' ? <AddUserForm onSuccess={handleModalClose} /> : <AddBicycleForm onSuccess={handleModalClose} />}
         </Modal>
       )}
     </div>
@@ -496,54 +496,54 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   );
 }
 
-// Umbrellas Management Component
-function UmbrellasManagement({ refreshTrigger }: { refreshTrigger: number }) {
-  const [umbrellas, setUmbrellas] = useState<any[]>([]);
+// Bicycles Management Component
+function BicyclesManagement({ refreshTrigger }: { refreshTrigger: number }) {
+  const [bicycles, setBicycles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    fetchUmbrellas();
+    fetchBicycles();
   }, [searchTerm, statusFilter, refreshTrigger]);
 
-  const fetchUmbrellas = async () => {
+  const fetchBicycles = async () => {
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter) params.append('status', statusFilter);
 
-      const response = await fetch(`/api/admin/umbrellas?${params}`);
+      const response = await fetch(`/api/admin/bicycles?${params}`);
       const data = await response.json();
       
       if (data.success) {
-        setUmbrellas(data.umbrellas);
+        setBicycles(data.bicycles);
       }
     } catch (error) {
-      console.error('Error fetching umbrellas:', error);
+      console.error('Error fetching bicycles:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteUmbrella = async (umbrellaId: string) => {
-    if (!confirm('Are you sure you want to delete this umbrella?')) return;
+  const deleteBicycle = async (bicycleId: string) => {
+    if (!confirm('Are you sure you want to delete this bicycle?')) return;
 
     try {
-      const response = await fetch(`/api/admin/umbrellas/${umbrellaId}`, {
+      const response = await fetch(`/api/admin/bicycles/${bicycleId}`, {
         method: 'DELETE',
       });
       
       if (response.ok) {
-        fetchUmbrellas();
+        fetchBicycles();
       }
     } catch (error) {
-      console.error('Error deleting umbrella:', error);
+      console.error('Error deleting bicycle:', error);
     }
   };
 
   if (loading) {
-    return <div className="animate-pulse">Loading umbrellas...</div>;
+    return <div className="animate-pulse">Loading bicycles...</div>;
   }
 
   return (
@@ -551,7 +551,7 @@ function UmbrellasManagement({ refreshTrigger }: { refreshTrigger: number }) {
       <div className="flex items-center space-x-4">
         <div className="flex-1">
           <Input
-            placeholder="Search umbrellas..."
+            placeholder="Search bicycles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -573,7 +573,7 @@ function UmbrellasManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Umbrella</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bicycle</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inventory</th>
@@ -582,30 +582,30 @@ function UmbrellasManagement({ refreshTrigger }: { refreshTrigger: number }) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {umbrellas.map((umbrella) => (
-                <tr key={umbrella.id}>
+              {bicycles.map((bicycle) => (
+                <tr key={bicycle.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{umbrella.description}</div>
+                    <div className="text-sm font-medium text-gray-900">{bicycle.description}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {umbrella.location}
+                    {bicycle.location}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded ${
-                      umbrella.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      bicycle.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {umbrella.status}
+                      {bicycle.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {umbrella.inventory || 0}
+                    {bicycle.inventory || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {umbrella.updated_at ? new Date(umbrella.updated_at).toLocaleDateString() : 'N/A'}
+                    {bicycle.updated_at ? new Date(bicycle.updated_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => deleteUmbrella(umbrella.id)}
+                      onClick={() => deleteBicycle(bicycle.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -716,8 +716,8 @@ function AddUserForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-// Add Umbrella Form Component
-function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
+// Add Bicycle Form Component
+function AddBicycleForm({ onSuccess }: { onSuccess: () => void }) {
   const stationOptions = [
     { station: 'Station 1', location: 'Kathmandu' },
     { station: 'Station 2', location: 'Lalitpur' },
@@ -746,7 +746,7 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/admin/umbrellas', {
+      const response = await fetch('/api/admin/bicycles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -771,11 +771,11 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
         }, 3000);
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.error || 'Failed to create umbrella'}`);
+        alert(`Error: ${errorData.error || 'Failed to create bicycle'}`);
       }
     } catch (error) {
-      console.error('Error creating umbrella:', error);
-      alert('Error creating umbrella. Please try again.');
+      console.error('Error creating bicycle:', error);
+      alert('Error creating bicycle. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -839,7 +839,7 @@ function AddUmbrellaForm({ onSuccess }: { onSuccess: () => void }) {
           </select>
         </div>
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Creating...' : 'Create Umbrella'}
+                          {loading ? 'Creating...' : 'Create Bicycle'}
         </Button>
       </form>
     </div>
