@@ -200,7 +200,7 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
         id: (users.length + 1).toString(),
         ...userData,
         role: 'user',
-        credits: 50,
+        credits: 250,
         profileImage: null,
         createdAt: new Date().toISOString(),
       };

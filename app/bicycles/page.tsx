@@ -1,0 +1,207 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthContext";
+import { 
+  MapPinIcon, 
+  BikeIcon, 
+  ClockIcon, 
+  StarIcon,
+  CreditCardIcon,
+  ShieldIcon,
+  ZapIcon,
+  UsersIcon,
+  CalendarIcon
+} from "lucide-react";
+import Image from "next/image";
+
+interface Bike {
+  id: string;
+  name: string;
+  station: string;
+  price: number;
+  pricePerHour: number;
+  location: string;
+  distance: string;
+  available: boolean;
+  image: string;
+  coordinates: { lat: number; lng: number };
+}
+
+export default function BicyclesPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [bikes, setBikes] = useState<Bike[]>([]);
+
+  // Mock bike data with actual image URLs
+  const mockBikes: Bike[] = [
+    {
+      id: "1",
+      name: "Bike 1",
+      station: "Station 1",
+      price: 250,
+      pricePerHour: 25,
+      location: "Basantapur Station",
+      distance: "0.2 km",
+      available: true,
+      image: "/Basantapur,Kathmandu.jpeg",
+      coordinates: { lat: 27.7172, lng: 85.3240 }
+    },
+    {
+      id: "2",
+      name: "Bike 2",
+      station: "Station 2",
+      price: 250,
+      pricePerHour: 25,
+      location: "Patan Station",
+      distance: "0.5 km",
+      available: true,
+      image: "/Patan Dubar Sqaure.jpeg",
+      coordinates: { lat: 27.7044, lng: 85.3073 }
+    },
+    {
+      id: "3",
+      name: "Bike 3",
+      station: "Station 3",
+      price: 250,
+      pricePerHour: 25,
+      location: "Bhaktapur Durbar Square Station",
+      distance: "1.2 km",
+      available: true,
+      image: "/Bhaktapur Durbar Square.jpeg",
+      coordinates: { lat: 27.7149, lng: 85.2906 }
+    }
+  ];
+
+  useEffect(() => {
+    setBikes(mockBikes);
+  }, []);
+
+  const handleRentBike = (bike: Bike) => {
+    if (!user) {
+      // Show popup message for unlogged users
+      const shouldRedirect = confirm("Please sign in to rent a bike. Would you like to go to the login page?");
+      if (shouldRedirect) {
+        router.push('/login');
+      }
+      return;
+    }
+    
+    // Redirect to bike selection page with station details (no credit check here)
+    const params = new URLSearchParams({
+      station: bike.id,
+      name: bike.station,
+      location: bike.location,
+      image: bike.image
+    });
+    
+    router.push(`/bike-selection?${params.toString()}`);
+  };
+
+  const getStationColor = (station: string) => {
+    switch (station) {
+      case 'Station 1':
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case 'Station 2':
+        return "bg-green-100 text-green-700 border-green-200";
+      case 'Station 3':
+        return "bg-orange-100 text-orange-700 border-orange-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Available Bikes</h1>
+              <p className="text-gray-600">Find your perfect ride for exploring valley</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Your Credits:</span>
+              <span className="font-semibold text-primary-600">{user?.credits || 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bikes Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bikes.map((bike) => (
+            <div
+              key={bike.id}
+              className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border-2 ${
+                bike.available ? 'border-gray-200 hover:border-primary-300' : 'border-red-200 opacity-60'
+              }`}
+            >
+              {/* Bike Image */}
+              <div className="relative h-48 rounded-t-xl overflow-hidden">
+                <Image
+                  src={bike.image}
+                  alt={bike.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                {!bike.available && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <span className="text-white font-semibold text-lg">Currently Rented</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6">
+                {/* Station Badge */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStationColor(bike.station)}`}>
+                    {bike.station}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <BikeIcon className="w-4 h-4 text-primary-600" />
+                    <span className="text-sm font-medium">{bike.name}</span>
+                  </div>
+                </div>
+
+                {/* Location and Distance */}
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPinIcon className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">{bike.location}</span>
+                  <span className="text-xs text-primary-600 font-medium">• {bike.distance}</span>
+                </div>
+
+                {/* Price */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-2xl font-bold text-primary-600">रू{bike.price}</span>
+                    <span className="text-sm text-gray-500 ml-1">/day</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-gray-500">रू{bike.pricePerHour}/hr</span>
+                  </div>
+                </div>
+
+                {/* Rent Button */}
+                <button
+                  onClick={() => handleRentBike(bike)}
+                  disabled={!bike.available}
+                  className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+                    bike.available
+                      ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {bike.available ? 'Rent Now' : 'Currently Rented'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
