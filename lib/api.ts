@@ -31,8 +31,9 @@ const initializeStorage = () => {
         mobile: '+977-9841234567',
         email: 'john@example.com',
         name: 'John Doe',
+        password: 'password',
         role: 'user',
-        credits: 100,
+        credits: 250,
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
@@ -41,6 +42,7 @@ const initializeStorage = () => {
         mobile: '+977-9841234568',
         email: 'admin@paddlenepal.com',
         name: 'Admin User',
+        password: 'password',
         role: 'admin',
         credits: 1000,
         profileImage: null,
@@ -54,9 +56,7 @@ const initializeStorage = () => {
   if (!getStorageData('paddlenepal_bicycles')) {
     const defaultBicycles = [
       {
-        id: '1',
-        name: 'Mountain Bike 1',
-        description: 'High-quality mountain bike for adventure trails',
+        description: 'Station 1',
         location: 'Basantapur, Kathmandu',
         status: 'available',
         hourlyRate: 200,
@@ -64,9 +64,7 @@ const initializeStorage = () => {
         image: '/bicycle1.jpg',
       },
       {
-        id: '2',
-        name: 'City Bike 1',
-        description: 'Comfortable city bike for urban exploration',
+        description: 'Station 2',
         location: 'Patan, Lalitpur',
         status: 'available',
         hourlyRate: 150,
@@ -74,9 +72,7 @@ const initializeStorage = () => {
         image: '/bicycle2.jpg',
       },
       {
-        id: '3',
-        name: 'Hybrid Bike 1',
-        description: 'Versatile hybrid bike for all terrains',
+        description: 'Station 3',
         location: 'Durbar Square, Bhaktapur',
         status: 'rented',
         hourlyRate: 180,

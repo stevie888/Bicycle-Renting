@@ -1,151 +1,133 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useState, useEffect } from "react";
 
 export default function DebugStoragePage() {
-  const [localStorageData, setLocalStorageData] = useState<any>({});
-  const [testResult, setTestResult] = useState<string>('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Load localStorage data
+    // Load data from localStorage
     const loadData = () => {
-      const data: any = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          try {
-            data[key] = JSON.parse(localStorage.getItem(key) || 'null');
-          } catch (e) {
-            data[key] = localStorage.getItem(key);
-          }
-        }
+      const storedUsers = localStorage.getItem('paddlenepal_users');
+      const storedCurrentUser = localStorage.getItem('paddlenepal_current_user');
+      
+      if (storedUsers) {
+        setUsers(JSON.parse(storedUsers));
       }
-      setLocalStorageData(data);
+      
+      if (storedCurrentUser) {
+        setCurrentUser(JSON.parse(storedCurrentUser));
+      }
     };
 
     loadData();
   }, []);
 
-  const testSignup = async () => {
-    try {
-      // Generate a random mobile number to avoid conflicts
-      const randomMobile = `+977-984${Math.floor(Math.random() * 9000000) + 1000000}`;
-      const result = await api.auth.signup({
-        mobile: randomMobile,
-        email: 'test@example.com',
-        password: 'password',
-        name: 'Test User'
-      });
-      setTestResult(`Signup successful: ${JSON.stringify(result, null, 2)}`);
-      // Reload data
-      setTimeout(() => {
-        const data: any = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key) {
-            try {
-              data[key] = JSON.parse(localStorage.getItem(key) || 'null');
-            } catch (e) {
-              data[key] = localStorage.getItem(key);
-            }
-          }
-        }
-        setLocalStorageData(data);
-      }, 100);
-    } catch (error) {
-      setTestResult(`Signup failed: ${error}`);
-    }
-  };
-
-  const testLogin = async () => {
-    try {
-      const result = await api.auth.login('+977-9841234599', 'password');
-      setTestResult(`Login successful: ${JSON.stringify(result, null, 2)}`);
-    } catch (error) {
-      setTestResult(`Login failed: ${error}`);
-    }
-  };
-
   const clearStorage = () => {
-    localStorage.clear();
-    setLocalStorageData({});
-    setTestResult('LocalStorage cleared');
+    localStorage.removeItem('paddlenepal_users');
+    localStorage.removeItem('paddlenepal_current_user');
+    localStorage.removeItem('paddlenepal_bicycles');
+    localStorage.removeItem('paddlenepal_rentals');
+    setUsers([]);
+    setCurrentUser(null);
+    alert('Storage cleared! Refresh the page to reinitialize.');
   };
 
-  const clearPaddleNepalStorage = () => {
-    if ((window as any).clearPaddleNepalStorage) {
-      (window as any).clearPaddleNepalStorage();
-      setTimeout(() => {
-        const data: any = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key) {
-            try {
-              data[key] = JSON.parse(localStorage.getItem(key) || 'null');
-            } catch (e) {
-              data[key] = localStorage.getItem(key);
-            }
-          }
-        }
-        setLocalStorageData(data);
-      }, 100);
-      setTestResult('PaddleNepal storage cleared and reinitialized');
-    } else {
-      setTestResult('clearPaddleNepalStorage function not available');
-    }
+  const reinitializeStorage = () => {
+    // Clear storage first
+    clearStorage();
+    // Force reinitialization by reloading
+    window.location.reload();
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">LocalStorage Debug Page</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">LocalStorage Data</h2>
-          <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-            {JSON.stringify(localStorageData, null, 2)}
-          </pre>
-        </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Debug Storage</h1>
         
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Test Functions</h2>
-          <div className="space-y-4">
-            <button
-              onClick={testSignup}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Test Signup
-            </button>
-            
-            <button
-              onClick={testLogin}
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 ml-2"
-            >
-              Test Login
-            </button>
-            
-            <button
-              onClick={clearStorage}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2"
-            >
-              Clear All Storage
-            </button>
-            
-            <button
-              onClick={clearPaddleNepalStorage}
-              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 ml-2"
-            >
-              Clear PaddleNepal Storage
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Users Section */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Users in localStorage</h2>
+            {users.length === 0 ? (
+              <p className="text-gray-500">No users found in localStorage</p>
+            ) : (
+              <div className="space-y-4">
+                {users.map((user, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><strong>ID:</strong> {user.id}</div>
+                      <div><strong>Name:</strong> {user.name}</div>
+                      <div><strong>Mobile:</strong> {user.mobile}</div>
+                      <div><strong>Email:</strong> {user.email}</div>
+                      <div><strong>Role:</strong> {user.role}</div>
+                      <div><strong>Credits:</strong> {user.credits}</div>
+                      <div><strong>Password:</strong> {user.password ? '✅ Set' : '❌ Missing'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Current User Section */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Current User</h2>
+            {currentUser ? (
+              <div className="border rounded-lg p-4 bg-blue-50">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><strong>ID:</strong> {currentUser.id}</div>
+                  <div><strong>Name:</strong> {currentUser.name}</div>
+                  <div><strong>Mobile:</strong> {currentUser.mobile}</div>
+                  <div><strong>Role:</strong> {currentUser.role}</div>
+                  <div><strong>Credits:</strong> {currentUser.credits}</div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-500">No current user logged in</p>
+            )}
+          </div>
+        </div>
+
+        {/* Admin Login Test */}
+        <div className="bg-white rounded-lg shadow p-6 mt-8">
+          <h2 className="text-xl font-semibold mb-4">Admin Login Test</h2>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <h3 className="font-semibold text-yellow-800 mb-2">Admin Credentials:</h3>
+            <div className="text-sm space-y-1">
+              <div><strong>Mobile:</strong> +977-9841234568</div>
+              <div><strong>Password:</strong> password</div>
+              <div><strong>Role:</strong> admin</div>
+            </div>
           </div>
           
-          <div className="mt-4">
-            <h3 className="font-semibold mb-2">Test Result:</h3>
-            <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-48">
-              {testResult}
-            </pre>
+          <div className="space-y-4">
+            <button
+              onClick={clearStorage}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Clear Storage
+            </button>
+            
+            <button
+              onClick={reinitializeStorage}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ml-4"
+            >
+              Reinitialize Storage
+            </button>
           </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-white rounded-lg shadow p-6 mt-8">
+          <h2 className="text-xl font-semibold mb-4">Troubleshooting Steps</h2>
+          <ol className="list-decimal list-inside space-y-2 text-sm">
+            <li>Check if users have password fields (should show "✅ Set")</li>
+            <li>If passwords are missing, click "Reinitialize Storage"</li>
+            <li>Go to login page and try admin credentials</li>
+            <li>If still having issues, try "Clear Storage" then refresh</li>
+          </ol>
         </div>
       </div>
     </div>
