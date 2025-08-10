@@ -20,11 +20,12 @@ interface Rental {
   endTime?: string;
   status: string;
   price: number;
-  duration: 'hourly' | 'daily';
+  duration: 'hourly' | 'daily' | 'pay-as-you-go';
   hours?: number;
   bikeName: string;
   station: string;
   slotNumber: number;
+  payAsYouGo?: boolean;
 }
 
 function RentalConfirmationPageContent() {
@@ -124,6 +125,37 @@ function RentalConfirmationPageContent() {
         status: 'completed'
       });
       
+      // Calculate final price for pay-as-you-go rentals
+      let finalPrice = latestRental.price;
+      if (latestRental.payAsYouGo) {
+        // Calculate price based on actual usage time (minimum 1 hour)
+        const actualHours = Math.max(1, Math.ceil(durationMs / (1000 * 60 * 60)));
+        finalPrice = actualHours * 25; // रू25 per hour
+        
+        // Update the rental with the calculated price
+        const updatedRentalsWithPrice = updatedRentals.map((rental: any) => {
+          if (rental.id === latestRental.id) {
+            return {
+              ...rental,
+              price: finalPrice
+            };
+          }
+          return rental;
+        });
+        localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentalsWithPrice));
+        
+        // Deduct credits from user account
+        const updatedUser = { ...user, credits: (user.credits || 0) - finalPrice };
+        localStorage.setItem('paddlenepal_current_user', JSON.stringify(updatedUser));
+        
+        // Also update the main users array for admin dashboard
+        const allUsers = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+        const updatedUsers = allUsers.map((u: any) => 
+          u.id === user.id ? { ...u, credits: updatedUser.credits } : u
+        );
+        localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      }
+      
       // Show completion message
       alert(`🎉 Ride Completed Successfully!
 
@@ -132,7 +164,7 @@ function RentalConfirmationPageContent() {
    End: ${endTimeFormatted}
    Duration: ${durationHours}h ${durationMinutes}m
 
-💰 Total Cost: रू${latestRental.price}
+💰 Total Cost: रू${finalPrice}${latestRental.payAsYouGo ? ' (charged based on actual usage)' : ''}
 
 Thank you for using Pedal Nepal! 🚴‍♂️`);
       
@@ -144,16 +176,20 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
     }
   };
 
-  const formatDuration = (duration: 'hourly' | 'daily', hours?: number) => {
+  const formatDuration = (duration: 'hourly' | 'daily' | 'pay-as-you-go', hours?: number) => {
     if (duration === 'hourly') {
       return hours && hours > 1 ? `${hours} Hours` : '1 Hour';
+    } else if (duration === 'pay-as-you-go') {
+      return 'Pay as you go';
     }
     return 'Daily';
   };
 
-  const formatPrice = (price: number, duration: 'hourly' | 'daily', hours?: number) => {
+  const formatPrice = (price: number, duration: 'hourly' | 'daily' | 'pay-as-you-go', hours?: number) => {
     if (duration === 'hourly') {
       return hours && hours > 1 ? `रू${price} (रू25 × ${hours} hours)` : `रू${price}/hour`;
+    } else if (duration === 'pay-as-you-go') {
+      return 'रू25/hour (charged when ride ends)';
     }
     return `रू${price}/day`;
   };
