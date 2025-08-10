@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   MapPinIcon, 
   BikeIcon, 
@@ -35,7 +36,7 @@ interface Station {
 
 type RentalDuration = 'hourly' | 'daily';
 
-export default function BikeSelectionPage() {
+function BikeSelectionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -52,7 +53,11 @@ export default function BikeSelectionPage() {
   const stationLocation = searchParams.get('location');
   const stationImage = searchParams.get('image');
 
+  // All hooks must be called before any conditional returns
   useEffect(() => {
+    // Wait for authentication to load before checking user
+    if (loading) return;
+    
     if (!user) {
       router.push('/login');
       return;
@@ -82,7 +87,7 @@ export default function BikeSelectionPage() {
     }));
 
     setBikeSlots(slots);
-  }, [stationId, stationName, stationLocation, stationImage, user, router]);
+  }, [stationId, stationName, stationLocation, stationImage, user, router, loading]);
 
   const handleSlotSelect = (slotId: string) => {
     const slot = bikeSlots.find(s => s.id === slotId);
@@ -186,6 +191,7 @@ export default function BikeSelectionPage() {
     }
   };
 
+  // Show loading state while authentication is being checked
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -197,11 +203,51 @@ export default function BikeSelectionPage() {
     );
   }
 
+  // Show error state if no user after loading
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to access this page.</p>
+          <button 
+            onClick={() => router.push('/login')}
+            className="mt-4 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if required URL parameters are present
+  if (!stationId || !stationName || !stationLocation) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Invalid station information. Please go back and try again.</p>
+          <button 
+            onClick={() => router.push('/bicycles')}
+            className="mt-4 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go Back to Stations
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!station) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Station not found</p>
+          <button 
+            onClick={() => router.push('/bicycles')}
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go Back to Stations
+          </button>
         </div>
       </div>
     );
@@ -251,13 +297,13 @@ export default function BikeSelectionPage() {
       </div>
 
       {/* Bike Slots Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-1.5">
           {bikeSlots.map((slot) => (
             <div
               key={slot.id}
               onClick={() => handleSlotSelect(slot.id)}
-              className={`relative bg-white rounded-lg shadow border transition-all duration-200 cursor-pointer ${
+              className={`relative bg-white rounded-lg shadow-sm border transition-all duration-200 cursor-pointer ${
                 selectedSlot === slot.id
                   ? 'border-primary-400 ring-1 ring-primary-200'
                   : slot.available
@@ -266,48 +312,48 @@ export default function BikeSelectionPage() {
               }`}
             >
               {/* Slot Number Badge */}
-              <div className="absolute top-2 left-2 z-10">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              <div className="absolute top-1 left-1 z-10">
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
                   slot.available
                     ? 'bg-green-100 text-green-700 border border-green-200'
                     : 'bg-red-100 text-red-700 border border-red-200'
                 }`}>
-                  Slot {slot.slotNumber}
+                  {slot.slotNumber}
                 </span>
               </div>
 
               {/* Availability Status */}
-              <div className="absolute top-2 right-2 z-10">
+              <div className="absolute top-1 right-1 z-10">
                 {slot.available ? (
-                  <CheckIcon className="w-5 h-5 text-green-600" />
+                  <CheckIcon className="w-3 h-3 text-green-600" />
                 ) : (
-                  <XIcon className="w-5 h-5 text-red-600" />
+                  <XIcon className="w-3 h-3 text-red-600" />
                 )}
               </div>
 
               {/* Bike Image */}
-              <div className="relative h-24 rounded-t-lg overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
-                <BikeIcon className="w-12 h-12 text-primary-600" />
+              <div className="relative h-16 rounded-t-lg overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+                <BikeIcon className="w-6 h-6 text-primary-600" />
                 {!slot.available && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">Occupied</span>
+                    <span className="text-white font-semibold text-xs">Occupied</span>
                   </div>
                 )}
               </div>
 
-              <div className="p-2">
+              <div className="p-1.5">
                 <div className="text-center">
                   <h3 className="font-semibold text-gray-900 text-xs">{slot.bikeName}</h3>
-                  <div className="mt-2 space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Daily:</span>
-                      <span className="font-semibold text-primary-600">रू{slot.price}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Hourly:</span>
-                      <span className="font-semibold text-primary-600">रू{slot.pricePerHour}</span>
-                    </div>
-                  </div>
+                                     <div className="mt-1 space-y-0.5">
+                     <div className="flex justify-between text-xs">
+                       <span className="text-gray-500">Daily:</span>
+                       <span className="font-semibold text-primary-600">रू{slot.price}</span>
+                     </div>
+                     <div className="flex justify-between text-xs">
+                       <span className="text-gray-500">Hourly:</span>
+                       <span className="font-semibold text-primary-600">रू{slot.pricePerHour}</span>
+                     </div>
+                   </div>
                 </div>
               </div>
             </div>
@@ -502,4 +548,12 @@ export default function BikeSelectionPage() {
       )}
     </div>
   );
-} 
+}
+
+export default function BikeSelectionPage() {
+  return (
+    <ErrorBoundary>
+      <BikeSelectionPageContent />
+    </ErrorBoundary>
+  );
+}

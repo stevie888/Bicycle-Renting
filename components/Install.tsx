@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 export default function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState<unknown>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     console.log("beforeinstallprompt event fired");

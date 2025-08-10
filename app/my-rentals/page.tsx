@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   BikeIcon, 
   MapPinIcon,
@@ -27,13 +28,17 @@ interface Rental {
   slotNumber: number;
 }
 
-export default function MyRentalsPage() {
+function MyRentalsPageContent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // All hooks must be called before any conditional returns
   useEffect(() => {
+    // Wait for authentication to load before checking user
+    if (authLoading) return;
+    
     if (!user) {
       router.push('/login');
       return;
@@ -44,7 +49,7 @@ export default function MyRentalsPage() {
     const userRentals = allRentals.filter((rental: any) => rental.userId === user.id);
     setRentals(userRentals);
     setLoading(false);
-  }, [user, router]);
+  }, [user, router, authLoading]);
 
   const formatDuration = (duration: 'hourly' | 'daily', hours?: number) => {
     if (duration === 'hourly') {
@@ -85,6 +90,18 @@ export default function MyRentalsPage() {
         return <ClockIcon className="w-4 h-4" />;
     }
   };
+
+  // Show loading state while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -190,7 +207,7 @@ export default function MyRentalsPage() {
                       </div>
                       
                       <div className="ml-4 text-right">
-                        <div className="text-2xl font-bold text-primary-600">₹{rental.price}</div>
+                        <div className="text-2xl font-bold text-primary-600">रू{rental.price}</div>
                         <div className="text-xs text-gray-500">Rental ID: {rental.id}</div>
                       </div>
                     </div>
@@ -212,5 +229,13 @@ export default function MyRentalsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MyRentalsPage() {
+  return (
+    <ErrorBoundary>
+      <MyRentalsPageContent />
+    </ErrorBoundary>
   );
 }

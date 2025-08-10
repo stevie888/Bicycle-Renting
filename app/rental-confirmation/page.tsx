@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   CheckCircleIcon, 
   BikeIcon, 
@@ -26,13 +27,17 @@ interface Rental {
   slotNumber: number;
 }
 
-export default function RentalConfirmationPage() {
+function RentalConfirmationPageContent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [latestRental, setLatestRental] = useState<Rental | null>(null);
   const [isEndingRide, setIsEndingRide] = useState(false);
 
+  // All hooks must be called before any conditional returns
   useEffect(() => {
+    // Wait for authentication to load before checking user
+    if (loading) return;
+    
     if (!user) {
       router.push('/login');
       return;
@@ -47,7 +52,7 @@ export default function RentalConfirmationPage() {
       const latest = userRentals[userRentals.length - 1];
       setLatestRental(latest);
     }
-  }, [user, router]);
+  }, [user, router, loading]);
 
   const handleEndRide = async () => {
     if (!latestRental || !user) return;
@@ -113,36 +118,27 @@ export default function RentalConfirmationPage() {
       localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
       
       // Update local state
-      setLatestRental(prev => prev ? {
-        ...prev,
+      setLatestRental({
+        ...latestRental,
         endTime: endTime,
         status: 'completed'
-      } : null);
+      });
       
-      // Show detailed completion message
-      const durationText = durationHours > 0 
-        ? `${durationHours} hour${durationHours !== 1 ? 's' : ''} and ${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`
-        : `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
-      
-      const completionMessage = `🚴‍♂️ Ride Completed Successfully!
+      // Show completion message
+      alert(`🎉 Ride Completed Successfully!
 
 📅 Rental Period:
    Start: ${startTimeFormatted}
    End: ${endTimeFormatted}
-   Duration: ${durationText}
+   Duration: ${durationHours}h ${durationMinutes}m
 
 💰 Total Cost: रू${latestRental.price}
 
-Thank you for using Pedal Nepal! 
-We hope you enjoyed your ride. 🚲✨
-
-Your bike has been returned and is now available for other riders.`;
+Thank you for using Pedal Nepal! 🚴‍♂️`);
       
-      alert(completionMessage);
-      router.push('/my-rentals');
     } catch (error) {
       console.error('Error ending ride:', error);
-      alert('Failed to end ride. Please try again.');
+      alert('Error ending ride. Please try again.');
     } finally {
       setIsEndingRide(false);
     }
@@ -161,6 +157,18 @@ Your bike has been returned and is now available for other riders.`;
     }
     return `रू${price}/day`;
   };
+
+  // Show loading state while authentication is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!latestRental) {
     return (
@@ -296,5 +304,13 @@ Your bike has been returned and is now available for other riders.`;
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RentalConfirmationPage() {
+  return (
+    <ErrorBoundary>
+      <RentalConfirmationPageContent />
+    </ErrorBoundary>
   );
 }

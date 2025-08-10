@@ -38,9 +38,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === "login") {
-        await login(formData.mobile, formData.password);
-        setSuccess("Login successful! Redirecting...");
-        setTimeout(() => router.push("/"), 1000);
+        const loginSuccess = await login(formData.mobile, formData.password);
+        if (loginSuccess) {
+          setSuccess("Login successful! Redirecting...");
+          setTimeout(() => router.push("/"), 1000);
+        } else {
+          setError("Invalid mobile number or password. Please try again.");
+        }
       } else {
         // Check if ID is uploaded for signup
         if (!selectedFile) {
@@ -49,14 +53,19 @@ export default function AuthForm({ mode }: AuthFormProps) {
           return;
         }
 
-        await register({
+        const registerSuccess = await register({
           mobile: formData.mobile,
           email: formData.email,
           password: formData.password,
           name: formData.name,
         });
-        setSuccess("Account created successfully! Your ID will be verified within 24 hours.");
-        setTimeout(() => router.push("/"), 2000);
+        
+        if (registerSuccess) {
+          setSuccess("Account created successfully! Your ID will be verified within 24 hours.");
+          setTimeout(() => router.push("/"), 2000);
+        } else {
+          setError("Registration failed. Please check your information and try again.");
+        }
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");

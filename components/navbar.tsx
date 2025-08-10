@@ -14,10 +14,7 @@ export const Navbar = () => {
   // More robust role checking
   const isAdmin = user && user.role === 'admin';
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
-  };
+
 
 
 
