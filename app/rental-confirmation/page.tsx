@@ -243,77 +243,69 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
 
           {/* Rental Details */}
           <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left Column - Rental Info */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Rental Details</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <BikeIcon className="w-5 h-5 text-primary-600" />
-                        <span className="font-medium text-gray-700">Bike</span>
-                      </div>
-                      <span className="font-semibold text-gray-900">{latestRental.bikeName}</span>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Rental Details</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column - Basic Info */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <BikeIcon className="w-5 h-5 text-primary-600" />
+                      <span className="font-medium text-gray-700">Bike</span>
                     </div>
+                    <span className="font-semibold text-gray-900">{latestRental.bikeName}</span>
+                  </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <MapPinIcon className="w-5 h-5 text-primary-600" />
-                        <span className="font-medium text-gray-700">Station</span>
-                      </div>
-                      <span className="font-semibold text-gray-900">{latestRental.station}</span>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <MapPinIcon className="w-5 h-5 text-primary-600" />
+                      <span className="font-medium text-gray-700">Station</span>
                     </div>
+                    <span className="font-semibold text-gray-900">{latestRental.station}</span>
+                  </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <ClockIcon className="w-5 h-5 text-primary-600" />
-                        <span className="font-medium text-gray-700">Duration</span>
-                      </div>
-                      <span className="font-semibold text-gray-900">{formatDuration(latestRental.duration, latestRental.hours)}</span>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <ClockIcon className="w-5 h-5 text-primary-600" />
+                      <span className="font-medium text-gray-700">Duration</span>
                     </div>
+                    <span className="font-semibold text-gray-900">{formatDuration(latestRental.duration, latestRental.hours)}</span>
+                  </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">रू</span>
-                        </div>
-                        <span className="font-medium text-gray-700">Price</span>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">रू</span>
                       </div>
-                      <span className="font-semibold text-gray-900">{formatPrice(latestRental.price, latestRental.duration, latestRental.hours)}</span>
+                      <span className="font-medium text-gray-700">Price</span>
                     </div>
+                    <span className="font-semibold text-gray-900">{formatPrice(latestRental.price, latestRental.duration, latestRental.hours)}</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column - Additional Info */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Rental Information</h3>
-                  
-                                     <div className="space-y-4">
-                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                       <h4 className="font-semibold text-green-900 mb-2">Start Time</h4>
-                       <p className="text-green-700">
-                         {new Date(latestRental.startTime).toLocaleString()}
-                       </p>
-                     </div>
+                {/* Right Column - Time & Slot Info */}
+                <div className="space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-900 mb-2">Start Time</h4>
+                    <p className="text-green-700">
+                      {new Date(latestRental.startTime).toLocaleString()}
+                    </p>
+                  </div>
 
-                     {latestRental.endTime && (
-                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                         <h4 className="font-semibold text-orange-900 mb-2">End Time</h4>
-                         <p className="text-orange-700">
-                           {new Date(latestRental.endTime).toLocaleString()}
-                         </p>
-                       </div>
-                     )}
+                  {latestRental.endTime && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-orange-900 mb-2">End Time</h4>
+                      <p className="text-orange-700">
+                        {new Date(latestRental.endTime).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
 
-                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                       <h4 className="font-semibold text-purple-900 mb-2">Slot Number</h4>
-                       <p className="text-purple-700">Slot {latestRental.slotNumber}</p>
-                     </div>
-                   </div>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-purple-900 mb-2">Slot Number</h4>
+                    <p className="text-purple-700">Slot {latestRental.slotNumber}</p>
+                  </div>
                 </div>
               </div>
             </div>

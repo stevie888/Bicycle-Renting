@@ -623,7 +623,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, roleFilter, refreshTrigger]);
+  }, [roleFilter, refreshTrigger]);
 
   const fetchUsers = async () => {
     try {
@@ -638,18 +638,23 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
       const usersWithUpdatedCredits = allUsers.map((user: any) => {
         const userRentals = allRentals.filter((rental: any) => rental.userId === user.id);
         const totalSpent = userRentals.reduce((sum: number, rental: any) => sum + rental.price, 0);
-        const initialCredits = user.initialCredits || 250; // Default starting credits
-        const currentCredits = Math.max(0, initialCredits - totalSpent);
+        
+        // Use the user's current credits if they exist, otherwise calculate from initialCredits
+        // If initialCredits is not set, default to 250
+        const initialCredits = user.initialCredits !== undefined ? user.initialCredits : 250;
+        const currentCredits = user.credits !== undefined ? user.credits : Math.max(0, initialCredits - totalSpent);
         
         console.log(`User ${user.name}:`, {
           initialCredits,
           totalSpent,
           currentCredits,
-          rentals: userRentals.length
+          rentals: userRentals.length,
+          userInitialCredits: user.initialCredits
         });
         
         return {
           ...user,
+          initialCredits: initialCredits, // Preserve the initialCredits
           credits: currentCredits,
           totalRentals: userRentals.length,
           totalSpent: totalSpent
@@ -740,13 +745,17 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
       const totalSpent = userRentals.reduce((sum: number, rental: any) => sum + rental.price, 0);
       const currentInitialCredits = selectedUser.initialCredits || 250;
       const newInitialCredits = currentInitialCredits + creditsToAdd;
-      const newCurrentCredits = Math.max(0, newInitialCredits - totalSpent);
+      
+      // Calculate new current credits: add the new credits directly to current balance
+      const currentCredits = selectedUser.credits || 0;
+      const newCurrentCredits = Math.max(0, currentCredits + creditsToAdd);
       
       console.log('Credit calculation:', {
         currentInitialCredits,
         newInitialCredits,
-        totalSpent,
+        currentCredits: selectedUser.credits || 0,
         newCurrentCredits,
+        totalSpent,
         userRentals: userRentals.length
       });
       
@@ -761,6 +770,9 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
           : user
       );
       localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      
+      console.log('Updated users in localStorage:', updatedUsers);
+      console.log('Updated user data:', updatedUsers.find((u: any) => u.id === selectedUser.id));
       
       // Update current user if it's the same user
       const currentUser = JSON.parse(localStorage.getItem('paddlenepal_current_user') || 'null');
@@ -778,10 +790,8 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
       setShowAddCreditsModal(false);
       setSelectedUser(null);
       
-      // Add a small delay to ensure localStorage is updated before refreshing
-      setTimeout(() => {
+      // Refresh the users list immediately to show updated credits
       fetchUsers();
-      }, 100);
     } catch (error) {
       console.error('Error adding credits:', error);
       alert('Failed to add credits');
@@ -1016,7 +1026,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   useEffect(() => {
     fetchBicycles();
-  }, [searchTerm, statusFilter, refreshTrigger]);
+  }, [statusFilter, refreshTrigger]);
 
   const fetchBicycles = async () => {
     try {
