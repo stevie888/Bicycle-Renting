@@ -1,0 +1,18 @@
+[33m2c956d8[m[33m ([m[1;36mHEAD -> [m[1;32mHome-page[m[33m, [m[1;31morigin/Home-page[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33mccda31a[m HEAD@{1}: checkout: moving from Rent-bike to Home-page
+[33mb755ff0[m[33m ([m[1;31morigin/Rent-bike[m[33m, [m[1;32mRent-bike[m[33m)[m HEAD@{2}: commit: Footer buttons & camera integration
+[33m4f7d66d[m HEAD@{3}: commit: Additional changes of renting bicycle
+[33m9d82804[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{4}: checkout: moving from master to Rent-bike
+[33m9d82804[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{5}: merge Rent-bike: Fast-forward
+[33m19033eb[m HEAD@{6}: checkout: moving from Rent-bike to master
+[33m9d82804[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{7}: commit: Enhanced bike rental system with mobile optimization, admin dashboard improvements, and login error handling fixes
+[33me967cef[m HEAD@{8}: commit: Rental confirmation $ end ride
+[33mccda31a[m HEAD@{9}: checkout: moving from Home-page to Rent-bike
+[33mccda31a[m HEAD@{10}: commit: Bicycle renting
+[33m2c956d8[m[33m ([m[1;36mHEAD -> [m[1;32mHome-page[m[33m, [m[1;31morigin/Home-page[m[33m)[m HEAD@{11}: commit: Minor changes of homepage
+[33mc7d6410[m HEAD@{12}: commit: Additional changes
+[33mb37d8f6[m HEAD@{13}: commit: UI/UX changes
+[33ma7281bc[m HEAD@{14}: commit: Developing Homepage
+[33m8aa950a[m HEAD@{15}: checkout: moving from master to Home-page
+[33m19033eb[m HEAD@{16}: commit: Logo change
+[33mc3f3567[m HEAD@{17}: commit (initial): First commit

@@ -36,7 +36,20 @@ export default function Footer() {
     alert('रू500 added to wallet!');
   };
 
-    const startCamera = async () => {
+  const handleScanQR = () => {
+    if (isScanning) {
+      stopCamera();
+    } else {
+      startCamera();
+    }
+  };
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false);
+    stopCamera();
+  };
+
+  const startCamera = async () => {
     try {
       setIsCameraLoading(true);
       setCameraError("");
@@ -117,20 +130,6 @@ export default function Footer() {
     setIsScanning(false);
     setIsCameraLoading(false);
     setCameraError("");
-    setScanResult("");
-  };
-
-  const handleScanQR = () => {
-    if (!isScanning) {
-      startCamera();
-    } else {
-      stopCamera();
-    }
-  };
-
-  const handleCloseQRModal = () => {
-    stopCamera();
-    setShowQRModal(false);
   };
 
   // Simulate QR code detection (in real app, you'd use a QR library like jsQR)
@@ -181,9 +180,9 @@ export default function Footer() {
         {/* Wallet Button */}
         <button 
           type="button"
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          onClick={handleWalletClick}
-          title="Wallet"
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed"
+          title="Wallet (Coming Soon)"
+          disabled
         >
           <Wallet className="h-5 w-5" />
         </button>

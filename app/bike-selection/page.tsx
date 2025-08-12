@@ -64,6 +64,59 @@ function BikeSelectionPageContent() {
       return;
     }
 
+    // Check if user has an active rental BEFORE setting up the page
+    const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const userActiveRental = existingRentals.find((rental: any) => 
+      rental.userId === user.id && rental.status === 'active'
+    );
+
+    if (userActiveRental) {
+      // Check if rental is overdue
+      const startTime = new Date(userActiveRental.startTime);
+      const currentTime = new Date();
+      const rentalDuration = userActiveRental.duration;
+      const rentalHours = userActiveRental.hours || 1;
+      
+      let isOverdue = false;
+      let overdueMessage = '';
+      
+      if (rentalDuration === 'hourly') {
+        const endTime = new Date(startTime.getTime() + (rentalHours * 60 * 60 * 1000));
+        isOverdue = currentTime > endTime;
+        if (isOverdue) {
+          const overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
+          overdueMessage = `Your rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`;
+        } else {
+          overdueMessage = `You have an active rental. Please end your current ride first.`;
+        }
+      } else if (rentalDuration === 'daily') {
+        const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000));
+        isOverdue = currentTime > endTime;
+        if (isOverdue) {
+          const overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
+          overdueMessage = `Your daily rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`;
+        } else {
+          overdueMessage = `You have an active daily rental. Please end your current ride first.`;
+        }
+      } else if (rentalDuration === 'pay-as-you-go') {
+        // For pay-as-you-go, consider overdue after 24 hours
+        const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000));
+        isOverdue = currentTime > endTime;
+        if (isOverdue) {
+          const overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
+          overdueMessage = `Your pay-as-you-go rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`;
+        } else {
+          overdueMessage = `You have an active pay-as-you-go rental. Please end your current ride first.`;
+        }
+      }
+
+      // Show alert and redirect immediately
+      alert(overdueMessage);
+      router.push('/rental-confirmation');
+      return; // Exit early - don't set up the page
+    }
+
+    // Only set up the page if user has NO active rental
     // Set station info
     if (stationId && stationName && stationLocation && stationImage) {
       setStation({
@@ -113,9 +166,21 @@ function BikeSelectionPageContent() {
      
      // Check if user has agreed to terms
      if (!agreedToTerms) {
-       alert("Please read and agree to the Safety Notes and Disclaimer before confirming your rental.");
+       alert("Please read and agree to the Safety Notes and Terms & Condition before confirming your rental.");
        return;
      }
+
+    // FINAL SAFETY CHECK: Ensure user doesn't have an active rental
+    const currentRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const userActiveRental = currentRentals.find((rental: any) => 
+      rental.userId === user.id && rental.status === 'active'
+    );
+
+    if (userActiveRental) {
+      alert("You already have an active rental. Please end your current ride first.");
+      router.push('/rental-confirmation');
+      return;
+    }
     
     const slot = bikeSlots.find(s => s.id === selectedSlot);
     if (!slot) return;
@@ -568,7 +633,7 @@ function BikeSelectionPageContent() {
                  )}
               </div>
 
-                             {/* Safety notes and disclaimer before confirmation */}
+                             {/* Safety notes and Terms & Condition before confirmation */}
                <div className="space-y-3 my-3">
                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                    <h6 className="font-semibold text-yellow-900 mb-1">Safety Notes</h6>
@@ -579,7 +644,7 @@ function BikeSelectionPageContent() {
                    </ul>
                  </div>
                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                   <h6 className="font-semibold text-red-900 mb-1">Disclaimer</h6>
+                   <h6 className="font-semibold text-red-900 mb-1">Terms & Condition</h6>
                    <ul className="list-disc pl-5 text-red-900 text-xs space-y-1">
                      <li>Pedal Nepal is not responsible for accidents, injuries, or damages from bicycle use.</li>
                      <li>Riders assume all risks and are responsible for fines/legal consequences of unsafe or unlawful riding.</li>
@@ -598,7 +663,7 @@ function BikeSelectionPageContent() {
                        className="mt-1 w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                      />
                      <label htmlFor="agree-terms" className="text-sm text-blue-900 cursor-pointer">
-                       <span className="font-medium">I have read and agree to the Safety Notes and Disclaimer</span>
+                       <span className="font-medium">I have read and agreed to all the safety notes and terms presented</span>
                        <br />
                        <span className="text-xs text-blue-700">
                          By checking this box, you acknowledge that you understand the safety requirements and accept all terms and conditions of the rental service.
