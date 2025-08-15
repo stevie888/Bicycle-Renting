@@ -40,6 +40,17 @@ const initializeStorage = () => {
       {
         id: '2',
         mobile: '+977-9841234568',
+        email: 'samirgrg0888@gmail.com',
+        name: 'Samir',
+        password: 'password',
+        role: 'user',
+        credits: 175,
+        profileImage: null,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: '3',
+        mobile: '+977-9841234569',
         email: 'admin@paddlenepal.com',
         name: 'Admin User',
         password: 'password',
@@ -88,12 +99,29 @@ const initializeStorage = () => {
     const defaultRentals = [
       {
         id: '1',
-        userId: '1',
+        userId: '2', // Samir's user ID
         bicycleId: '3',
         startTime: '2024-01-15T10:00:00Z',
-        endTime: null,
-        status: 'active',
+        endTime: '2024-01-15T12:30:00Z', // 2.5 hours duration
+        status: 'completed',
         totalCost: 360,
+        price: 75,
+        station: 'Station 1',
+        bikeName: 'Station 1',
+        slotNumber: 1,
+      },
+      {
+        id: '2',
+        userId: '2', // Samir's user ID
+        bicycleId: '1',
+        startTime: '2024-01-16T14:00:00Z',
+        endTime: '2024-01-16T15:30:00Z', // 1.5 hours duration
+        status: 'completed',
+        totalCost: 300,
+        price: 75,
+        station: 'Station 1',
+        bikeName: 'Station 1',
+        slotNumber: 2,
       },
     ];
     setStorageData('paddlenepal_rentals', defaultRentals);
@@ -121,7 +149,87 @@ const ensureInitialized = () => {
     initializeStorage();
     console.log('Storage cleared and reinitialized');
   };
+  
+  // Add a function to fix rental data specifically
+  (window as any).fixRentalData = () => {
+    const defaultRentals = [
+      {
+        id: '1',
+        userId: '2', // Samir's user ID
+        bicycleId: '3',
+        startTime: '2024-01-15T10:00:00Z',
+        endTime: '2024-01-15T12:30:00Z', // 2.5 hours duration
+        status: 'completed',
+        totalCost: 360,
+        price: 75,
+        station: 'Station 1',
+        bikeName: 'Station 1',
+        slotNumber: 1,
+      },
+      {
+        id: '2',
+        userId: '2', // Samir's user ID
+        bicycleId: '1',
+        startTime: '2024-01-16T14:00:00Z',
+        endTime: '2024-01-16T15:30:00Z', // 1.5 hours duration
+        status: 'completed',
+        totalCost: 300,
+        price: 75,
+        station: 'Station 1',
+        bikeName: 'Station 1',
+        slotNumber: 2,
+      },
+    ];
+    localStorage.setItem('paddlenepal_rentals', JSON.stringify(defaultRentals));
+    console.log('Rental data fixed with proper end times');
+  };
 };
+
+// Add this function to help reset slot data with reserved slots
+if (typeof window !== 'undefined') {
+  (window as any).resetSlotDataWithReserved = () => {
+    try {
+      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const uniqueStations = new Map<string, any>();
+      
+      // Get unique stations
+      bicycles.forEach((bike: any) => {
+        const stationKey = `${bike.name}_${bike.location}`;
+        if (!uniqueStations.has(stationKey)) {
+          uniqueStations.set(stationKey, {
+            name: bike.name,
+            location: bike.location
+          });
+        }
+      });
+      
+      // Reset slots for each station with reserved slots
+      uniqueStations.forEach((station, stationKey) => {
+        const slotsKey = `paddlenepal_slots_${stationKey}`;
+        const newSlots = Array.from({ length: 10 }, (_, index) => ({
+          id: `slot_${stationKey}_${index + 1}`,
+          slotNumber: index + 1,
+          // Keep slots 9 and 10 empty for bike returns
+          status: (index >= 8) ? 'in-maintenance' : 'active',
+          lastUpdated: new Date().toISOString(),
+          notes: index >= 8 ? 'Reserved for bike returns' : ''
+        }));
+        
+        localStorage.setItem(slotsKey, JSON.stringify(newSlots));
+        console.log(`Reset slots for ${station.name} with reserved slots 9-10`);
+      });
+      
+      console.log('Slot data reset successfully with reserved slots!');
+      alert('Slot data reset successfully! Slots 9-10 are now reserved for bike returns.');
+      
+      // Refresh the page to see changes
+      window.location.reload();
+    } catch (error) {
+      console.error('Error resetting slot data:', error);
+      alert('Error resetting slot data. Please try again.');
+    }
+  };
+}
 
 // LocalStorage API call function
 async function localStorageApiCall(endpoint: string, options: RequestInit = {}) {
@@ -441,4 +549,101 @@ export const api = {
   credits: creditsAPI,
 };
 
-export default api; 
+export default api;
+
+// Add global functions for debugging and data management
+if (typeof window !== 'undefined') {
+  (window as any).clearPaddleNepalStorage = () => {
+    localStorage.removeItem('paddlenepal_users');
+    localStorage.removeItem('paddlenepal_bicycles');
+    localStorage.removeItem('paddlenepal_rentals');
+    localStorage.removeItem('paddlenepal_current_user');
+    // Clear all slot data
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('paddlenepal_slots_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    location.reload();
+  };
+
+  (window as any).fixRentalData = () => {
+    const defaultRentals = [
+      {
+        id: '1',
+        userId: '2',
+        bikeId: '1-bike-1',
+        startTime: '2024-01-15T10:00:00.000Z',
+        endTime: '2024-01-15T12:30:00.000Z',
+        status: 'completed',
+        price: 62,
+        duration: 'hourly',
+        hours: 2.5,
+        bikeName: 'Bike 1',
+        station: 'Station 1',
+        slotNumber: 1
+      },
+      {
+        id: '2',
+        userId: '2',
+        bikeId: '1-bike-2',
+        startTime: '2024-01-16T14:00:00.000Z',
+        endTime: '2024-01-16T15:30:00.000Z',
+        status: 'completed',
+        price: 37,
+        duration: 'hourly',
+        hours: 1.5,
+        bikeName: 'Bike 2',
+        station: 'Station 1',
+        slotNumber: 2
+      }
+    ];
+    localStorage.setItem('paddlenepal_rentals', JSON.stringify(defaultRentals));
+    location.reload();
+  };
+
+  (window as any).resetSlotDataWithReserved = () => {
+    // Reset all station slot data to include reserved slots
+    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+    
+    bicycles.forEach((bike: any) => {
+      const stationKey = `${bike.description}_${bike.location}`;
+      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      
+      const slots = [];
+      for (let i = 1; i <= 10; i++) {
+        slots.push({
+          id: `${stationKey}_slot_${i}`,
+          slotNumber: i,
+          status: i >= 9 ? 'in-maintenance' : 'active',
+          lastUpdated: new Date().toISOString(),
+          notes: i >= 9 ? 'Reserved for bike returns' : undefined
+        });
+      }
+      
+      localStorage.setItem(slotsKey, JSON.stringify(slots));
+    });
+    
+    location.reload();
+  };
+
+  (window as any).testSmartSlotManagement = () => {
+    // Test function to simulate smart slot management
+    console.log('Testing Smart Slot Management...');
+    
+    // Get all stations
+    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+    
+    bicycles.forEach((bike: any) => {
+      const stationKey = `${bike.description}_${bike.location}`;
+      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
+      
+      console.log(`\nStation: ${bike.description}`);
+      console.log('Current slot status:');
+      slots.forEach((slot: any) => {
+        console.log(`  Slot ${slot.slotNumber}: ${slot.status} - ${slot.notes || 'No notes'}`);
+      });
+    });
+  };
+} 

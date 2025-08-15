@@ -14,7 +14,8 @@ import {
   RefreshCwIcon,
   TrendingUpIcon,
   Trash2Icon,
-  EditIcon
+  EditIcon,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +39,7 @@ export default function AddStationPage() {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
-    bikeCount: 1,
+    bikeCount: 10,
     hourlyRate: 25,
     dailyRate: 250
   });
@@ -141,33 +142,52 @@ export default function AddStationPage() {
       // Get existing bicycles
       const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
       
-      // Create new bicycle(s) based on quantity
-      for (let i = 0; i < formData.bikeCount; i++) {
-        const newBicycle = {
-          id: (bicycles.length + i + 1).toString(),
-          name: formData.name,
-          description: formData.name,
-          location: formData.location,
-          status: 'available',
-          hourlyRate: formData.hourlyRate,
-          dailyRate: formData.dailyRate,
-          image: '/bicycle-placeholder.jpg',
-          createdAt: new Date().toISOString(),
-        };
+      if (editingStation) {
+        // Update existing station
+        const updatedBicycles = bicycles.map((bicycle: any) => {
+          if (bicycle.name === formData.name) {
+            return {
+              ...bicycle,
+              location: formData.location,
+              hourlyRate: formData.hourlyRate,
+              dailyRate: formData.dailyRate
+            };
+          }
+          return bicycle;
+        });
         
-        bicycles.push(newBicycle);
+        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        alert(`Successfully updated station "${formData.name}"`);
+        
+        // Reset editing state
+        setEditingStation(null);
+      } else {
+        // Create new station
+        for (let i = 0; i < formData.bikeCount; i++) {
+          const newBicycle = {
+            id: (bicycles.length + i + 1).toString(),
+            name: formData.name,
+            description: formData.name,
+            location: formData.location,
+            status: 'available',
+            hourlyRate: formData.hourlyRate,
+            dailyRate: formData.dailyRate,
+            image: '/bicycle-placeholder.jpg',
+            createdAt: new Date().toISOString(),
+          };
+          
+          bicycles.push(newBicycle);
+        }
+        
+        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(bicycles));
+        alert(`Successfully created station "${formData.name}" with ${formData.bikeCount} bike(s)`);
       }
-      
-      // Save to localStorage
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(bicycles));
-      
-      alert(`Successfully created station "${formData.name}" with ${formData.bikeCount} bike(s)`);
       
       // Reset form
       setFormData({
         name: '',
         location: '',
-        bikeCount: 1,
+        bikeCount: 10,
         hourlyRate: 25,
         dailyRate: 250
       });
@@ -175,8 +195,8 @@ export default function AddStationPage() {
       // Reload stations
       loadStations();
     } catch (error) {
-      console.error('Error creating station:', error);
-      alert('Error creating station. Please try again.');
+      console.error('Error saving station:', error);
+      alert('Error saving station. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -196,27 +216,30 @@ export default function AddStationPage() {
         : station
     ));
 
-    // Immediately update localStorage
-    try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-      const updatedBicycles = bicycles.map((bicycle: any) => {
-        if (bicycle.name === stationName) {
-          return {
-            ...bicycle,
-            [field]: value
-          };
-        }
-        return bicycle;
-      });
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
-      
-      // Show success feedback
-      setLastSaved(`${stationName} - ${field} updated to रू${value}`);
-      setTimeout(() => setLastSaved(null), 3000); // Clear after 3 seconds
-    } catch (error) {
-      console.error('Error updating pricing:', error);
-      alert('Failed to update pricing. Please try again.');
-    }
+    // Use setTimeout to avoid setState during render
+    setTimeout(() => {
+      // Immediately update localStorage
+      try {
+        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const updatedBicycles = bicycles.map((bicycle: any) => {
+          if (bicycle.name === stationName) {
+            return {
+              ...bicycle,
+              [field]: value
+            };
+          }
+          return bicycle;
+        });
+        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        
+        // Show success feedback
+        setLastSaved(`${stationName} - ${field} updated to रू${value}`);
+        setTimeout(() => setLastSaved(null), 3000); // Clear after 3 seconds
+      } catch (error) {
+        console.error('Error updating pricing:', error);
+        alert('Failed to update pricing. Please try again.');
+      }
+    }, 0);
   };
 
   const handleSavePricing = async () => {
@@ -258,20 +281,23 @@ export default function AddStationPage() {
       dailyRate: 250
     })));
 
-    // Immediately update localStorage
-    try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-      const updatedBicycles = bicycles.map((bicycle: any) => ({
-        ...bicycle,
-        hourlyRate: 25,
-        dailyRate: 250
-      }));
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
-      alert('Pricing reset to defaults successfully!');
-    } catch (error) {
-      console.error('Error resetting pricing:', error);
-      alert('Failed to reset pricing. Please try again.');
-    }
+    // Use setTimeout to avoid setState during render
+    setTimeout(() => {
+      // Immediately update localStorage
+      try {
+        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const updatedBicycles = bicycles.map((bicycle: any) => ({
+          ...bicycle,
+          hourlyRate: 25,
+          dailyRate: 250
+        }));
+        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        alert('Pricing reset to defaults successfully!');
+      } catch (error) {
+        console.error('Error resetting pricing:', error);
+        alert('Failed to reset pricing. Please try again.');
+      }
+    }, 0);
   };
 
   const deleteStation = (stationName: string) => {
@@ -287,6 +313,21 @@ export default function AddStationPage() {
         alert('Failed to delete station. Please try again.');
       }
     }
+  };
+
+  const editStation = (station: Station) => {
+    // Use setTimeout to avoid setState during render
+    setTimeout(() => {
+      setEditingStation(station.id);
+      setFormData({
+        name: station.name,
+        location: station.location,
+        bikeCount: station.bikeCount,
+        hourlyRate: station.hourlyRate,
+        dailyRate: station.dailyRate
+      });
+      setActiveTab('add'); // Switch to add tab for editing
+    }, 0);
   };
 
   return (
@@ -306,7 +347,7 @@ export default function AddStationPage() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                   Station Management
                 </h1>
-                <p className="text-gray-600 text-sm">Create new stations and manage pricing</p>
+                <p className="text-gray-600 text-sm">Create new stations and manage slots, pricing, and operations</p>
               </div>
             </div>
                          <div className="flex items-center space-x-4">
@@ -314,8 +355,8 @@ export default function AddStationPage() {
                  onClick={() => setActiveTab('pricing')}
                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
                >
-                 <DollarSignIcon className="w-5 h-5 mr-2" />
-                 Edit Pricing
+                 <Settings className="w-5 h-5 mr-2" />
+                 Manage Stations
                </Button>
                <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                  <MapPinIcon className="w-6 h-6 text-white" />
@@ -347,8 +388,8 @@ export default function AddStationPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <DollarSignIcon className="w-4 h-4 inline mr-2" />
-            Manage Pricing
+            <Settings className="w-4 h-4 inline mr-2" />
+            Manage Stations
           </button>
         </div>
       </div>
@@ -360,9 +401,11 @@ export default function AddStationPage() {
             <div className="bg-gradient-to-r from-green-500 to-blue-600 px-8 py-6">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <BikeIcon className="w-6 h-6 mr-3" />
-                Create New Station
+                {editingStation ? 'Edit Station' : 'Create New Station'}
               </h2>
-              <p className="text-green-100 mt-2">Add a new bike rental station with bikes</p>
+              <p className="text-green-100 mt-2">
+                {editingStation ? 'Update station details and pricing' : 'Add a new bike rental station with bikes'}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -487,17 +530,30 @@ export default function AddStationPage() {
               <div className="flex gap-4 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
-                  onClick={() => router.push('/admin')}
+                  onClick={() => {
+                    if (editingStation) {
+                      setEditingStation(null);
+                      setFormData({
+                        name: '',
+                        location: '',
+                        bikeCount: 10,
+                        hourlyRate: 25,
+                        dailyRate: 250
+                      });
+                    } else {
+                      router.push('/admin');
+                    }
+                  }}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                 >
-                  Cancel
+                  {editingStation ? 'Cancel Edit' : 'Cancel'}
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading}
                   className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
                 >
-                  {loading ? 'Creating...' : 'Create Station'}
+                  {loading ? (editingStation ? 'Updating...' : 'Creating...') : (editingStation ? 'Update Station' : 'Create Station')}
                 </Button>
               </div>
             </form>
@@ -506,10 +562,10 @@ export default function AddStationPage() {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-orange-500 to-red-600 px-8 py-6">
               <h2 className="text-2xl font-bold text-white flex items-center">
-                <TrendingUpIcon className="w-6 h-6 mr-3" />
-                Manage Station Pricing
+                <Settings className="w-6 h-6 mr-3" />
+                Manage Stations
               </h2>
-              <p className="text-orange-100 mt-2">Update rental rates for all stations</p>
+              <p className="text-orange-100 mt-2">Manage slots, pricing, and station operations</p>
             </div>
 
             <div className="p-8">
@@ -561,6 +617,20 @@ export default function AddStationPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
+                          onClick={() => router.push(`/admin/manage-slots?stationId=${station.name}_${station.location}`)}
+                          className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
+                          title="Manage slots"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => editStation(station)}
+                          className="p-1 text-green-500 hover:text-green-700 transition-colors"
+                          title="Edit station"
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => deleteStation(station.name)}
                           className="p-1 text-red-500 hover:text-red-700 transition-colors"
                           title="Delete station"
@@ -609,6 +679,29 @@ export default function AddStationPage() {
                            />
                         </div>
                         <p className="text-xs text-gray-500 mt-1">per day</p>
+                      </div>
+
+                      {/* Slot Management Summary */}
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200">
+                        <div className="text-xs text-gray-600 mb-2">Slot Status:</div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Slots:</span>
+                            <span className="font-semibold text-blue-600">10</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Available:</span>
+                            <span className="font-semibold text-green-600">8</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Maintenance:</span>
+                            <span className="font-semibold text-orange-600">2</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Occupied:</span>
+                            <span className="font-semibold text-red-600">0</span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Price Summary */}

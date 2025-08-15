@@ -97,17 +97,17 @@ export default function Home() {
           <div className="flex justify-center">
             <button 
               onClick={handleRentBike}
-              className={`relative px-2 md:px-12 py-0.5 md:py-4 text-xs md:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl border-2 transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer group ${
+              className={`relative px-6 md:px-12 py-3 md:py-4 text-sm md:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer group flex items-center justify-center gap-3 ${
                 hasActiveRental 
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white border-orange-400 hover:border-orange-500' 
-                  : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white border-primary-500 hover:border-primary-600'
+                  ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white' 
+                  : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white'
               }`}
             >
-              <div className="flex items-center justify-center gap-0.5 md:gap-3">
-                <BikeIcon className="w-2 h-2 md:w-5 md:h-5" />
-                <span>{hasActiveRental ? 'Manage Active Rental' : 'Rent a Bike'}</span>
-                <ArrowRightIcon className="w-2 h-2 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <BikeIcon className="w-3 h-3 text-white" />
               </div>
+              <span>{hasActiveRental ? 'Manage Active Rental' : 'Rent a Bike'}</span>
+              <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
             </button>
           </div>
           

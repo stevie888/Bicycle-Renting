@@ -488,26 +488,26 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
         </div>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Success Header */}
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-12 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircleIcon className="w-10 h-10 text-white" />
+          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-6 text-center">
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <CheckCircleIcon className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Rental Confirmed!</h2>
-            <p className="text-green-100 text-lg">Your bike has been successfully rented</p>
+            <h2 className="text-2xl font-bold text-white mb-1">Rental Confirmed!</h2>
+            <p className="text-green-100 text-sm">Your bike has been successfully rented</p>
           </div>
 
           {/* Active Rental Management Notice */}
           {latestRental?.status === 'active' && (
-            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mx-8 mt-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
+            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mx-6 mt-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mt-0.5">
                   <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-orange-700">
-                    <span className="font-medium">Active Rental:</span> You can end your ride anytime using the "End My Ride" button below. 
+                    <span className="font-medium">Active Rental:</span> You can end your ride anytime using the "End My Ride" button below.
                     {getStatusText(latestRental.status, latestRental).includes('Overdue') && (
                       <span className="block mt-1 font-semibold">⚠️ Your rental is overdue - please end your ride soon!</span>
                     )}
@@ -518,11 +518,11 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
           )}
 
           {/* Rental Details */}
-          <div className="p-8">
+          <div className="p-6">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Rental Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Details</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Left Column - Basic Info */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -589,11 +589,6 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                       </p>
                     </div>
                   )}
-
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-purple-900 mb-2">Slot Number</h4>
-                    <p className="text-purple-700">Slot {latestRental.slotNumber}</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -603,15 +598,37 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => router.push('/my-rentals')}
-                  className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 border-0"
                 >
+                  <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
                   View My Rentals
+                </button>
+                <button
+                  onClick={() => router.push('/return-bike')}
+                  disabled={(latestRental?.status as string) === 'completed'}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 border-0"
+                >
+                  <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  {(latestRental?.status as string) === 'completed' ? 'Ride Completed' : 'Return Bike'}
                 </button>
                 <button
                   onClick={handleEndRide}
                   disabled={isEndingRide || (latestRental?.status as string) === 'completed'}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold border border-red-300 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 border-0"
                 >
+                  <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
                   {isEndingRide ? 'Ending Ride...' : (latestRental?.status as string) === 'completed' ? 'Ride Completed' : 'End My Ride'}
                 </button>
               </div>

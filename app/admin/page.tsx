@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -8,7 +8,7 @@ import Card from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Modal from '@/components/ui/modal';
-import { Users, Bike, MapPin, BarChart3, Plus, Search, CreditCard, Trash2, UserCheck, Activity, TrendingUp, TrendingDown, Edit } from 'lucide-react';
+import { Users, Bike, MapPin, BarChart3, Plus, Search, CreditCard, Trash2, UserCheck, Activity, TrendingUp, TrendingDown, Edit, RefreshCw } from 'lucide-react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -60,10 +60,8 @@ interface RecentActivity {
 
 // Pie Chart Components
 const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
-  // Simulate realistic bike inventory across all stations
-  const totalStations = stats?.bicycles.totalBicycles || 0;
-  const bikesPerStation = 15; // Average bikes per station
-  const totalBikes = totalStations * bikesPerStation;
+  // Use the total bikes from stats (already calculated as stations * 10)
+  const totalBikes = stats?.bicycles.totalBicycles || 0;
   
   const rentedBikes = stats?.rentals.activeRentals || 0;
   const availableBikes = Math.max(0, totalBikes - rentedBikes);
@@ -96,10 +94,10 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       legend: {
         position: 'bottom' as const,
         labels: {
-          padding: 20,
+          padding: 15,
           usePointStyle: true,
           font: {
-            size: 12,
+            size: 11,
           },
         },
       },
@@ -118,17 +116,17 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
       <div className="flex items-center mb-4">
         <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl flex items-center justify-center mr-3">
           <Bike className="w-5 h-5 text-white" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">All Stations Bike Status</h3>
-          <p className="text-sm text-gray-500">Total bikes across {totalStations} stations</p>
+          <p className="text-sm text-gray-500">Total bikes across all stations</p>
         </div>
       </div>
-      <div className="h-64">
+      <div className="h-48">
         <Pie data={data} options={options} />
       </div>
       
@@ -183,10 +181,10 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       legend: {
         position: 'bottom' as const,
         labels: {
-          padding: 20,
+          padding: 15,
           usePointStyle: true,
           font: {
-            size: 12,
+            size: 11,
           },
         },
       },
@@ -205,7 +203,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
       <div className="flex items-center mb-4">
         <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-3">
           <Users className="w-5 h-5 text-white" />
@@ -215,7 +213,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
           <p className="text-sm text-gray-500">User engagement breakdown</p>
         </div>
       </div>
-      <div className="h-64">
+      <div className="h-48">
         <Pie data={data} options={options} />
       </div>
     </div>
@@ -253,10 +251,10 @@ const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       legend: {
         position: 'bottom' as const,
         labels: {
-          padding: 20,
+          padding: 15,
           usePointStyle: true,
           font: {
-            size: 12,
+            size: 11,
           },
         },
       },
@@ -275,7 +273,7 @@ const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
       <div className="flex items-center mb-4">
         <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-amber-500 rounded-xl flex items-center justify-center mr-3">
           <Activity className="w-5 h-5 text-white" />
@@ -285,7 +283,7 @@ const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
           <p className="text-sm text-gray-500">Customer feedback analysis</p>
         </div>
       </div>
-      <div className="h-64">
+      <div className="h-48">
         <Pie data={data} options={options} />
       </div>
     </div>
@@ -300,6 +298,161 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bicycles'>('overview');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  // Function to ensure proper rental data exists
+  const ensureRentalData = () => {
+    const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+    
+    // Find Samir's user ID
+    const samir = users.find((u: any) => u.name === 'Samir');
+    if (!samir) return;
+    
+    // Check if we have proper rental data for Samir
+    const samirRentals = existingRentals.filter((r: any) => r.userId === samir.id);
+    
+    if (samirRentals.length === 0) {
+      // Create proper rental data for Samir
+      const newRentals = [
+        {
+          id: '1',
+          userId: samir.id,
+          bicycleId: '3',
+          startTime: '2024-01-15T10:00:00Z',
+          endTime: '2024-01-15T12:30:00Z', // 2.5 hours
+          status: 'completed',
+          totalCost: 360,
+          price: 75,
+          station: 'Station 1',
+          bikeName: 'Station 1',
+          slotNumber: 1,
+        },
+        {
+          id: '2',
+          userId: samir.id,
+          bicycleId: '1',
+          startTime: '2024-01-16T14:00:00Z',
+          endTime: '2024-01-16T15:30:00Z', // 1.5 hours
+          status: 'completed',
+          totalCost: 300,
+          price: 75,
+          station: 'Station 1',
+          bikeName: 'Station 1',
+          slotNumber: 2,
+        },
+        {
+          id: '3',
+          userId: samir.id,
+          bicycleId: '2',
+          startTime: '2024-01-17T09:00:00Z',
+          endTime: '2024-01-17T10:00:00Z', // 1 hour
+          status: 'completed',
+          totalCost: 200,
+          price: 75,
+          station: 'Station 1',
+          bikeName: 'Station 1',
+          slotNumber: 3,
+        },
+        {
+          id: '4',
+          userId: samir.id,
+          bicycleId: '3',
+          startTime: '2024-01-18T16:00:00Z',
+          endTime: '2024-01-18T17:00:00Z', // 1 hour
+          status: 'completed',
+          totalCost: 200,
+          price: 75,
+          station: 'Station 1',
+          bikeName: 'Station 1',
+          slotNumber: 4,
+        }
+      ];
+      
+      // Add new rentals to existing ones
+      const updatedRentals = [...existingRentals, ...newRentals];
+      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
+      console.log('Created rental data for Samir with 6 hours total duration');
+    }
+  };
+
+  // Add global test function to window object
+  if (typeof window !== 'undefined') {
+    (window as any).testDurationCalculation = () => {
+      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const samir = users.find((u: any) => u.name === 'Samir');
+      
+      if (!samir) {
+        console.log('Samir user not found');
+        return;
+      }
+      
+      const samirRentals = rentals.filter((r: any) => r.userId === samir.id);
+      console.log('Samir rentals:', samirRentals);
+      
+      let totalDuration = 0;
+      samirRentals.forEach((rental: any) => {
+        if (rental.startTime) {
+          const start = new Date(rental.startTime);
+          let end: Date;
+          
+          if (rental.endTime) {
+            end = new Date(rental.endTime);
+            const duration = end.getTime() - start.getTime();
+            const hours = duration / (1000 * 60 * 60);
+            console.log(`Completed rental ${rental.id}: ${hours.toFixed(2)} hours`);
+            totalDuration += duration;
+          } else if (rental.status === 'active') {
+            end = new Date();
+            const duration = end.getTime() - start.getTime();
+            const hours = duration / (1000 * 60 * 60);
+            console.log(`Active rental ${rental.id}: ${hours.toFixed(2)} hours (ongoing)`);
+            totalDuration += duration;
+          }
+        }
+      });
+      
+      const totalHours = Math.round(totalDuration / (1000 * 60 * 60));
+      console.log(`Total duration for Samir: ${totalHours} hours`);
+      
+      return totalHours;
+    };
+    
+    (window as any).createTestRental = () => {
+      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const samir = users.find((u: any) => u.name === 'Samir');
+      
+      if (!samir) {
+        console.log('Samir user not found');
+        return;
+      }
+      
+      const newRental = {
+        id: Date.now().toString(),
+        userId: samir.id,
+        bikeId: 'test-bike',
+        startTime: new Date().toISOString(),
+        status: 'active',
+        price: 0,
+        duration: 'pay-as-you-go',
+        bikeName: 'Test Bike',
+        station: 'Station 1',
+        slotNumber: 1,
+        payAsYouGo: true
+      };
+      
+      const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const updatedRentals = [...existingRentals, newRental];
+      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
+      
+      console.log('Created test rental for Samir');
+      console.log('New rental:', newRental);
+      
+      // Refresh the admin dashboard
+      fetchDashboardData();
+    };
+  }
 
   // Check if user is admin, if not redirect to home
   useEffect(() => {
@@ -312,6 +465,36 @@ function AdminDashboard() {
       fetchDashboardData();
     }
   }, [user, router]);
+
+  // Refresh data periodically and when window gains focus
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      const interval = setInterval(() => {
+        try {
+          setLastRefresh(Date.now());
+          fetchDashboardData();
+        } catch (error) {
+          console.error('Error in interval refresh:', error);
+        }
+      }, 30000); // Refresh every 30 seconds
+
+      const handleFocus = (event: Event) => {
+        try {
+          setLastRefresh(Date.now());
+          fetchDashboardData();
+        } catch (error) {
+          console.error('Error in focus refresh:', error);
+        }
+      };
+
+      window.addEventListener('focus', handleFocus);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [user]);
 
   // Show loading while checking user role
   if (!user) {
@@ -348,6 +531,9 @@ function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       console.log('Fetching dashboard data from localStorage...');
+      
+      // Ensure proper rental data exists
+      ensureRentalData();
       
       // Get data from localStorage
       const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
@@ -411,6 +597,11 @@ function AdminDashboard() {
       }
       
       // Calculate stats
+      // Count unique stations instead of individual bikes
+      const uniqueStations = new Set(updatedBicycles.map((b: any) => b.name));
+      const totalStations = uniqueStations.size;
+      const totalBikes = totalStations * 10; // 10 slots per station
+      
       const stats: DashboardStats = {
         users: {
           totalUsers: users.length,
@@ -418,7 +609,7 @@ function AdminDashboard() {
           regularUsers: users.filter((u: any) => u.role === 'user').length,
         },
         bicycles: {
-          totalBicycles: updatedBicycles.length,
+          totalBicycles: totalBikes, // Use calculated total instead of individual bike count
           availableBicycles: updatedBicycles.filter((b: any) => b.status === 'available').length,
           outOfStockBicycles: updatedBicycles.filter((b: any) => b.status === 'rented').length,
         },
@@ -491,8 +682,7 @@ function AdminDashboard() {
             </div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-gray-500">Welcome,</div>
-              <div className="text-sm font-semibold text-gray-900">Admin User</div>
+              {/* Welcome greeting removed */}
             </div>
           </div>
           
@@ -511,6 +701,19 @@ function AdminDashboard() {
               >
               <Plus className="w-4 h-4 mr-2" />
                 Add Station
+              </Button>
+              <Button
+              onClick={() => {
+                try {
+                  setLastRefresh(Date.now());
+                  fetchDashboardData();
+                } catch (error) {
+                  console.error('Error in manual refresh:', error);
+                }
+              }}
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3 px-4 rounded-xl shadow-lg text-sm font-medium"
+              >
+              <RefreshCw className="w-4 h-4" />
               </Button>
           </div>
         </div>
@@ -569,7 +772,7 @@ function AdminDashboard() {
               </div>
 
             {/* Pie Charts Overview */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <BikeStatusPieChart stats={stats} />
               <UserActivityPieChart stats={stats} />
               <ReviewsPieChart stats={stats} />
@@ -620,6 +823,26 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [showAddCreditsModal, setShowAddCreditsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [creditsToAdd, setCreditsToAdd] = useState(50);
+  const [nameFilter, setNameFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  // Function to determine if user is active (has activity in last 2-3 months)
+  const isUserActive = (user: any) => {
+    const userRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]').filter((rental: any) => rental.userId === user.id);
+    
+    if (userRentals.length === 0) return false;
+    
+    // Check if user has any activity in the last 3 months
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    const recentActivity = userRentals.some((rental: any) => {
+      const rentalDate = new Date(rental.startTime);
+      return rentalDate > threeMonthsAgo;
+    });
+    
+    return recentActivity;
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -815,105 +1038,218 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   return (
     <div className="space-y-6">
-      {/* Mobile Filter */}
+      {/* Filters */}
       <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Name</label>
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 bg-white"
+          />
+            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
         <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 bg-white"
-        >
-          <option value="">All Roles</option>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 bg-white"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active Users</option>
+              <option value="inactive">Inactive Users</option>
+              <option value="admin">Admin Users</option>
         </select>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile Users List */}
+      {/* Users Table */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-green-500 to-teal-500 px-4 py-4">
+        <div className="bg-gradient-to-r from-green-500 to-teal-500 px-6 py-4">
           <h3 className="text-white font-semibold flex items-center">
             <Users className="w-5 h-5 mr-2" />
             User Management ({users.length})
           </h3>
         </div>
         
-        <div className="divide-y divide-gray-100">
-              {users.map((user) => (
-            <div key={user.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SN</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No of Rides</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Most Visited Station</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Duration</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining Credit</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Credit Spent</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users
+                .filter(user => 
+                  (nameFilter === '' || user.name.toLowerCase().includes(nameFilter.toLowerCase())) &&
+                  (statusFilter === '' || 
+                    (statusFilter === 'admin' && user.role === 'admin') ||
+                    (statusFilter === 'active' && user.role === 'user' && isUserActive(user)) ||
+                    (statusFilter === 'inactive' && user.role === 'user' && !isUserActive(user))
+                  )
+                )
+                .map((user, index) => {
+                  // Calculate user statistics
+                  const allRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+                  console.log('All rentals:', allRentals);
+                  console.log('User ID:', user.id, 'User name:', user.name);
+                  const userRentals = allRentals.filter((rental: any) => rental.userId === user.id);
+                  console.log('User rentals for', user.name, ':', userRentals);
+                  const completedRentals = userRentals.filter((rental: any) => rental.status === 'completed');
+                  const activeRentals = userRentals.filter((rental: any) => rental.status === 'active');
+                  const totalRides = completedRentals.length + activeRentals.length;
+                  
+
+                  
+                  // Calculate most visited station (including active rentals)
+                  const stationVisits = userRentals.reduce((acc: Record<string, number>, rental: any) => {
+                    acc[rental.station] = (acc[rental.station] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+                  const mostVisitedStation = Object.keys(stationVisits).length > 0 
+                    ? Object.entries(stationVisits).sort(([,a], [,b]) => (b as number) - (a as number))[0][0]
+                    : 'None';
+                  
+                  // Calculate total duration (including active rentals)
+                  const totalDuration = userRentals.reduce((total: number, rental: any) => {
+                    if (rental.startTime) {
+                      const start = new Date(rental.startTime);
+                      let end: Date;
+                      
+                      if (rental.endTime) {
+                        // For completed rentals, use the actual end time
+                        end = new Date(rental.endTime);
+                      } else if (rental.status === 'active') {
+                        // For active rentals, use current time
+                        end = new Date();
+                      } else {
+                        // Skip rentals without start time or invalid status
+                        return total;
+                      }
+                      
+                      const duration = end.getTime() - start.getTime();
+                      const durationHours = duration / (1000 * 60 * 60);
+                      
+                      console.log(`Rental ${rental.id} for ${user.name}:`, {
+                        startTime: rental.startTime,
+                        endTime: rental.endTime,
+                        status: rental.status,
+                        durationMs: duration,
+                        durationHours: durationHours
+                      });
+                      
+                      return total + duration;
+                    }
+                    return total;
+                  }, 0);
+                  const totalHours = Math.round(totalDuration / (1000 * 60 * 60));
+                  
+                  console.log(`Duration calculation for ${user.name}:`, {
+                    totalDuration,
+                    totalHours,
+                    userRentalsCount: userRentals.length,
+                    completedRentalsCount: completedRentals.length,
+                    activeRentalsCount: activeRentals.length
+                  });
+
+                  
+                  // Calculate total credit spent
+                  const totalSpent = completedRentals.reduce((total: number, rental: any) => total + (rental.price || 0), 0);
+                  
+                  // Determine user status
+                  const userStatus = user.role === 'admin' ? 'Admin' : (isUserActive(user) ? 'Active' : 'Inactive');
+                  const statusColor = user.role === 'admin' 
+                    ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                    : isUserActive(user)
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-gray-100 text-gray-800 border border-gray-300';
+                  
+                  return (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {index + 1}
+                      </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">{user.name}</div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
-                      user.role === 'admin' 
-                        ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' 
-                        : 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300'
-                    }`}>
-                      {user.role}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 text-xs rounded-full font-semibold ${statusColor}`}>
+                          {userStatus}
                     </span>
-                    </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 mb-1">Credits</div>
-                  <div className="text-lg font-bold text-green-600">रू{user.credits || 0}</div>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 mb-1">Rentals</div>
-                  <div className="text-lg font-bold text-blue-600">{user.totalRentals || 0}</div>
-                </div>
-              </div>
-              
-              {/* Mobile Action Buttons */}
-              <div className="flex space-x-2">
-                <Button
+                  </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {totalRides}
+                  </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {mostVisitedStation}
+                  </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {totalHours}h
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                        रू{user.credits || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        रू{totalSpent}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                      <button
                         onClick={() => openAddCreditsModal(user)}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
                       >
-                  <CreditCard className="w-4 h-4 mr-1" />
-                  Add Credits
-                </Button>
+                            Add Credits
+                      </button>
                       {user.role === 'user' ? (
-                  <Button
+                        <button
                           onClick={() => promoteToAdmin(user.id)}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
-                    <UserCheck className="w-4 h-4 mr-1" />
-                    Make Admin
-                  </Button>
+                              Make Admin
+                        </button>
                       ) : (
-                  <Button
+                        <button
                           onClick={() => demoteToUser(user.id)}
-                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                              className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
-                    <UserCheck className="w-4 h-4 mr-1" />
-                    Remove Admin
-                  </Button>
+                              Remove Admin
+                        </button>
                       )}
-                <Button
+                      <button
                         onClick={() => deleteUser(user.id)}
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs"
                       >
-                        <Trash2 className="w-4 h-4" />
-                </Button>
+                            Delete
+                      </button>
                     </div>
-            </div>
-              ))}
+                  </td>
+                </tr>
+                  );
+                })}
+            </tbody>
+          </table>
         </div>
-        
-        {users.length === 0 && (
-          <div className="p-8 text-center">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
-            <p className="text-gray-600">No users match your search criteria.</p>
-          </div>
-        )}
       </div>
 
       {/* Add Credits Modal */}
@@ -1022,31 +1358,153 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [bicycles, setBicycles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
-  const router = useRouter(); // Added useRouter here
+  const [nameFilter, setNameFilter] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     fetchBicycles();
   }, [statusFilter, refreshTrigger]);
+
+  // Add focus event listener to refresh data when returning from slot management
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchBicycles();
+    };
+
+    const handleSlotStatusChanged = () => {
+      fetchBicycles();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('slotStatusChanged', handleSlotStatusChanged);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('slotStatusChanged', handleSlotStatusChanged);
+    };
+  }, []);
 
   const fetchBicycles = async () => {
     try {
       // Get bicycles from localStorage
       const allBicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
       
-      // Apply filters
-      let filteredBicycles = allBicycles;
+      // Group bicycles by unique stations
+      const stationMap = new Map();
+      allBicycles.forEach((bicycle: any) => {
+        const stationKey = `${bicycle.name}_${bicycle.location}`;
+        if (!stationMap.has(stationKey)) {
+          stationMap.set(stationKey, {
+            id: bicycle.id,
+            name: bicycle.name,
+            location: bicycle.location,
+            hourlyRate: bicycle.hourlyRate || 25,
+            dailyRate: bicycle.dailyRate || 250,
+            status: bicycle.status,
+            createdAt: bicycle.createdAt
+          });
+        }
+      });
       
-      if (statusFilter) {
-        filteredBicycles = filteredBicycles.filter((bicycle: any) => bicycle.status === statusFilter);
-      }
-      
-      setBicycles(filteredBicycles);
+      const uniqueStations = Array.from(stationMap.values());
+      setBicycles(uniqueStations);
     } catch (error) {
       console.error('Error fetching bicycles:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Memoize filtered bicycles to prevent unnecessary re-renders
+  const filteredBicycles = useMemo(() => {
+    let filtered = bicycles;
+    
+    if (statusFilter) {
+      filtered = filtered.filter((bicycle: any) => bicycle.status === statusFilter);
+    }
+    
+    if (nameFilter) {
+      filtered = filtered.filter((bicycle: any) => 
+        bicycle.name.toLowerCase().includes(nameFilter.toLowerCase()) ||
+        bicycle.location.toLowerCase().includes(nameFilter.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [bicycles, statusFilter, nameFilter]);
+
+  // Function to get slot statistics for a station
+  const getSlotStatistics = useMemo(() => {
+    return (stationKey: string) => {
+      try {
+        // Parse the station key to get name and location
+        const [stationName, stationLocation] = stationKey.split('_');
+        
+        // Get all bicycles to count bikes at this station
+        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        
+        // Count all bikes that belong to this station
+        const bikesAtThisStation = bicycles.filter((bike: any) =>
+          bike.name === stationName && bike.location === stationLocation
+        );
+        const totalBikesForStation = bikesAtThisStation.length;
+        
+        console.log('Slot Statistics Debug:', {
+          stationKey,
+          stationName,
+          stationLocation,
+          totalBikesForStation,
+          totalBicycles: bicycles.length,
+          allBicycles: bicycles.map((b: any) => ({ id: b.id, name: b.name, location: b.location })),
+          bikesAtThisStation: bikesAtThisStation.map((b: any) => ({ id: b.id, name: b.name, location: b.location }))
+        });
+
+        // Get slots for this station
+        const slotsKey = `paddlenepal_slots_${stationKey}`;
+        const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
+
+        // Use fixed slot count of 10, regardless of bike count
+        const totalSlots = 10;
+        
+        // If no slots exist, initialize them with 10 active slots
+        if (slots.length === 0) {
+          const defaultSlots = Array.from({ length: 10 }, (_, index) => ({
+            id: `slot_${stationKey}_${index + 1}`,
+            slotNumber: index + 1,
+            status: 'active' as const,
+            lastUpdated: new Date().toISOString(),
+            notes: ''
+          }));
+          localStorage.setItem(slotsKey, JSON.stringify(defaultSlots));
+          
+          return {
+            totalSlots: 10,
+            activeSlots: 10,
+            maintenanceSlots: 0,
+            availableSlots: 10
+          };
+        }
+        
+        const activeSlots = slots.filter((slot: any) => slot.status === 'active').length;
+        const maintenanceSlots = slots.filter((slot: any) => slot.status === 'in-maintenance').length;
+
+        return {
+          totalSlots,
+          activeSlots,
+          maintenanceSlots,
+          availableSlots: activeSlots
+        };
+      } catch (error) {
+        console.error('Error getting slot statistics:', error);
+        return {
+          totalSlots: 10,
+          activeSlots: 10,
+          maintenanceSlots: 0,
+          availableSlots: 10
+        };
+      }
+    };
+  }, []);
 
   const deleteBicycle = async (bicycleId: string) => {
     if (!confirm('Are you sure you want to delete this station?')) return;
@@ -1061,6 +1519,20 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       console.error('Error deleting bicycle:', error);
     }
   };
+
+  const manageSlots = (stationId: string) => {
+    // Get the bicycle to create a proper station identifier
+    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+    const currentBicycle = bicycles.find((bike: any) => bike.id === stationId);
+    
+    if (currentBicycle) {
+      // Create a unique station identifier based on name and location
+      const stationKey = `${currentBicycle.name}_${currentBicycle.location}`;
+      router.push(`/admin/manage-slots?stationId=${stationKey}`);
+    }
+  };
+
+
 
   if (loading) {
     return (
@@ -1079,90 +1551,138 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   return (
     <div className="space-y-6">
-      {/* Mobile Filter */}
+      {/* Filters */}
       <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200 bg-white"
-          >
-            <option value="">All Status</option>
-            <option value="available">Available</option>
-            <option value="rented">Rented</option>
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Name/Location</label>
+            <input
+              type="text"
+              placeholder="Search by station name or location..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200 bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200 bg-white"
+            >
+              <option value="">All Status</option>
+              <option value="available">Available</option>
+              <option value="rented">Rented</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile Stations List */}
+      {/* Stations Table */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-4">
-          <h3 className="text-white font-semibold flex items-center">
-            <MapPin className="w-5 h-5 mr-2" />
-            Station Management ({bicycles.length})
-          </h3>
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+          <div className="flex items-center justify-between">
+                              <h3 className="text-white font-semibold flex items-center">
+                    <MapPin className="w-5 h-5 mr-2" />
+                    Station Management ({filteredBicycles.length})
+                  </h3>
+
+          </div>
         </div>
         
-        <div className="divide-y divide-gray-100">
-              {bicycles.map((bicycle) => (
-            <div key={bicycle.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                    <MapPin className="w-6 h-6" />
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SN</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Station Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Slots</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Maintenance</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Slots</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredBicycles.map((bicycle, index) => {
+                // Get real slot statistics for each station
+                const stationKey = `${bicycle.name}_${bicycle.location}`;
+                const slotStats = getSlotStatistics(stationKey);
+                
+                return (
+                  <tr key={`${bicycle.id}-${stationKey}`} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                          <MapPin className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{bicycle.name}</div>
+                          <div className="text-sm text-gray-500">रू{bicycle.hourlyRate || 25}/hr • रू{bicycle.dailyRate || 250}/day</div>
+                        </div>
                       </div>
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">{bicycle.name}</div>
-                    <div className="text-sm text-gray-500">{bicycle.location}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bicycle.location}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className="font-semibold">{slotStats.totalSlots}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className="font-semibold text-red-600">
+                        {slotStats.maintenanceSlots}
+                        {slotStats.maintenanceSlots > 0 && (
+                          <span className="ml-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                            Maintenance
+                          </span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className="font-semibold text-green-600">{slotStats.availableSlots}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => manageSlots(bicycle.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs"
+                        >
+                          Manage Slots
+                        </button>
+                        <button
+                          onClick={() => router.push(`/admin/add-station?edit=${bicycle.id}`)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteBicycle(bicycle.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs"
+                        >
+                          Delete
+                        </button>
                       </div>
-                    </div>
-                    <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
-                      bicycle.status === 'available' 
-                        ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' 
-                        : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300'
-                    }`}>
-                      {bicycle.status}
-                    </span>
-                    </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 mb-1">Hourly Rate</div>
-                  <div className="text-lg font-bold text-orange-600">रू{bicycle.hourlyRate || 25}</div>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500 mb-1">Daily Rate</div>
-                  <div className="text-lg font-bold text-red-600">रू{bicycle.dailyRate || 250}</div>
-                </div>
-              </div>
-              
-              {/* Mobile Action Buttons */}
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => router.push(`/admin/add-station?edit=${bicycle.id}`)}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-                <Button
-                      onClick={() => deleteBicycle(bicycle.id)}
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-3 rounded-lg text-sm font-medium"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                </Button>
+                    </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
-          ))}
+
+      {filteredBicycles.length === 0 && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+          <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Stations Found</h3>
+          <p className="text-gray-600">No stations available matching your filters.</p>
+        </div>
+      )}
     </div>
-        
-        {bicycles.length === 0 && (
-          <div className="p-8 text-center">
-            <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Stations Found</h3>
-            <p className="text-gray-600">No stations available.</p>
-      </div>
-        )}
-      </div>
-      </div>
   );
 }
 

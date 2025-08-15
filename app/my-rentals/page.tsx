@@ -284,8 +284,13 @@ function MyRentalsPageContent() {
             <p className="text-sm text-gray-600 mb-3">You haven't rented any bikes yet. Start your adventure today!</p>
             <button
               onClick={() => router.push('/bicycles')}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+              className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm flex items-center justify-center gap-2"
             >
+              <div className="w-4 h-4 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
               Rent a Bike
             </button>
           </div>
@@ -536,8 +541,13 @@ function MyRentalsPageContent() {
             <div className="text-center pt-1 pb-1">
               <button
                 onClick={() => router.push('/bicycles')}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm flex items-center justify-center gap-2 mx-auto"
               >
+                <div className="w-4 h-4 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
                 Rent Another Bike
               </button>
             </div>
