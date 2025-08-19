@@ -12,6 +12,12 @@ export default function Home() {
 
   useEffect(() => {
     if (user && !loading) {
+      // Redirect admin users directly to admin dashboard
+      if (user.role === 'admin') {
+        router.push('/admin');
+        return;
+      }
+      
       // Check if user has an active rental
       const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
       const userActiveRental = existingRentals.find((rental: any) => 
@@ -71,6 +77,30 @@ export default function Home() {
     }
     router.push('/bicycles');
   };
+
+  // Show loading state while checking user role
+  if (loading) {
+    return (
+      <div className="h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render homepage content for admin users (they will be redirected)
+  if (user && user.role === 'admin') {
+    return (
+      <div className="h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-white flex flex-col">

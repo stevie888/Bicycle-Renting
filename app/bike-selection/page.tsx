@@ -26,7 +26,7 @@ interface BikeSlot {
   image: string;
   price: number;
   pricePerHour: number;
-  status?: 'active' | 'in-maintenance';
+  status?: 'active' | 'in-maintenance' | 'reserved';
   notes?: string;
 }
 
@@ -99,7 +99,7 @@ function BikeSelectionPageContent() {
         image: stationImage || "/Basantapur,Kathmandu.jpeg",
         price: 250,
         pricePerHour: 25,
-        status: index < 8 ? 'active' : 'in-maintenance',
+        status: index < 8 ? 'active' : 'reserved',
         notes: index >= 8 ? 'Reserved for bike returns' : ''
       }));
       setBikeSlots(defaultSlots);
@@ -107,18 +107,24 @@ function BikeSelectionPageContent() {
     }
 
     // Convert real slot data to bike slots
-    const updatedSlots: BikeSlot[] = realSlots.map((slot: any) => ({
-      id: slot.id || `${stationId}-slot-${slot.slotNumber}`,
-      slotNumber: slot.slotNumber,
-      bikeId: `${stationId}-bike-${slot.slotNumber}`,
-      bikeName: `Bike ${slot.slotNumber}`,
-      available: slot.status === 'active' && !slot.notes?.includes('Reserved for bike returns'),
-      image: stationImage || "/Basantapur,Kathmandu.jpeg",
-      price: 250,
-      pricePerHour: 25,
-      status: slot.status,
-      notes: slot.notes
-    }));
+    const updatedSlots: BikeSlot[] = realSlots.map((slot: any) => {
+      // Ensure reserved slots (9-10) are never available for rental
+      const isReservedSlot = slot.slotNumber >= 9;
+      const isAvailable = !isReservedSlot && slot.status === 'active' && slot.status !== 'occupied';
+      
+      return {
+        id: slot.id || `${stationId}-slot-${slot.slotNumber}`,
+        slotNumber: slot.slotNumber,
+        bikeId: `${stationId}-bike-${slot.slotNumber}`,
+        bikeName: `Bike ${slot.slotNumber}`,
+        available: isAvailable,
+        image: stationImage || "/Basantapur,Kathmandu.jpeg",
+        price: 250,
+        pricePerHour: 25,
+        status: isReservedSlot ? 'reserved' : slot.status,
+        notes: isReservedSlot ? 'Reserved for bike returns' : slot.notes
+      };
+    });
 
     setBikeSlots(updatedSlots);
   };
@@ -223,6 +229,8 @@ function BikeSelectionPageContent() {
     const slot = bikeSlots.find(s => s.id === slotId);
     if (slot && slot.available) {
       setSelectedSlot(slotId);
+      // Automatically show the booking modal when a slot is selected
+      setShowBookingModal(true);
     }
   };
 
@@ -286,31 +294,35 @@ function BikeSelectionPageContent() {
     const slotsKey = `paddlenepal_slots_${stationId}`;
     let allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
     
-    // If the selected slot is a return slot (9 or 10), we need to move bikes
+    // Ensure reserved slots (9-10) are always available for returns
+    allSlots = allSlots.map((slot: any) => {
+      if (slot.slotNumber >= 9) {
+        return {
+          ...slot,
+          status: 'reserved',
+          notes: 'Reserved for bike returns',
+          lastUpdated: new Date().toISOString()
+        };
+      }
+      return slot;
+    });
+    
+    // If the selected slot is a return slot (9 or 10), find an available slot in 1-8
     if (selectedSlot.slotNumber >= 9) {
-      // Find an available slot in 1-8 to move the bike to
+      // Find an available slot in 1-8 to rent from instead
       const availableSlot = allSlots.find((slot: any) => 
         slot.slotNumber <= 8 && slot.status === 'active' && 
         !slot.notes?.includes('Reserved for bike returns')
       );
       
       if (availableSlot) {
-        // Move the bike from return slot to available slot
+        // Mark the available slot as occupied
         const updatedSlots = allSlots.map((slot: any) => {
-          if (slot.id === selectedSlot.id) {
-            // Mark return slot as available for returns again
+          if (slot.id === availableSlot.id) {
             return {
               ...slot,
-              status: 'in-maintenance',
-              notes: 'Reserved for bike returns',
-              lastUpdated: new Date().toISOString()
-            };
-          } else if (slot.id === availableSlot.id) {
-            // Mark the available slot as occupied
-            return {
-              ...slot,
-              status: 'active',
-              notes: 'Bike moved from return slot',
+              status: 'occupied',
+              notes: 'Bike rented',
               lastUpdated: new Date().toISOString()
             };
           }
@@ -319,17 +331,25 @@ function BikeSelectionPageContent() {
         
         localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
         
-        // Update the selected slot to the available slot
-        return availableSlot;
+        // Return the available slot instead of the return slot
+        return {
+          ...availableSlot,
+          status: 'occupied',
+          notes: 'Bike rented'
+        };
+      } else {
+        // No available slots in 1-8, cannot rent
+        alert('No available slots for rental. Please try another station.');
+        return null;
       }
     }
     
-    // If not a return slot or no available slots, just mark the selected slot as occupied
+    // If renting from a regular slot (1-8), mark it as occupied
     const updatedSlots = allSlots.map((slot: any) => {
       if (slot.id === selectedSlot.id) {
         return {
           ...slot,
-          status: 'active',
+          status: 'occupied',
           notes: 'Bike rented',
           lastUpdated: new Date().toISOString()
         };
@@ -367,6 +387,11 @@ function BikeSelectionPageContent() {
 
     // Apply smart slot allocation
     const finalSlot = manageSmartSlotAllocation(slot);
+    
+    // If no slot is available, exit early
+    if (!finalSlot) {
+      return;
+    }
 
     const rentalPrice = getCurrentRentalPrice();
     const userCredits = user?.credits || 0;
@@ -551,9 +576,9 @@ function BikeSelectionPageContent() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-600 transition-all duration-200 border border-primary-200 hover:border-primary-300"
+                className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
               >
-                <ArrowLeftIcon className="w-5 h-5" />
+                <ArrowLeftIcon className="w-5 h-5 text-white" />
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{station.name}</h1>
@@ -651,17 +676,7 @@ function BikeSelectionPageContent() {
           })}
         </div>
 
-        {/* Rent Button */}
-        {selectedSlot && (
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleRentBike}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-            >
-              Rent Selected Bike
-            </button>
-          </div>
-        )}
+
       </div>
 
       {/* Booking Modal */}

@@ -58,42 +58,7 @@ export default function AddStationPage() {
     loadStations();
   }, []);
 
-  const initializeSamplePricing = () => {
-    try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-      
-      // If we have bicycles but they all have default pricing, update them with sample pricing
-      if (bicycles.length > 0 && bicycles.every((bike: any) => bike.hourlyRate === 25 && bike.dailyRate === 250)) {
-        const updatedBicycles = bicycles.map((bicycle: any, index: number) => {
-          let hourlyRate = 25;
-          let dailyRate = 250;
-          
-          // Assign different pricing based on station
-          if (bicycle.name === 'Bike 1' || bicycle.name === 'Station 1') {
-            hourlyRate = 200;
-            dailyRate = 1500;
-          } else if (bicycle.name === 'Bike 2' || bicycle.name === 'Station 2') {
-            hourlyRate = 150;
-            dailyRate = 1200;
-          } else if (bicycle.name === 'Bike 3' || bicycle.name === 'Station 3') {
-            hourlyRate = 180;
-            dailyRate = 1400;
-          }
-          
-          return {
-            ...bicycle,
-            hourlyRate,
-            dailyRate
-          };
-        });
-        
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
-        loadStations(); // Reload stations with new pricing
-      }
-    } catch (error) {
-      console.error('Error initializing sample pricing:', error);
-    }
-  };
+
 
   const loadStations = () => {
     try {
@@ -192,8 +157,27 @@ export default function AddStationPage() {
         dailyRate: 250
       });
       
-      // Reload stations
-      loadStations();
+      // Update local state to include the new station
+      if (!editingStation) {
+        const newStation: Station = {
+          id: (bicycles.length + 1).toString(),
+          name: formData.name,
+          location: formData.location,
+          bikeCount: formData.bikeCount,
+          hourlyRate: formData.hourlyRate,
+          dailyRate: formData.dailyRate,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+        setStations(prev => [...prev, newStation]);
+      } else {
+        // Update existing station in local state
+        setStations(prev => prev.map(station => 
+          station.name === formData.name 
+            ? { ...station, location: formData.location, hourlyRate: formData.hourlyRate, dailyRate: formData.dailyRate }
+            : station
+        ));
+      }
     } catch (error) {
       console.error('Error saving station:', error);
       alert('Error saving station. Please try again.');
@@ -209,16 +193,16 @@ export default function AddStationPage() {
       return;
     }
 
-    // Update local state
-    setStations(prev => prev.map(station => 
-      station.name === stationName 
-        ? { ...station, [field]: value }
-        : station
-    ));
-
     // Use setTimeout to avoid setState during render
     setTimeout(() => {
-      // Immediately update localStorage
+      // Update local state
+      setStations(prev => prev.map(station => 
+        station.name === stationName 
+          ? { ...station, [field]: value }
+          : station
+      ));
+
+      // Update localStorage
       try {
         const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
         const updatedBicycles = bicycles.map((bicycle: any) => {
@@ -306,7 +290,10 @@ export default function AddStationPage() {
         const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
         const updatedBicycles = bicycles.filter((bicycle: any) => bicycle.name !== stationName);
         localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
-        loadStations();
+        
+        // Update local state to remove the deleted station
+        setStations(prev => prev.filter(station => station.name !== stationName));
+        
         alert(`Station "${stationName}" deleted successfully!`);
       } catch (error) {
         console.error('Error deleting station:', error);

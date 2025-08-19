@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Card from '@/components/ui/card';
@@ -103,12 +103,21 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       },
       tooltip: {
         callbacks: {
+          title: function(context: any) {
+            return 'All Stations Bike Status';
+          },
           label: function(context: any) {
-            const label = context.label || '';
-            const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${value} (${percentage}%)`;
+            const chart = context.chart;
+            const labels = chart.data.labels;
+            const values = chart.data.datasets[0].data;
+            const total = values.reduce((a: number, b: number) => a + b, 0);
+            
+            // Return all data points
+            return labels.map((label: string, index: number) => {
+              const value = values[index];
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            });
           },
         },
       },
@@ -150,13 +159,27 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
 };
 
 const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
+  // Calculate real-time active users (excluding logged out users)
+  const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
+  const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+  
+  const currentlyActiveUsers = activeSessions.filter((session: any) => {
+    const isInactive = inactiveSessions.some((inactiveSession: any) => 
+      inactiveSession.userId === session.userId
+    );
+    
+    // User is active if they have recent activity AND haven't logged out
+    return !isInactive && new Date(session.lastActivity) > thirtyMinutesAgo;
+  }).length;
+  
   const data = {
     labels: ['Active Users', 'Returning Users', 'New Users'],
     datasets: [
       {
         data: [
-          stats?.rentals.activeRentals || 0,
-          Math.max(0, (stats?.users.totalUsers || 0) - (stats?.users.regularUsers || 0) - (stats?.rentals.activeRentals || 0)),
+          currentlyActiveUsers,
+          Math.max(0, (stats?.users.totalUsers || 0) - (stats?.users.regularUsers || 0) - currentlyActiveUsers),
           stats?.users.regularUsers || 0,
         ],
         backgroundColor: [
@@ -190,12 +213,21 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       },
       tooltip: {
         callbacks: {
+          title: function(context: any) {
+            return 'User Activity';
+          },
           label: function(context: any) {
-            const label = context.label || '';
-            const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${value} (${percentage}%)`;
+            const chart = context.chart;
+            const labels = chart.data.labels;
+            const values = chart.data.datasets[0].data;
+            const total = values.reduce((a: number, b: number) => a + b, 0);
+            
+            // Return all data points
+            return labels.map((label: string, index: number) => {
+              const value = values[index];
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            });
           },
         },
       },
@@ -260,12 +292,21 @@ const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       },
       tooltip: {
         callbacks: {
+          title: function(context: any) {
+            return 'Reviews & Complaints';
+          },
           label: function(context: any) {
-            const label = context.label || '';
-            const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${value} (${percentage}%)`;
+            const chart = context.chart;
+            const labels = chart.data.labels;
+            const values = chart.data.datasets[0].data;
+            const total = values.reduce((a: number, b: number) => a + b, 0);
+            
+            // Return all data points
+            return labels.map((label: string, index: number) => {
+              const value = values[index];
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            });
           },
         },
       },
@@ -293,12 +334,32 @@ const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
 function AdminDashboard() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recent, setRecent] = useState<RecentActivity | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bicycles'>('overview');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  // Function to get active user count for display
+  const getActiveUserCount = () => {
+    const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
+    const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    
+    // Filter out users who have logged out
+    const activeUsers = activeSessions.filter((session: any) => {
+      const isInactive = inactiveSessions.some((inactiveSession: any) => 
+        inactiveSession.userId === session.userId
+      );
+      
+      // User is active if they have recent activity AND haven't logged out
+      return !isInactive && new Date(session.lastActivity) > thirtyMinutesAgo;
+    });
+    
+    return activeUsers.length;
+  };
 
   // Function to ensure proper rental data exists
   const ensureRentalData = () => {
@@ -495,6 +556,14 @@ function AdminDashboard() {
       };
     }
   }, [user]);
+
+  // Handle URL parameters for tab navigation
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'users', 'bicycles'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'users' | 'bicycles');
+    }
+  }, [searchParams]);
 
   // Show loading while checking user role
   if (!user) {
@@ -751,12 +820,15 @@ function AdminDashboard() {
           <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl">
+                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.users.totalUsers || 0}</div>
                   <div className="text-xs text-blue-100">Total Users</div>
+                  <div className="text-xs text-blue-200 mt-1">
+                    {getActiveUserCount()} currently active
                   </div>
                 </div>
+              </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.bicycles.totalBicycles || 0}</div>
@@ -826,27 +898,42 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [nameFilter, setNameFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  // Function to determine if user is active (has activity in last 2-3 months)
+  // Function to determine if user is currently active (using the system in real-time)
   const isUserActive = (user: any) => {
-    const userRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]').filter((rental: any) => rental.userId === user.id);
+    // First check if user has explicitly logged out
+    const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+    const userInactiveSession = inactiveSessions.find((session: any) => session.userId === user.id);
     
-    if (userRentals.length === 0) return false;
+    // If user has logged out, they are immediately inactive
+    if (userInactiveSession) {
+      return false;
+    }
     
-    // Check if user has any activity in the last 3 months
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    // Get active sessions from localStorage
+    const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
     
-    const recentActivity = userRentals.some((rental: any) => {
-      const rentalDate = new Date(rental.startTime);
-      return rentalDate > threeMonthsAgo;
+    // Check if user has an active session (logged in within last 30 minutes)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    
+    const userActiveSession = activeSessions.find((session: any) => {
+      return session.userId === user.id && new Date(session.lastActivity) > thirtyMinutesAgo;
     });
     
-    return recentActivity;
+    return !!userActiveSession;
   };
 
   useEffect(() => {
     fetchUsers();
   }, [roleFilter, refreshTrigger]);
+
+  // Refresh user data every 30 seconds to show real-time active users
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -1466,32 +1553,53 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
         // Use fixed slot count of 10, regardless of bike count
         const totalSlots = 10;
         
-        // If no slots exist, initialize them with 10 active slots
+        // If no slots exist, initialize them with proper status (slots 9-10 reserved)
         if (slots.length === 0) {
           const defaultSlots = Array.from({ length: 10 }, (_, index) => ({
             id: `slot_${stationKey}_${index + 1}`,
             slotNumber: index + 1,
-            status: 'active' as const,
+            status: (index >= 8) ? 'reserved' as const : 'active' as const,
             lastUpdated: new Date().toISOString(),
-            notes: ''
+            notes: (index >= 8) ? 'Reserved for bike returns' : ''
           }));
           localStorage.setItem(slotsKey, JSON.stringify(defaultSlots));
           
           return {
             totalSlots: 10,
-            activeSlots: 10,
+            activeSlots: 8,
             maintenanceSlots: 0,
-            availableSlots: 10
+            reservedSlots: 2,
+            availableSlots: 8
           };
         }
         
-        const activeSlots = slots.filter((slot: any) => slot.status === 'active').length;
-        const maintenanceSlots = slots.filter((slot: any) => slot.status === 'in-maintenance').length;
+        // Update existing slots to ensure slots 9-10 are properly marked as reserved
+        const updatedSlots = slots.map((slot: any) => {
+          if (slot.slotNumber >= 9) {
+            return {
+              ...slot,
+              status: 'reserved' as const,
+              notes: 'Reserved for bike returns',
+              lastUpdated: new Date().toISOString()
+            };
+          }
+          return slot;
+        });
+        
+        // Save updated slots if any changes were made
+        if (JSON.stringify(updatedSlots) !== JSON.stringify(slots)) {
+          localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
+        }
+        
+        const activeSlots = updatedSlots.filter((slot: any) => slot.status === 'active').length;
+        const maintenanceSlots = updatedSlots.filter((slot: any) => slot.status === 'in-maintenance').length;
+        const reservedSlots = updatedSlots.filter((slot: any) => slot.status === 'reserved').length;
 
         return {
           totalSlots,
           activeSlots,
           maintenanceSlots,
+          reservedSlots,
           availableSlots: activeSlots
         };
       } catch (error) {
@@ -1500,6 +1608,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           totalSlots: 10,
           activeSlots: 10,
           maintenanceSlots: 0,
+          reservedSlots: 0,
           availableSlots: 10
         };
       }
@@ -1520,16 +1629,9 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
     }
   };
 
-  const manageSlots = (stationId: string) => {
-    // Get the bicycle to create a proper station identifier
-    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-    const currentBicycle = bicycles.find((bike: any) => bike.id === stationId);
-    
-    if (currentBicycle) {
-      // Create a unique station identifier based on name and location
-      const stationKey = `${currentBicycle.name}_${currentBicycle.location}`;
-      router.push(`/admin/manage-slots?stationId=${stationKey}`);
-    }
+  const manageSlots = (stationKey: string) => {
+    // stationKey is already in the format "StationName_Location"
+    router.push(`/admin/manage-slots?stationId=${stationKey}`);
   };
 
 
@@ -1580,7 +1682,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       </div>
 
       {/* Stations Table */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div id="station-management" className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
           <div className="flex items-center justify-between">
                               <h3 className="text-white font-semibold flex items-center">
@@ -1648,7 +1750,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => manageSlots(bicycle.id)}
+                          onClick={() => manageSlots(`${bicycle.name}_${bicycle.location}`)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
                           Manage Slots

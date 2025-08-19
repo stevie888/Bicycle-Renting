@@ -207,11 +207,16 @@ function MyRentalsPageContent() {
     return rental.status === filter;
   });
 
+  // Sort filtered rentals by start time (newest first)
+  const sortedFilteredRentals = [...filteredRentals].sort((a, b) => 
+    new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+  );
+
   // Pagination logic
-  const totalPages = Math.ceil(filteredRentals.length / rentalsPerPage);
+  const totalPages = Math.ceil(sortedFilteredRentals.length / rentalsPerPage);
   const startIndex = (currentPage - 1) * rentalsPerPage;
   const endIndex = startIndex + rentalsPerPage;
-  const currentRentals = filteredRentals.slice(startIndex, endIndex);
+  const currentRentals = sortedFilteredRentals.slice(startIndex, endIndex);
 
   // Reset to first page when filter changes
   useEffect(() => {
@@ -270,10 +275,9 @@ function MyRentalsPageContent() {
         <div className="mb-2">
           <button
             onClick={() => router.back()}
-            className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-primary-50 text-primary-600 hover:text-primary-700 font-medium rounded-lg border border-gray-200 hover:border-primary-300 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-x-1"
+            className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
           >
-            <ArrowLeftIcon className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
-            <span className="text-sm">Back</span>
+            <ArrowLeftIcon className="w-5 h-5 text-white" />
           </button>
         </div>
 
@@ -486,7 +490,7 @@ function MyRentalsPageContent() {
               <div className="bg-white rounded-lg shadow-md border border-gray-100 p-2">
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, filteredRentals.length)} of {filteredRentals.length} rentals
+                    Showing {startIndex + 1} to {Math.min(endIndex, sortedFilteredRentals.length)} of {sortedFilteredRentals.length} rentals
                   </div>
                   
                   <div className="flex items-center gap-1">

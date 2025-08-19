@@ -32,6 +32,7 @@ interface AuthContextType {
     profileImage?: string;
   }) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  updateActivity: () => void;
   loading: boolean;
 }
 
@@ -78,6 +79,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userObj);
     localStorage.setItem("paddlenepal_current_user", JSON.stringify(userObj));
     console.log('AuthContext - User saved to localStorage');
+    
+    // Track user session for real-time active user monitoring
+    updateUserSession(userObj.id);
+  };
+
+  const updateUserSession = (userId: string) => {
+    const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
+    const now = new Date().toISOString();
+    
+    // Remove old session for this user if exists
+    const filteredSessions = activeSessions.filter((session: any) => session.userId !== userId);
+    
+    // Add new session
+    const newSession = {
+      userId,
+      lastActivity: now,
+      sessionId: `${userId}_${Date.now()}`
+    };
+    
+    localStorage.setItem('paddlenepal_active_sessions', JSON.stringify([...filteredSessions, newSession]));
   };
 
   // Login with mobile number and password
@@ -122,6 +143,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    if (user) {
+      // Remove user session when logging out and mark as immediately inactive
+      const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
+      const filteredSessions = activeSessions.filter((session: any) => session.userId !== user.id);
+      localStorage.setItem('paddlenepal_active_sessions', JSON.stringify(filteredSessions));
+      
+      // Add to inactive sessions to ensure they show as inactive immediately
+      const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+      const now = new Date().toISOString();
+      const inactiveSession = {
+        userId: user.id,
+        loggedOutAt: now,
+        sessionId: `${user.id}_${Date.now()}`
+      };
+      localStorage.setItem('paddlenepal_inactive_sessions', JSON.stringify([...inactiveSessions, inactiveSession]));
+    }
+    
     setUser(null);
     localStorage.removeItem("paddlenepal_current_user");
   };
@@ -172,6 +210,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+    const updateActivity = () => {
+    if (user) {
+      updateUserSession(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -179,7 +223,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       register, 
       logout, 
       updateProfile, 
-      changePassword,
+      changePassword, 
+      updateActivity,
       loading 
     }}>
       {children}

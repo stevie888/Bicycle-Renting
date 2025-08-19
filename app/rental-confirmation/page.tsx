@@ -32,7 +32,6 @@ function RentalConfirmationPageContent() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [latestRental, setLatestRental] = useState<Rental | null>(null);
-  const [isEndingRide, setIsEndingRide] = useState(false);
 
   // All hooks must be called before any conditional returns
   useEffect(() => {
@@ -115,126 +114,7 @@ function RentalConfirmationPageContent() {
     setLatestRental(latestRental);
   }, [user, router, loading]);
 
-  const handleEndRide = async () => {
-    if (!latestRental || !user) return;
-    
-    setIsEndingRide(true);
-    
-    try {
-      const endTime = new Date().toISOString();
-      const startTime = new Date(latestRental.startTime);
-      const endTimeDate = new Date(endTime);
-      
-      // Calculate rental duration
-      const durationMs = endTimeDate.getTime() - startTime.getTime();
-      const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-      const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      // Format times for display
-      const startTimeFormatted = startTime.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      const endTimeFormatted = endTimeDate.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      // Update the rental with end time and completed status
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
-      const updatedRentals = rentals.map((rental: any) => {
-        if (rental.id === latestRental.id) {
-          return {
-            ...rental,
-            endTime: endTime,
-            status: 'completed'
-          };
-        }
-        return rental;
-      });
-      
-      // Update the bike status to available
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-      const updatedBicycles = bicycles.map((bicycle: any) => {
-        if (bicycle.name === latestRental.bikeName) {
-          return {
-            ...bicycle,
-            status: 'available'
-          };
-        }
-        return bicycle;
-      });
-      
-      // Save updated data
-      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
-      
-      // Update local state
-      setLatestRental({
-        ...latestRental,
-        endTime: endTime,
-        status: 'completed'
-      });
-      
-      // Calculate final price for pay-as-you-go rentals
-      let finalPrice = latestRental.price;
-      if (latestRental.payAsYouGo) {
-        // Calculate price based on actual usage time (minimum 1 hour)
-        const actualHours = Math.max(1, Math.ceil(durationMs / (1000 * 60 * 60)));
-        finalPrice = actualHours * 25; // रू25 per hour
-        
-        // Update the rental with the calculated price
-        const updatedRentalsWithPrice = updatedRentals.map((rental: any) => {
-          if (rental.id === latestRental.id) {
-            return {
-              ...rental,
-              price: finalPrice
-            };
-          }
-          return rental;
-        });
-        localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentalsWithPrice));
-        
-        // Deduct credits from user account
-        const updatedUser = { ...user, credits: (user.credits || 0) - finalPrice };
-        localStorage.setItem('paddlenepal_current_user', JSON.stringify(updatedUser));
-        
-        // Also update the main users array for admin dashboard
-        const allUsers = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
-        const updatedUsers = allUsers.map((u: any) => 
-          u.id === user.id ? { ...u, credits: updatedUser.credits } : u
-        );
-        localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
-      }
-      
-      // Show completion message
-      alert(`🎉 Ride Completed Successfully!
 
-📅 Rental Period:
-   Start: ${startTimeFormatted}
-   End: ${endTimeFormatted}
-   Duration: ${durationHours}h ${durationMinutes}m
-
-💰 Total Cost: रू${finalPrice}${latestRental.payAsYouGo ? ' (charged based on actual usage)' : ''}
-
-Thank you for using Pedal Nepal! 🚴‍♂️`);
-      
-    } catch (error) {
-      console.error('Error ending ride:', error);
-      alert('Error ending ride. Please try again.');
-    } finally {
-      setIsEndingRide(false);
-    }
-  };
 
   const formatDuration = (duration: 'hourly' | 'daily' | 'pay-as-you-go', hours?: number) => {
     if (duration === 'hourly') {
@@ -365,10 +245,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
           <div className="mb-6">
             <button
               onClick={() => router.back()}
-              className="group flex items-center gap-3 px-4 py-2 bg-white hover:bg-primary-50 text-primary-600 hover:text-primary-700 font-medium rounded-lg border border-gray-200 hover:border-primary-300 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-x-1"
+              className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
             >
-              <ArrowLeftIcon className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1" />
-              <span>Back</span>
+              <ArrowLeftIcon className="w-5 h-5 text-white" />
             </button>
           </div>
           
@@ -402,9 +281,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <BikeIcon className="w-5 h-5 text-primary-600" />
-                      <span className="font-medium text-gray-700">Bike</span>
+                      <span className="font-medium text-gray-700">Slot</span>
                     </div>
-                    <span className="font-semibold text-gray-900">{latestRental.bikeName}</span>
+                    <span className="font-semibold text-gray-900">Slot {latestRental.slotNumber}</span>
                   </div>
 
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -480,10 +359,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="group flex items-center gap-3 px-4 py-2 bg-white hover:bg-primary-50 text-primary-600 hover:text-primary-700 font-medium rounded-lg border border-gray-200 hover:border-primary-300 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-x-1"
+            className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
           >
-            <ArrowLeftIcon className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1" />
-            <span>Back</span>
+            <ArrowLeftIcon className="w-5 h-5 text-white" />
           </button>
         </div>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
@@ -507,7 +385,7 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-orange-700">
-                    <span className="font-medium">Active Rental:</span> You can end your ride anytime using the "End My Ride" button below.
+                    <span className="font-medium">Active Rental:</span> You can end your ride anytime using the "End My Ride" button.
                     {getStatusText(latestRental.status, latestRental).includes('Overdue') && (
                       <span className="block mt-1 font-semibold">⚠️ Your rental is overdue - please end your ride soon!</span>
                     )}
@@ -528,9 +406,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <BikeIcon className="w-5 h-5 text-primary-600" />
-                      <span className="font-medium text-gray-700">Bike</span>
+                      <span className="font-medium text-gray-700">Slot</span>
                     </div>
-                    <span className="font-semibold text-gray-900">{latestRental.bikeName}</span>
+                    <span className="font-semibold text-gray-900">Slot {latestRental.slotNumber}</span>
                   </div>
 
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -619,18 +497,7 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                   </div>
                   {(latestRental?.status as string) === 'completed' ? 'Ride Completed' : 'Return Bike'}
                 </button>
-                <button
-                  onClick={handleEndRide}
-                  disabled={isEndingRide || (latestRental?.status as string) === 'completed'}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2 border-0"
-                >
-                  <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                  {isEndingRide ? 'Ending Ride...' : (latestRental?.status as string) === 'completed' ? 'Ride Completed' : 'End My Ride'}
-                </button>
+
               </div>
             </div>
           </div>

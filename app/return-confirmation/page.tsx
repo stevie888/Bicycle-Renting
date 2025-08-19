@@ -36,8 +36,22 @@ function ReturnConfirmationPage() {
     const start = new Date(startTime);
     const end = new Date(endTime);
     const durationMs = end.getTime() - start.getTime();
-    const hours = durationMs / (1000 * 60 * 60);
-    return hours;
+    const durationMinutes = Math.floor(durationMs / (1000 * 60));
+    const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+    const remainingMinutes = durationMinutes % 60;
+    
+    // Format duration for display
+    let formattedDuration = '';
+    if (durationHours > 0) {
+      formattedDuration = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
+      if (remainingMinutes > 0) {
+        formattedDuration += ` ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`;
+      }
+    } else {
+      formattedDuration = `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
+    }
+    
+    return formattedDuration;
   };
 
   if (loading) {
@@ -82,8 +96,8 @@ function ReturnConfirmationPage() {
                     <Clock className="w-5 h-5 text-purple-600" />
                     <span className="font-semibold text-gray-900">Ride Duration</span>
                   </div>
-                  <p className="text-gray-700">
-                    {calculateDuration(rentalDetails.startTime, rentalDetails.endTime).toFixed(1)} hours
+                                                       <p className="text-gray-700">
+                    {calculateDuration(rentalDetails.startTime, rentalDetails.endTime)}
                   </p>
                 </div>
 
@@ -105,33 +119,33 @@ function ReturnConfirmationPage() {
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="space-y-4">
-              <Button
-                onClick={() => router.push('/bicycles')}
-                className="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
-              >
-                <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                Rent Another Bike
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              
-              <Button
-                onClick={() => router.push('/')}
-                className="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
-              >
-                <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                </div>
-                Go to Home
-              </Button>
-            </div>
+                         {/* Action Buttons */}
+             <div className="space-y-4">
+               <button
+                 onClick={() => router.push('/bicycles')}
+                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3 border-0 cursor-pointer"
+               >
+                 <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                   </svg>
+                 </div>
+                 Rent Another Bike
+                 <ArrowRight className="w-4 h-4" />
+               </button>
+               
+               <button
+                 onClick={() => router.push('/')}
+                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3 border-0 cursor-pointer"
+               >
+                 <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                   </svg>
+                 </div>
+                 Go to Home
+               </button>
+             </div>
           </div>
 
           {/* Additional Info */}
