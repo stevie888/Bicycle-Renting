@@ -67,11 +67,11 @@ export default function AddStationPage() {
       // Group bicycles by station name to get unique stations
       const stationMap = new Map<string, Station>();
       
-      bicycles.forEach((bicycle: any) => {
+      bicycles.forEach((bicycle: any, index: number) => {
         const stationName = bicycle.name || bicycle.description;
         if (!stationMap.has(stationName)) {
           stationMap.set(stationName, {
-            id: bicycle.id,
+            id: `station_${stationName}_${index}`, // Ensure unique ID
             name: stationName,
             location: bicycle.location,
             bikeCount: 1, // Will be calculated
@@ -158,26 +158,28 @@ export default function AddStationPage() {
       });
       
       // Update local state to include the new station
-      if (!editingStation) {
-        const newStation: Station = {
-          id: (bicycles.length + 1).toString(),
-          name: formData.name,
-          location: formData.location,
-          bikeCount: formData.bikeCount,
-          hourlyRate: formData.hourlyRate,
-          dailyRate: formData.dailyRate,
-          status: 'active',
-          createdAt: new Date().toISOString()
-        };
-        setStations(prev => [...prev, newStation]);
-      } else {
-        // Update existing station in local state
-        setStations(prev => prev.map(station => 
-          station.name === formData.name 
-            ? { ...station, location: formData.location, hourlyRate: formData.hourlyRate, dailyRate: formData.dailyRate }
-            : station
-        ));
-      }
+      setTimeout(() => {
+        if (!editingStation) {
+          const newStation: Station = {
+            id: (bicycles.length + 1).toString(),
+            name: formData.name,
+            location: formData.location,
+            bikeCount: formData.bikeCount,
+            hourlyRate: formData.hourlyRate,
+            dailyRate: formData.dailyRate,
+            status: 'active',
+            createdAt: new Date().toISOString()
+          };
+          setStations(prev => [...prev, newStation]);
+        } else {
+          // Update existing station in local state
+          setStations(prev => prev.map(station => 
+            station.name === formData.name 
+              ? { ...station, location: formData.location, hourlyRate: formData.hourlyRate, dailyRate: formData.dailyRate }
+              : station
+          ));
+        }
+      }, 0);
     } catch (error) {
       console.error('Error saving station:', error);
       alert('Error saving station. Please try again.');
@@ -292,7 +294,9 @@ export default function AddStationPage() {
         localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
         
         // Update local state to remove the deleted station
-        setStations(prev => prev.filter(station => station.name !== stationName));
+        setTimeout(() => {
+          setStations(prev => prev.filter(station => station.name !== stationName));
+        }, 0);
         
         alert(`Station "${stationName}" deleted successfully!`);
       } catch (error) {

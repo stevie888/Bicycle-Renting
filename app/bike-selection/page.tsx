@@ -612,7 +612,7 @@ function BikeSelectionPageContent() {
 
       {/* Bike Slots Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-1.5">
+        <div className="grid grid-cols-5 md:grid-cols-5 lg:grid-cols-8 gap-1.5">
           {bikeSlots.map((slot) => {
             const statusInfo = getSlotStatusInfo(slot);
             const StatusIcon = statusInfo.icon;
@@ -657,12 +657,6 @@ function BikeSelectionPageContent() {
                 <div className="p-1.5">
                   <div className="text-center">
                     <h3 className="font-semibold text-gray-900 text-xs">{slot.bikeName}</h3>
-                    <div className="mt-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500">Rate:</span>
-                        <span className="font-semibold text-primary-600">रू{slot.pricePerHour}/hour</span>
-                      </div>
-                    </div>
                     {/* Show maintenance notes if available */}
                     {slot.status === 'in-maintenance' && slot.notes && (
                       <div className="mt-1 text-xs text-orange-600 truncate" title={slot.notes}>

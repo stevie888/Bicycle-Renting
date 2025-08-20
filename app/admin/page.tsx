@@ -252,84 +252,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   );
 };
 
-const ReviewsPieChart = ({ stats }: { stats: DashboardStats | null }) => {
-  // Mock data for reviews/complaints - you can replace with real data
-  const totalReviews = 15;
-  const bicycleComplaints = 8;
-  const generalReviews = totalReviews - bicycleComplaints;
 
-  const data = {
-    labels: ['General Reviews', 'Bicycle Complaints'],
-    datasets: [
-      {
-        data: [generalReviews, bicycleComplaints],
-        backgroundColor: [
-          '#10b981', // Green for positive reviews
-          '#f59e0b', // Amber for complaints
-        ],
-        borderColor: [
-          '#059669',
-          '#d97706',
-        ],
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          padding: 15,
-          usePointStyle: true,
-          font: {
-            size: 11,
-          },
-        },
-      },
-      tooltip: {
-        callbacks: {
-          title: function(context: any) {
-            return 'Reviews & Complaints';
-          },
-          label: function(context: any) {
-            const chart = context.chart;
-            const labels = chart.data.labels;
-            const values = chart.data.datasets[0].data;
-            const total = values.reduce((a: number, b: number) => a + b, 0);
-            
-            // Return all data points
-            return labels.map((label: string, index: number) => {
-              const value = values[index];
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}: ${value} (${percentage}%)`;
-            });
-          },
-        },
-      },
-    },
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-      <div className="flex items-center mb-4">
-        <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-amber-500 rounded-xl flex items-center justify-center mr-3">
-          <Activity className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Reviews & Complaints</h3>
-          <p className="text-sm text-gray-500">Customer feedback analysis</p>
-        </div>
-      </div>
-      <div className="h-48">
-        <Pie data={data} options={options} />
-      </div>
-    </div>
-  );
-};
 
 function AdminDashboard() {
   const { user } = useAuth();
@@ -338,7 +261,7 @@ function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recent, setRecent] = useState<RecentActivity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bicycles'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bicycles' | 'reviews'>('overview');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
@@ -560,8 +483,8 @@ function AdminDashboard() {
   // Handle URL parameters for tab navigation
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['overview', 'users', 'bicycles'].includes(tabParam)) {
-      setActiveTab(tabParam as 'overview' | 'users' | 'bicycles');
+    if (tabParam && ['overview', 'users', 'bicycles', 'reviews'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'users' | 'bicycles' | 'reviews');
     }
   }, [searchParams]);
 
@@ -796,6 +719,7 @@ function AdminDashboard() {
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'users', label: 'Users', icon: Users },
               { id: 'bicycles', label: 'Stations', icon: MapPin },
+              { id: 'reviews', label: 'Reviews', icon: Activity },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -844,10 +768,9 @@ function AdminDashboard() {
               </div>
 
             {/* Pie Charts Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <BikeStatusPieChart stats={stats} />
               <UserActivityPieChart stats={stats} />
-              <ReviewsPieChart stats={stats} />
             </div>
 
             {/* Recent Activity */}
@@ -882,6 +805,7 @@ function AdminDashboard() {
 
         {activeTab === 'users' && <UsersManagement refreshTrigger={refreshTrigger} />}
         {activeTab === 'bicycles' && <StationsManagement refreshTrigger={refreshTrigger} />}
+        {activeTab === 'reviews' && <ReviewsManagement refreshTrigger={refreshTrigger} />}
       </div>
     </div>
   );
@@ -1164,18 +1088,18 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SN</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No of Rides</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Most Visited Station</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining Credit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Credit Spent</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">SN</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Name</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Rides</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Station</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Duration</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Credits</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Spent</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1266,66 +1190,68 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
                         {index + 1}
                       </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-xs mr-2">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{user.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs rounded-full font-semibold ${statusColor}`}>
+                  <td className="px-3 py-3 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${statusColor}`}>
                           {userStatus}
                     </span>
                   </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         {totalRides}
                   </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {mostVisitedStation}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <span className="truncate block max-w-24" title={mostVisitedStation}>
+                          {mostVisitedStation}
+                        </span>
                   </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         {totalHours}h
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                  </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-green-600">
                         रू{user.credits || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-red-600">
                         रू{totalSpent}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
+                        <div className="flex flex-wrap gap-1">
                       <button
                         onClick={() => openAddCreditsModal(user)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
+                            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"
                       >
-                            Add Credits
+                            Add
                       </button>
                       {user.role === 'user' ? (
                         <button
                           onClick={() => promoteToAdmin(user.id)}
-                              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-xs"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs"
                         >
-                              Make Admin
+                              Admin
                         </button>
                       ) : (
                         <button
                           onClick={() => demoteToUser(user.id)}
-                              className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-lg text-xs"
+                              className="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs"
                         >
-                              Remove Admin
+                              Remove
                         </button>
                       )}
                       <button
                         onClick={() => deleteUser(user.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs"
+                            className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
                       >
                             Delete
                       </button>
@@ -1782,6 +1708,421 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Stations Found</h3>
           <p className="text-gray-600">No stations available matching your filters.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Reviews Management Component
+function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, reviews, complaints
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reviewsPerPage] = useState(5);
+
+  // Mock data for reviews and complaints
+  const mockReviews = [
+    {
+      id: 1,
+      userId: 'user1',
+      userName: 'Samir Kumar',
+      type: 'review',
+      title: 'Great Service!',
+      content: 'The bike rental service was excellent. Clean bikes and friendly staff.',
+      rating: 5,
+      station: 'Station 1',
+      createdAt: '2024-01-15T10:30:00Z',
+      status: 'active'
+    },
+    {
+      id: 2,
+      userId: 'user2',
+      userName: 'Priya Sharma',
+      type: 'complaint',
+      title: 'Bike Maintenance Issue',
+      content: 'The bike I rented had a flat tire. Please check maintenance regularly.',
+      rating: 2,
+      station: 'Station 2',
+      createdAt: '2024-01-14T15:45:00Z',
+      status: 'pending'
+    },
+    {
+      id: 3,
+      userId: 'user3',
+      userName: 'Raj Patel',
+      type: 'review',
+      title: 'Convenient Location',
+      content: 'Station location is perfect for exploring the city. Will use again!',
+      rating: 4,
+      station: 'Station 3',
+      createdAt: '2024-01-13T09:20:00Z',
+      status: 'active'
+    },
+    {
+      id: 4,
+      userId: 'user4',
+      userName: 'Anita Singh',
+      type: 'complaint',
+      title: 'App Not Working',
+      content: 'The mobile app crashed when I tried to rent a bike. Please fix this issue.',
+      rating: 1,
+      station: 'Station 1',
+      createdAt: '2024-01-12T14:15:00Z',
+      status: 'resolved'
+    },
+    {
+      id: 5,
+      userId: 'user5',
+      userName: 'Mohan Das',
+      type: 'review',
+      title: 'Affordable Pricing',
+      content: 'Very reasonable rates for bike rentals. Good value for money.',
+      rating: 5,
+      station: 'Station 2',
+      createdAt: '2024-01-11T11:30:00Z',
+      status: 'active'
+    },
+    {
+      id: 6,
+      userId: 'user6',
+      userName: 'Sita Devi',
+      type: 'review',
+      title: 'Excellent Experience',
+      content: 'Had a wonderful time exploring the city. Bikes were in perfect condition.',
+      rating: 5,
+      station: 'Station 3',
+      createdAt: '2024-01-10T16:20:00Z',
+      status: 'active'
+    },
+    {
+      id: 7,
+      userId: 'user7',
+      userName: 'Amit Kumar',
+      type: 'complaint',
+      title: 'Late Delivery',
+      content: 'The bike was delivered 30 minutes late. Please improve delivery times.',
+      rating: 3,
+      station: 'Station 1',
+      createdAt: '2024-01-09T12:45:00Z',
+      status: 'pending'
+    },
+    {
+      id: 8,
+      userId: 'user8',
+      userName: 'Lakshmi Bai',
+      type: 'review',
+      title: 'Friendly Staff',
+      content: 'The staff was very helpful and guided me through the process.',
+      rating: 4,
+      station: 'Station 2',
+      createdAt: '2024-01-08T14:30:00Z',
+      status: 'active'
+    },
+    {
+      id: 9,
+      userId: 'user9',
+      userName: 'Ramesh Singh',
+      type: 'complaint',
+      title: 'Bike Quality Issue',
+      content: 'The bike had some mechanical issues. Needs better quality control.',
+      rating: 2,
+      station: 'Station 3',
+      createdAt: '2024-01-07T10:15:00Z',
+      status: 'resolved'
+    },
+    {
+      id: 10,
+      userId: 'user10',
+      userName: 'Geeta Patel',
+      type: 'review',
+      title: 'Great Value',
+      content: 'Affordable prices and good service. Highly recommended!',
+      rating: 5,
+      station: 'Station 1',
+      createdAt: '2024-01-06T09:00:00Z',
+      status: 'active'
+    },
+    {
+      id: 11,
+      userId: 'user11',
+      userName: 'Vikram Malhotra',
+      type: 'complaint',
+      title: 'App Interface Issues',
+      content: 'The app interface is confusing. Please improve the user experience.',
+      rating: 2,
+      station: 'Station 2',
+      createdAt: '2024-01-05T15:30:00Z',
+      status: 'pending'
+    },
+    {
+      id: 12,
+      userId: 'user12',
+      userName: 'Sunita Verma',
+      type: 'review',
+      title: 'Perfect for Tourists',
+      content: 'As a tourist, this service was perfect for exploring the city.',
+      rating: 5,
+      station: 'Station 3',
+      createdAt: '2024-01-04T11:20:00Z',
+      status: 'active'
+    }
+  ];
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => {
+      setReviews(mockReviews);
+      setLoading(false);
+    }, 1000);
+  }, [refreshTrigger]);
+
+  const filteredReviews = reviews.filter(review => {
+    const matchesFilter = filter === 'all' || review.type === filter;
+    const matchesSearch = review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         review.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         review.userName.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  // Pagination logic
+  const indexOfLastReview = currentPage * reviewsPerPage;
+  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+  const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview);
+  const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'review': return 'text-green-600 bg-green-100';
+      case 'complaint': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getRatingStars = (rating: number) => {
+    return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Reviews & Complaints</h2>
+            <p className="text-gray-600">Manage customer feedback and complaints</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              {reviews.filter(r => r.type === 'review').length} Reviews
+            </div>
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              {reviews.filter(r => r.type === 'complaint').length} Complaints
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Search reviews and complaints..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'all' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('review')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'review' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Reviews
+            </button>
+            <button
+              onClick={() => setFilter('complaint')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'complaint' 
+                  ? 'bg-red-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Complaints
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews List */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Station</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentReviews.map((review) => (
+                <tr key={review.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                        {review.userName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{review.userName}</div>
+                        <div className="text-sm text-gray-500">ID: {review.userId}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(review.type)}`}>
+                      {review.type === 'review' ? 'Review' : 'Complaint'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">{review.title}</div>
+                    <div className="text-sm text-gray-500 max-w-xs truncate">{review.content}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-yellow-600 font-medium">{getRatingStars(review.rating)}</div>
+                    <div className="text-xs text-gray-500">{review.rating}/5</div>
+                  </td>
+                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                     {review.station}
+                   </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                     {new Date(review.createdAt).toLocaleDateString()}
+                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs">
+                        View
+                      </button>
+                      <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs">
+                        Reply
+                      </button>
+                      
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {filteredReviews.length === 0 && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+          <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reviews Found</h3>
+          <p className="text-gray-600">No reviews or complaints match your current filters.</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {indexOfFirstReview + 1} to {Math.min(indexOfLastReview, filteredReviews.length)} of {filteredReviews.length} reviews
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                Previous
+              </button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const pageNumber = index + 1;
+                  // Show first page, last page, current page, and pages around current
+                  const shouldShow = 
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
+                  
+                  if (shouldShow) {
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          currentPage === pageNumber
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <span key={pageNumber} className="px-2 py-2 text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
