@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   BikeIcon, 
@@ -36,6 +37,7 @@ interface Rental {
 function MyRentalsPageContent() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'recent' | 'completed'>('all');
@@ -53,7 +55,7 @@ function MyRentalsPageContent() {
     }
 
     // Get rentals for the current user
-    const allRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const allRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
     const userRentals = allRentals.filter((rental: any) => rental.userId === user.id);
     setRentals(userRentals);
     setLoading(false);
@@ -61,20 +63,20 @@ function MyRentalsPageContent() {
 
   const formatDuration = (duration: 'hourly' | 'daily' | 'pay-as-you-go', hours?: number) => {
     if (duration === 'hourly') {
-      return hours && hours > 1 ? `${hours} Hours` : '1 Hour';
+      return hours && hours > 1 ? `${hours} ${t('rentals.hours')}` : `1 ${t('rentals.hour')}`;
     } else if (duration === 'pay-as-you-go') {
-      return 'Pay as you go';
+      return t('bikeSelection.payAsYouGo');
     }
-    return 'Daily';
+    return t('bikeSelection.daily');
   };
 
   const formatPrice = (price: number, duration: 'hourly' | 'daily' | 'pay-as-you-go', hours?: number) => {
     if (duration === 'hourly') {
-      return hours && hours > 1 ? `रू${price} (रू25 × ${hours} hours)` : `रू${price}/hour`;
+      return hours && hours > 1 ? `रू${price} (रू25 × ${hours} ${t('rentals.hours')})` : `रू${price}${t('bike.perHour')}`;
     } else if (duration === 'pay-as-you-go') {
-      return `रू${price} (calculated on return)`;
+      return `रू${price} (${t('rentals.calculatedOnReturn')})`;
     }
-    return `रू${price}/day`;
+    return `रू${price}${t('bike.perDay')}`;
   };
 
   const getStatusColor = (status: string, rental: Rental) => {
@@ -100,19 +102,19 @@ function MyRentalsPageContent() {
       }
       
       if (isOverdue) {
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800 border-red-300';
       }
     }
     
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-300';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
@@ -139,19 +141,19 @@ function MyRentalsPageContent() {
       }
       
       if (isOverdue) {
-        return <XCircleIcon className="w-4 h-4" />;
+        return <XCircleIcon className="w-3 h-3" />;
       }
     }
     
     switch (status) {
       case 'active':
-        return <CheckCircleIcon className="w-4 h-4" />;
+        return <CheckCircleIcon className="w-3 h-3" />;
       case 'completed':
-        return <CheckCircleIcon className="w-4 h-4" />;
+        return <CheckCircleIcon className="w-3 h-3" />;
       case 'cancelled':
-        return <XCircleIcon className="w-4 h-4" />;
+        return <XCircleIcon className="w-3 h-3" />;
       default:
-        return <ClockIcon className="w-4 h-4" />;
+        return <HashIcon className="w-3 h-3" />;
     }
   };
 
@@ -164,35 +166,34 @@ function MyRentalsPageContent() {
       const rentalHours = rental.hours || 1;
       
       let isOverdue = false;
-      let overdueHours = 0;
       
       if (rentalDuration === 'hourly') {
         const endTime = new Date(startTime.getTime() + (rentalHours * 60 * 60 * 1000));
         isOverdue = currentTime > endTime;
-        if (isOverdue) {
-          overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-        }
       } else if (rentalDuration === 'daily') {
         const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000));
         isOverdue = currentTime > endTime;
-        if (isOverdue) {
-          overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-        }
       } else if (rentalDuration === 'pay-as-you-go') {
         // For pay-as-you-go, consider overdue after 24 hours
         const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000));
         isOverdue = currentTime > endTime;
-        if (isOverdue) {
-          overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-        }
       }
       
       if (isOverdue) {
-        return `Overdue (${overdueHours}h)`;
+        return t('rentals.overdue');
       }
     }
     
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    switch (status) {
+      case 'active':
+        return t('rentals.active');
+      case 'completed':
+        return t('rentals.completed');
+      case 'cancelled':
+        return t('rentals.cancelled');
+      default:
+        return status;
+    }
   };
 
   const filteredRentals = rentals.filter(rental => {
@@ -250,7 +251,7 @@ function MyRentalsPageContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -261,7 +262,7 @@ function MyRentalsPageContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your rentals...</p>
+          <p className="mt-4 text-gray-600">{t('rentals.loadingRentals')}</p>
         </div>
       </div>
     );
@@ -284,8 +285,8 @@ function MyRentalsPageContent() {
         {rentals.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 text-center">
             <BikeIcon className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <h3 className="text-base font-semibold text-gray-900 mb-1">No Rentals Yet</h3>
-            <p className="text-sm text-gray-600 mb-3">You haven't rented any bikes yet. Start your adventure today!</p>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{t('rentals.noRentalsYet')}</h3>
+            <p className="text-sm text-gray-600 mb-3">{t('rentals.noRentalsMessage')}</p>
             <button
               onClick={() => router.push('/bicycles')}
               className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm flex items-center justify-center gap-2"
@@ -295,7 +296,7 @@ function MyRentalsPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
-              Rent a Bike
+              {t('rentals.rentABike')}
             </button>
           </div>
         ) : (
@@ -308,13 +309,13 @@ function MyRentalsPageContent() {
                     <BikeIcon className="w-4 h-4 text-primary-600" />
                   </div>
                   <div>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-900">Rental History</h1>
-                    <p className="text-xs text-gray-600">Track your bike rental activities</p>
+                    <h1 className="text-lg sm:text-xl font-bold text-gray-900">{t('rentals.history')}</h1>
+                    <p className="text-xs text-gray-600">{t('rentals.trackActivities')}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xl sm:text-2xl font-bold text-primary-600">रू{totalSpent}</div>
-                  <div className="text-xs text-gray-500">Total Spent</div>
+                  <div className="text-xs text-gray-500">{t('rentals.totalSpent')}</div>
                 </div>
               </div>
 
@@ -327,7 +328,7 @@ function MyRentalsPageContent() {
                     </div>
                     <div>
                       <div className="text-base font-bold text-green-600">{recentRentals}</div>
-                      <div className="text-xs text-green-700">Recent Top 5</div>
+                      <div className="text-xs text-green-700">{t('rentals.recentTop5')}</div>
                     </div>
                   </div>
                 </div>
@@ -339,7 +340,7 @@ function MyRentalsPageContent() {
                     </div>
                     <div>
                       <div className="text-base font-bold text-blue-600">{completedRentals}</div>
-                      <div className="text-xs text-blue-700">Completed</div>
+                      <div className="text-xs text-blue-700">{t('rentals.completed')}</div>
                     </div>
                   </div>
                 </div>
@@ -351,7 +352,7 @@ function MyRentalsPageContent() {
                     </div>
                     <div>
                       <div className="text-base font-bold text-purple-600">{rentals.length}</div>
-                      <div className="text-xs text-purple-700">Total Rentals</div>
+                      <div className="text-xs text-purple-700">{t('rentals.totalRentals')}</div>
                     </div>
                   </div>
                 </div>
@@ -360,9 +361,9 @@ function MyRentalsPageContent() {
               {/* Filter Tabs */}
               <div className="flex gap-1 border-b border-gray-200">
                 {[
-                  { key: 'all', label: 'All Rentals', count: rentals.length },
-                  { key: 'recent', label: 'Recent', count: recentRentals },
-                  { key: 'completed', label: 'Completed', count: completedRentals }
+                  { key: 'all', label: t('rentals.allRentals'), count: rentals.length },
+                  { key: 'recent', label: t('rentals.recent'), count: recentRentals },
+                  { key: 'completed', label: t('rentals.completed'), count: completedRentals }
                 ].map((tab) => (
                   <button
                     key={tab.key}
@@ -392,7 +393,7 @@ function MyRentalsPageContent() {
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-gray-900">{rental.bikeName}</h3>
-                          <p className="text-xs text-gray-600">Rental ID: {rental.id}</p>
+                          <p className="text-xs text-gray-600">{t('rentals.rentalId')}: {rental.id}</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -413,17 +414,17 @@ function MyRentalsPageContent() {
                       <div className="space-y-2">
                         <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
                           <MapPinIcon className="w-3 h-3 text-primary-600" />
-                          Location Details
+                          {t('rentals.locationDetails')}
                         </h4>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 text-xs">
                             <div className="w-1 h-1 bg-primary-600 rounded-full"></div>
-                            <span className="text-gray-600">Station:</span>
+                            <span className="text-gray-600">{t('bike.station')}:</span>
                             <span className="font-medium">{rental.station}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs">
                             <div className="w-1 h-1 bg-primary-600 rounded-full"></div>
-                            <span className="text-gray-600">Slot:</span>
+                            <span className="text-gray-600">{t('bike.slot')}:</span>
                             <span className="font-medium">#{rental.slotNumber}</span>
                           </div>
                         </div>
@@ -433,24 +434,24 @@ function MyRentalsPageContent() {
                       <div className="space-y-2">
                         <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
                           <ClockIcon className="w-3 h-3 text-primary-600" />
-                          Rental Info
+                          {t('rentals.rentalInfo')}
                         </h4>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 text-xs">
                             <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                            <span className="text-gray-600">Duration:</span>
+                            <span className="text-gray-600">{t('rental.duration')}:</span>
                             <span className="font-medium">{formatDuration(rental.duration, rental.hours)}</span>
                           </div>
                           {rental.duration === 'hourly' && rental.hours && (
                             <div className="flex items-center gap-1.5 text-xs">
                               <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                              <span className="text-gray-600">Period:</span>
-                              <span className="font-medium">{rental.hours} hour{rental.hours !== 1 ? 's' : ''}</span>
+                              <span className="text-gray-600">{t('rentals.period')}:</span>
+                              <span className="font-medium">{rental.hours} {rental.hours !== 1 ? t('rentals.hours') : t('rentals.hour')}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1.5 text-xs">
                             <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                            <span className="text-gray-600">Rate:</span>
+                            <span className="text-gray-600">{t('bike.rate')}:</span>
                             <span className="font-medium">{formatPrice(rental.price, rental.duration, rental.hours)}</span>
                           </div>
                         </div>
@@ -460,22 +461,22 @@ function MyRentalsPageContent() {
                       <div className="space-y-2">
                         <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
                           <CalendarIcon className="w-3 h-3 text-primary-600" />
-                          Time & Cost
+                          {t('rentals.timeAndCost')}
                         </h4>
                         <div className="space-y-1">
                           <div className="text-xs">
-                            <div className="text-gray-600 mb-0.5">Start Time:</div>
+                            <div className="text-gray-600 mb-0.5">{t('rental.startTime')}:</div>
                             <div className="font-medium">{new Date(rental.startTime).toLocaleString()}</div>
                           </div>
                           {rental.endTime && (
                             <div className="text-xs">
-                              <div className="text-gray-600 mb-0.5">End Time:</div>
+                              <div className="text-gray-600 mb-0.5">{t('rental.endTime')}:</div>
                               <div className="font-medium">{new Date(rental.endTime).toLocaleString()}</div>
                             </div>
                           )}
                           <div className="pt-1.5 border-t border-gray-200">
                             <div className="text-base font-bold text-primary-600">रू{rental.price}</div>
-                            <div className="text-xs text-gray-500">Total Cost</div>
+                            <div className="text-xs text-gray-500">{t('rental.cost')}</div>
                           </div>
                         </div>
                       </div>
@@ -490,7 +491,7 @@ function MyRentalsPageContent() {
               <div className="bg-white rounded-lg shadow-md border border-gray-100 p-2">
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, sortedFilteredRentals.length)} of {sortedFilteredRentals.length} rentals
+                    {t('rentals.showing')} {startIndex + 1} {t('rentals.to')} {Math.min(endIndex, sortedFilteredRentals.length)} {t('rentals.of')} {sortedFilteredRentals.length} {t('rentals.rentals')}
                   </div>
                   
                   <div className="flex items-center gap-1">
@@ -552,7 +553,7 @@ function MyRentalsPageContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                Rent Another Bike
+                {t('rentals.rentAnotherBike')}
               </button>
             </div>
           </div>

@@ -63,7 +63,7 @@ function ManageSlots() {
       }
 
       // Get slots from localStorage or create default ones
-      const slotsKey = `paddlenepal_slots_${stationId}`; // stationId is now a station key like "StationName_Location"
+      const slotsKey = `pedalnepal_slots_${stationId}`; // stationId is now a station key like "StationName_Location"
       let existingSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
 
       // Parse the station key to get name and location
@@ -86,7 +86,7 @@ function ManageSlots() {
       }
 
       // Check for active rentals and mark slots as occupied
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const activeRentals = rentals.filter((rental: any) => 
         rental.status === 'active' && 
         rental.station === stationName
@@ -139,7 +139,7 @@ function ManageSlots() {
       );
       
       // Save to localStorage
-      const slotsKey = `paddlenepal_slots_${stationId}`;
+      const slotsKey = `pedalnepal_slots_${stationId}`;
       localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
       
       setSlots(updatedSlots);
@@ -187,7 +187,7 @@ function ManageSlots() {
   const resetTo10Slots = () => {
     if (confirm('This will reset all slots to exactly 10 slots. Continue?')) {
       try {
-        const slotsKey = `paddlenepal_slots_${stationId}`;
+        const slotsKey = `pedalnepal_slots_${stationId}`;
         
         // Create exactly 10 slots
         const newSlots = Array.from({ length: 10 }, (_, index) => ({

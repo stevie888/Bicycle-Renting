@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { 
   MapPinIcon, 
   BikeIcon, 
@@ -36,6 +37,7 @@ interface Bike {
 export default function BicyclesPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [loadingBikes, setLoadingBikes] = useState(true);
 
@@ -83,7 +85,7 @@ export default function BicyclesPage() {
   const getSlotStatistics = (stationName: string, location: string) => {
     try {
       const stationKey = `${stationName}_${location}`;
-      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      const slotsKey = `pedalnepal_slots_${stationKey}`;
       const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
       
       // If no slots exist, return default values (10 available slots)
@@ -216,7 +218,7 @@ export default function BicyclesPage() {
       if (bike.maintenanceSlots && bike.maintenanceSlots > 0) {
         return {
           status: 'maintenance',
-          text: 'Under Maintenance',
+          text: t('bike.maintenance'),
           icon: WrenchIcon,
           color: 'text-orange-600',
           bgColor: 'bg-orange-50',
@@ -225,7 +227,7 @@ export default function BicyclesPage() {
       } else {
         return {
           status: 'unavailable',
-          text: 'Currently Unavailable',
+          text: t('bike.occupied'),
           icon: AlertTriangleIcon,
           color: 'text-red-600',
           bgColor: 'bg-red-50',
@@ -235,7 +237,7 @@ export default function BicyclesPage() {
     }
     return {
       status: 'available',
-      text: 'Available',
+      text: t('bike.available'),
       icon: BikeIcon,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
@@ -248,7 +250,7 @@ export default function BicyclesPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-600 border-t-transparent mx-auto mb-6"></div>
-          <p className="text-gray-600 text-lg font-medium">Loading bike stations...</p>
+          <p className="text-gray-600 text-lg font-medium">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -261,11 +263,11 @@ export default function BicyclesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Available Bikes</h1>
-              <p className="text-gray-600">Find your perfect ride for exploring valley</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('bike.availableBikes')}</h1>
+              <p className="text-gray-600">{t('bike.findPerfectRide')}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Your Credits:</span>
+              <span className="text-sm text-gray-500">{t('bike.yourCredits')}:</span>
               <span className="font-semibold text-primary-600">{user?.credits || 0}</span>
             </div>
           </div>
@@ -330,10 +332,10 @@ export default function BicyclesPage() {
                   {/* Slot Information */}
                   {bike.totalSlots && (
                     <div className="flex items-center justify-between mb-3 text-xs text-gray-600">
-                      <span>Available Slots: {bike.availableSlots}/{bike.totalSlots}</span>
+                      <span>{t('bike.availableSlots')}: {bike.availableSlots}/{bike.totalSlots}</span>
                       {bike.maintenanceSlots && bike.maintenanceSlots > 0 && (
                         <span className="text-orange-600">
-                          {bike.maintenanceSlots} in maintenance
+                          {bike.maintenanceSlots} {t('bike.maintenance')}
                         </span>
                       )}
                     </div>
@@ -343,17 +345,17 @@ export default function BicyclesPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <MapPinIcon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-600">{bike.location}</span>
-                    <span className="text-xs text-primary-600 font-medium">• {bike.distance}</span>
+                    <span className="text-xs text-primary-600 font-medium">• {bike.distance.replace('km', t('bike.km'))}</span>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <span className="text-2xl font-bold text-primary-600">रू{bike.price}</span>
-                      <span className="text-sm text-gray-500 ml-1">/day</span>
+                      <span className="text-sm text-gray-500 ml-1">{t('bike.perDay')}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm text-gray-500">रू{bike.pricePerHour}/hr</span>
+                      <span className="text-sm text-gray-500">रू{bike.pricePerHour}{t('bike.perHour')}</span>
                     </div>
                   </div>
 
@@ -367,7 +369,7 @@ export default function BicyclesPage() {
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    {bike.available ? 'Rent Now' : availabilityStatus.text}
+                    {bike.available ? t('bike.rentNow') : availabilityStatus.text}
                   </button>
                 </div>
               </div>

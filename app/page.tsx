@@ -2,11 +2,13 @@
 import { MapPinIcon, BikeIcon, ArrowRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { useState, useEffect } from "react";
 
 export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const [hasActiveRental, setHasActiveRental] = useState(false);
   const [overdueMessage, setOverdueMessage] = useState("");
 
@@ -17,9 +19,8 @@ export default function Home() {
         router.push('/admin');
         return;
       }
-      
       // Check if user has an active rental
-      const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const userActiveRental = existingRentals.find((rental: any) => 
         rental.userId === user.id && rental.status === 'active'
       );
@@ -84,7 +85,7 @@ export default function Home() {
       <div className="h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -108,18 +109,18 @@ export default function Home() {
       <section className="flex-1 flex items-center justify-center px-4 py-4 md:px-6 md:py-8">
         <div className="max-w-4xl mx-auto text-center space-y-2 md:space-y-4">
           <div className="inline-flex items-center gap-0.5 bg-primary-50 text-primary-700 px-2 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium">
-            <span>Most Popular Bike Rental in Nepal</span>
+            <span>{t('home.subtitle')}</span>
           </div>
           
           <h1 className="text-xl md:text-5xl lg:text-6xl font-bold text-neutral-900 leading-tight">
-            Explore Valley
+            {t('home.title')}
             <br />
             <span className="text-primary-600">on Two Wheels</span>
           </h1>
           
           <p className="text-xs md:text-xl text-neutral-600 max-w-2xl mx-auto leading-tight">
-            Discover the breathtaking beauty of Nepal with our premium bicycle rental service. 
-            <span className="text-primary-600 font-semibold"> Browse Rent a bike</span> and start your adventure today!
+            {t('home.subtitle')}
+            <span className="text-primary-600 font-semibold"> {t('bike.rentBike')}</span> and start your adventure today!
           </p>
           
           <div className="flex justify-center">
@@ -134,7 +135,7 @@ export default function Home() {
               <div className="w-4 h-4 md:w-5 md:h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <BikeIcon className="w-2 h-2 md:w-3 md:h-3 text-white" />
               </div>
-              <span>{hasActiveRental ? 'Manage Active Rental' : 'Rent a Bike'}</span>
+              <span>{hasActiveRental ? 'Manage Active Rental' : t('bike.rentBike')}</span>
               <ArrowRightIcon className="w-3 h-3 md:w-4 md:h-4 group-hover:translate-x-1 transition-transform duration-200" />
             </button>
           </div>

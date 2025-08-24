@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function Error({
   error,
@@ -11,6 +12,7 @@ export default function Error({
   reset: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Log the error to an error reporting service
@@ -27,28 +29,28 @@ export default function Error({
             </svg>
           </div>
           
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong!</h2>
-          <p className="text-gray-600 mb-6">We're sorry, but something unexpected happened while loading this page.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('error.somethingWentWrong')}</h2>
+          <p className="text-gray-600 mb-6">{t('error.unexpectedError')}</p>
           
           <div className="space-y-3">
             <button
               onClick={() => reset()}
               className="w-full bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
-              Try again
+              {t('error.tryAgain')}
             </button>
             
             <button
               onClick={() => router.push('/')}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors"
             >
-              Go to Home
+              {t('error.goToHome')}
             </button>
           </div>
           
           {process.env.NODE_ENV === 'development' && (
             <details className="mt-6 text-left">
-              <summary className="text-sm text-gray-500 cursor-pointer">Error Details (Development)</summary>
+              <summary className="text-sm text-gray-500 cursor-pointer">{t('error.errorDetails')}</summary>
               <pre className="mt-2 text-xs text-red-600 bg-red-50 p-3 rounded overflow-auto">
                 {error.message}
               </pre>

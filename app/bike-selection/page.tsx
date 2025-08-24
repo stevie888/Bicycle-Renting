@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   MapPinIcon, 
@@ -44,6 +45,7 @@ function BikeSelectionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [station, setStation] = useState<Station | null>(null);
@@ -72,7 +74,7 @@ function BikeSelectionPageContent() {
       }
       
       const stationKey = `${stationName}_${mappedLocation}`;
-      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      const slotsKey = `pedalnepal_slots_${stationKey}`;
       const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
       
       return slots;
@@ -140,7 +142,7 @@ function BikeSelectionPageContent() {
     }
 
     // Check if user has an active rental BEFORE setting up the page
-    const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
     const userActiveRental = existingRentals.find((rental: any) => 
       rental.userId === user.id && rental.status === 'active'
     );
@@ -291,7 +293,7 @@ function BikeSelectionPageContent() {
 
   // Function to manage smart slot allocation
   const manageSmartSlotAllocation = (selectedSlot: BikeSlot) => {
-    const slotsKey = `paddlenepal_slots_${stationId}`;
+    const slotsKey = `pedalnepal_slots_${stationId}`;
     let allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
     
     // Ensure reserved slots (9-10) are always available for returns
@@ -371,7 +373,7 @@ function BikeSelectionPageContent() {
     }
 
     // FINAL SAFETY CHECK: Ensure user doesn't have an active rental
-    const currentRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const currentRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
     const userActiveRental = currentRentals.find((rental: any) => 
       rental.userId === user.id && rental.status === 'active'
     );
@@ -415,8 +417,8 @@ function BikeSelectionPageContent() {
       };
       
       // Save to localStorage without charging credits
-      const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
-      localStorage.setItem('paddlenepal_rentals', JSON.stringify([...existingRentals, rental]));
+      const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
+      localStorage.setItem('pedalnepal_rentals', JSON.stringify([...existingRentals, rental]));
       
       setShowBookingModal(false);
       setSelectedSlot(null);
@@ -458,16 +460,16 @@ function BikeSelectionPageContent() {
     const updatedUser = { ...user, credits: (user.credits || 0) - rentalPrice };
     
     // Save to localStorage
-    const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
-    localStorage.setItem('paddlenepal_rentals', JSON.stringify([...existingRentals, rental]));
-    localStorage.setItem('paddlenepal_current_user', JSON.stringify(updatedUser));
+    const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
+    localStorage.setItem('pedalnepal_rentals', JSON.stringify([...existingRentals, rental]));
+    localStorage.setItem('pedalnepal_current_user', JSON.stringify(updatedUser));
     
     // Also update the main users array for admin dashboard
-    const allUsers = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+    const allUsers = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
     const updatedUsers = allUsers.map((u: any) => 
       u.id === user.id ? { ...u, credits: updatedUser.credits } : u
     );
-    localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+    localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
     
     setShowBookingModal(false);
     setSelectedSlot(null);
@@ -604,8 +606,8 @@ function BikeSelectionPageContent() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white">
             <BikeIcon className="w-16 h-16 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold">Select Your Bike</h2>
-            <p className="text-lg opacity-90">Choose from available slots</p>
+                            <h2 className="text-3xl font-bold">{t('bikeSelection.title')}</h2>
+                          <p className="text-lg opacity-90">{t('bikeSelection.chooseSlots')}</p>
           </div>
         </div>
       </div>

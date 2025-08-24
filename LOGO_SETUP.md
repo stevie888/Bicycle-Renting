@@ -3,7 +3,7 @@
 ## 🎯 **Simple Steps to Use Your Logo:**
 
 ### **Step 1: Save Your Logo**
-1. **Copy your original PaddleNepal logo image**
+1. **Copy your original pedalNepal logo image**
 2. **Paste it into the `public` folder**
 3. **Rename it to `logo.png`** (or keep original name)
 
@@ -29,7 +29,7 @@ src="/your-logo-name.png"  // Change to your actual file name
 
 ## 🎨 **Your Logo Will Show:**
 
-- **Original PaddleNepal logo** with bicycle icon
+- **Original pedalNepal logo** with bicycle icon
 - **"BikeShare" text** next to it in the navbar
 - **Professional appearance** in your bike rental app
 

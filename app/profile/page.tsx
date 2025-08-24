@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins } from "lucide-rea
 
 export default function ProfilePage() {
   const { user, updateProfile, logout, loading, changePassword } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const [profile, setProfile] = useState({
@@ -52,11 +54,11 @@ export default function ProfilePage() {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
       } else {
-        setError("Failed to update profile. Please try again.");
+        setError(t('profile.updateFailed'));
       }
     } catch (error) {
       console.error('Update profile error:', error);
-      setError("An error occurred. Please try again.");
+      setError(t('profile.updateError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,13 +72,13 @@ export default function ProfilePage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword) {
-      setPwMsg("Please fill in both fields.");
+      setPwMsg(t('profile.fillBothFields'));
       return;
     }
     if (await changePassword(oldPassword, newPassword)) {
-      setPwMsg("Password changed successfully!");
+      setPwMsg(t('profile.passwordChanged'));
     } else {
-      setPwMsg("Old password incorrect.");
+      setPwMsg(t('profile.oldPasswordIncorrect'));
     }
     setOldPassword("");
     setNewPassword("");
@@ -103,7 +105,7 @@ export default function ProfilePage() {
       <div className="p-8 flex flex-col gap-8">
         {showSuccess && (
           <div className="mb-2 p-2 rounded bg-green-100 text-green-800 text-center border border-green-300">
-            Profile updated successfully!
+            {t('profile.updateSuccess')}
           </div>
         )}
         {error && (
@@ -113,7 +115,7 @@ export default function ProfilePage() {
         )}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><UserIcon className="w-4 h-4 text-blue-400" /> Name</label>
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><UserIcon className="w-4 h-4 text-blue-400" /> {t('auth.name')}</label>
             <input
               className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
               value={profile.name}
@@ -122,7 +124,7 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Mail className="w-4 h-4 text-blue-400" /> Email</label>
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><Mail className="w-4 h-4 text-blue-400" /> {t('auth.email')}</label>
             <input
               className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
               value={profile.email}
@@ -131,7 +133,7 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Smartphone className="w-4 h-4 text-blue-400" /> Mobile</label>
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><Smartphone className="w-4 h-4 text-blue-400" /> {t('auth.mobile')}</label>
             <input
               className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
               value={profile.mobile}
@@ -140,10 +142,10 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-primary-500" /> Credits</label>
+            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-primary-500" /> {t('profile.credits')}</label>
             <div className="border px-3 py-2 rounded-lg bg-gray-50 flex justify-between items-center">
-              <span className="text-gray-700">{user.credits || 0} credits</span>
-              <span className="text-sm text-gray-500">({Math.floor((user.credits || 0) / 50)} rentals available)</span>
+              <span className="text-gray-700">{user.credits || 0} {t('profile.credits')}</span>
+              <span className="text-sm text-gray-500">({Math.floor((user.credits || 0) / 50)} {t('profile.rentalsAvailable')})</span>
             </div>
           </div>
           {edit ? (
@@ -152,7 +154,7 @@ export default function ProfilePage() {
               className="w-full mt-2 bg-primary-600 text-white rounded-lg py-2 font-semibold hover:bg-primary-700 transition disabled:bg-gray-400"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? t('common.saving') : t('common.save')}
             </button>
           ) : (
             <button
@@ -160,23 +162,23 @@ export default function ProfilePage() {
               className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
               onClick={handleEditClick}
             >
-              Edit
+              {t('common.edit')}
             </button>
           )}
         </div>
         <div className="border-t pt-6 mt-2 flex flex-col gap-4">
           <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
-            <label className="font-semibold text-gray-700">Change Password</label>
+            <label className="font-semibold text-gray-700">{t('profile.changePassword')}</label>
             <Input
               type="password"
-              placeholder="Old password"
+              placeholder={t('profile.oldPassword')}
               value={oldPassword}
               onChange={e => setOldPassword(e.target.value)}
               className="rounded-lg"
             />
             <Input
               type="password"
-              placeholder="New password"
+              placeholder={t('profile.newPassword')}
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               className="rounded-lg"
@@ -186,7 +188,7 @@ export default function ProfilePage() {
               className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
               disabled={!oldPassword || !newPassword}
             >
-              Change Password
+              {t('profile.changePassword')}
             </button>
             {pwMsg && <div className="text-center text-sm text-green-600">{pwMsg}</div>}
           </form>
@@ -198,7 +200,7 @@ export default function ProfilePage() {
             onClick={() => router.push('/')}
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
+            {t('common.back')}
           </button>
         </div>
       </div>

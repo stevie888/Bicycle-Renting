@@ -9,8 +9,8 @@ export default function DebugStoragePage() {
   useEffect(() => {
     // Load data from localStorage
     const loadData = () => {
-      const storedUsers = localStorage.getItem('paddlenepal_users');
-      const storedCurrentUser = localStorage.getItem('paddlenepal_current_user');
+      const storedUsers = localStorage.getItem('pedalnepal_users');
+      const storedCurrentUser = localStorage.getItem('pedalnepal_current_user');
       
       if (storedUsers) {
         setUsers(JSON.parse(storedUsers));
@@ -25,10 +25,10 @@ export default function DebugStoragePage() {
   }, []);
 
   const clearStorage = () => {
-    localStorage.removeItem('paddlenepal_users');
-    localStorage.removeItem('paddlenepal_current_user');
-    localStorage.removeItem('paddlenepal_bicycles');
-    localStorage.removeItem('paddlenepal_rentals');
+    localStorage.removeItem('pedalnepal_users');
+    localStorage.removeItem('pedalnepal_current_user');
+    localStorage.removeItem('pedalnepal_bicycles');
+    localStorage.removeItem('pedalnepal_rentals');
     setUsers([]);
     setCurrentUser(null);
     alert('Storage cleared! Refresh the page to reinitialize.');

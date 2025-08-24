@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import { useLanguage } from '@/components/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, MapPin, Clock, CreditCard, ArrowRight } from 'lucide-react';
 
 function ReturnConfirmationPage() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [rentalDetails, setRentalDetails] = useState<any>(null);
 
@@ -21,7 +23,7 @@ function ReturnConfirmationPage() {
     }
 
     // Get the latest completed rental for this user
-    const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+    const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
     const userRentals = rentals.filter((rental: any) => rental.userId === user.id);
     const latestCompletedRental = userRentals
       .filter((rental: any) => rental.status === 'completed')
@@ -59,7 +61,7 @@ function ReturnConfirmationPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
-          <p className="text-gray-600 text-lg font-medium">Loading...</p>
+          <p className="text-gray-600 text-lg font-medium">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -75,8 +77,8 @@ function ReturnConfirmationPage() {
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
             
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Bike Returned Successfully!</h1>
-            <p className="text-gray-600 mb-8">Your bike has been returned and your ride is complete.</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('return.returnConfirmed')}!</h1>
+            <p className="text-gray-600 mb-8">{t('return.returnSuccess')}</p>
 
             {rentalDetails && (
               <div className="space-y-4 mb-8">
@@ -84,19 +86,19 @@ function ReturnConfirmationPage() {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <MapPin className="w-5 h-5 text-blue-600" />
-                    <span className="font-semibold text-gray-900">Return Location</span>
+                    <span className="font-semibold text-gray-900">{t('return.returnLocation')}</span>
                   </div>
-                  <p className="text-gray-700">{rentalDetails.returnStation || 'Unknown Station'}</p>
-                  <p className="text-sm text-gray-500">Slot {rentalDetails.returnSlotNumber || 'N/A'}</p>
+                  <p className="text-gray-700">{rentalDetails.returnStation || t('common.unknown')}</p>
+                  <p className="text-sm text-gray-500">{t('bike.slot')} {rentalDetails.returnSlotNumber || 'N/A'}</p>
                 </div>
 
                 {/* Ride Duration */}
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <Clock className="w-5 h-5 text-purple-600" />
-                    <span className="font-semibold text-gray-900">Ride Duration</span>
+                    <span className="font-semibold text-gray-900">{t('rental.duration')}</span>
                   </div>
-                                                       <p className="text-gray-700">
+                  <p className="text-gray-700">
                     {calculateDuration(rentalDetails.startTime, rentalDetails.endTime)}
                   </p>
                 </div>
@@ -105,21 +107,21 @@ function ReturnConfirmationPage() {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <CreditCard className="w-5 h-5 text-green-600" />
-                    <span className="font-semibold text-gray-900">Total Cost</span>
+                    <span className="font-semibold text-gray-900">{t('rental.cost')}</span>
                   </div>
                   <p className="text-2xl font-bold text-green-600">₹{rentalDetails.price || 0}</p>
-                  <p className="text-sm text-gray-500">Deducted from your credits</p>
+                  <p className="text-sm text-gray-500">{t('return.deductedFromCredits')}</p>
                 </div>
 
                 {/* Remaining Credits */}
                 <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                  <p className="text-sm text-gray-600 mb-1">Remaining Credits</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('return.remainingCredits')}</p>
                   <p className="text-xl font-bold text-green-600">₹{user?.credits || 0}</p>
                 </div>
               </div>
             )}
 
-                         {/* Action Buttons */}
+            {/* Action Buttons */}
              <div className="space-y-4">
                <button
                  onClick={() => router.push('/bicycles')}
@@ -130,7 +132,7 @@ function ReturnConfirmationPage() {
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                    </svg>
                  </div>
-                 Rent Another Bike
+                 {t('return.rentAnother')}
                  <ArrowRight className="w-4 h-4" />
                </button>
                
@@ -143,16 +145,16 @@ function ReturnConfirmationPage() {
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                    </svg>
                  </div>
-                 Go to Home
+                 {t('return.goHome')}
                </button>
              </div>
           </div>
 
           {/* Additional Info */}
           <div className="bg-blue-50 rounded-xl p-4 mt-6">
-            <h3 className="font-semibold text-blue-900 mb-2">Thank you for using PaddleNepal!</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">{t('return.thankYouMessage')}</h3>
             <p className="text-sm text-blue-700">
-              Your bike has been safely returned. You can now rent another bike from any station or check your ride history in your profile.
+              {t('return.additionalInfo')}
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import { useLanguage } from '@/components/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Card from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,7 @@ interface RecentActivity {
 }
 
 // Pie Chart Components
-const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
+const BikeStatusPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (key: string) => string }) => {
   // Use the total bikes from stats (already calculated as stations * 10)
   const totalBikes = stats?.bicycles.totalBicycles || 0;
   
@@ -68,7 +69,7 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   const emptySlots = Math.max(0, totalBikes - availableBikes - rentedBikes);
   
   const data = {
-    labels: ['Rented Bikes', 'Empty Slots', 'Available Bikes'],
+    labels: [t('admin.rentedBikes'), t('admin.emptySlots'), t('admin.availableBikes')],
     datasets: [
       {
         data: [rentedBikes, emptySlots, availableBikes],
@@ -104,7 +105,7 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       tooltip: {
         callbacks: {
           title: function(context: any) {
-            return 'All Stations Bike Status';
+            return t('admin.bikeStatusTitle');
           },
           label: function(context: any) {
             const chart = context.chart;
@@ -131,8 +132,8 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
           <Bike className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">All Stations Bike Status</h3>
-          <p className="text-sm text-gray-500">Total bikes across all stations</p>
+          <h3 className="text-lg font-semibold text-gray-900">{t('admin.bikeStatusTitle')}</h3>
+          <p className="text-sm text-gray-500">{t('admin.bikeStatusDescription')}</p>
         </div>
       </div>
       <div className="h-48">
@@ -143,22 +144,22 @@ const BikeStatusPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
         <div className="text-center">
           <div className="font-semibold text-red-600">{rentedBikes}</div>
-          <div className="text-gray-500">Rented</div>
+          <div className="text-gray-500">{t('admin.rented')}</div>
         </div>
         <div className="text-center">
           <div className="font-semibold text-gray-600">{emptySlots}</div>
-          <div className="text-gray-500">Empty</div>
+          <div className="text-gray-500">{t('admin.empty')}</div>
         </div>
         <div className="text-center">
           <div className="font-semibold text-green-600">{availableBikes}</div>
-          <div className="text-gray-500">Available</div>
+          <div className="text-gray-500">{t('admin.available')}</div>
         </div>
       </div>
     </div>
   );
 };
 
-const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
+const UserActivityPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (key: string) => string }) => {
   // Calculate real-time active users (excluding logged out users)
   const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
   const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
@@ -174,7 +175,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
   }).length;
   
   const data = {
-    labels: ['Active Users', 'Returning Users', 'New Users'],
+    labels: [t('admin.activeUsers'), t('admin.returningUsers'), t('admin.newUsers')],
     datasets: [
       {
         data: [
@@ -214,7 +215,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
       tooltip: {
         callbacks: {
           title: function(context: any) {
-            return 'User Activity';
+            return t('admin.userActivityTitle');
           },
           label: function(context: any) {
             const chart = context.chart;
@@ -241,8 +242,8 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
           <Users className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">User Activity</h3>
-          <p className="text-sm text-gray-500">User engagement breakdown</p>
+          <h3 className="text-lg font-semibold text-gray-900">{t('admin.userActivityTitle')}</h3>
+          <p className="text-sm text-gray-500">{t('admin.userActivityDescription')}</p>
         </div>
       </div>
       <div className="h-48">
@@ -256,6 +257,7 @@ const UserActivityPieChart = ({ stats }: { stats: DashboardStats | null }) => {
 
 function AdminDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -286,8 +288,8 @@ function AdminDashboard() {
 
   // Function to ensure proper rental data exists
   const ensureRentalData = () => {
-    const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
-    const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+    const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
+    const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
     
     // Find Samir's user ID
     const samir = users.find((u: any) => u.name === 'Samir');
@@ -355,7 +357,7 @@ function AdminDashboard() {
       
       // Add new rentals to existing ones
       const updatedRentals = [...existingRentals, ...newRentals];
-      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
+      localStorage.setItem('pedalnepal_rentals', JSON.stringify(updatedRentals));
       console.log('Created rental data for Samir with 6 hours total duration');
     }
   };
@@ -363,8 +365,8 @@ function AdminDashboard() {
   // Add global test function to window object
   if (typeof window !== 'undefined') {
     (window as any).testDurationCalculation = () => {
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       const samir = users.find((u: any) => u.name === 'Samir');
       
       if (!samir) {
@@ -404,7 +406,7 @@ function AdminDashboard() {
     };
     
     (window as any).createTestRental = () => {
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       const samir = users.find((u: any) => u.name === 'Samir');
       
       if (!samir) {
@@ -426,9 +428,9 @@ function AdminDashboard() {
         payAsYouGo: true
       };
       
-      const existingRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const existingRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const updatedRentals = [...existingRentals, newRental];
-      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
+      localStorage.setItem('pedalnepal_rentals', JSON.stringify(updatedRentals));
       
       console.log('Created test rental for Samir');
       console.log('New rental:', newRental);
@@ -494,7 +496,7 @@ function AdminDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
-          <p className="text-gray-600 text-lg font-medium">Loading Admin Dashboard...</p>
+          <p className="text-gray-600 text-lg font-medium">{t('admin.loadingDashboard')}</p>
         </div>
       </div>
     );
@@ -509,10 +511,10 @@ function AdminDashboard() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <UserCheck className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-3xl font-bold text-red-600 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-6">You don't have permission to access the admin dashboard.</p>
+            <h1 className="text-3xl font-bold text-red-600 mb-4">{t('admin.accessDenied')}</h1>
+            <p className="text-gray-600 mb-6">{t('admin.noPermission')}</p>
             <Button onClick={() => router.push('/')} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
-            Go to Home
+            {t('admin.goToHome')}
           </Button>
           </div>
         </div>
@@ -528,9 +530,9 @@ function AdminDashboard() {
       ensureRentalData();
       
       // Get data from localStorage
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       
       // Update existing data to use proper station names
       const updatedBicycles = bicycles.map((bicycle: any, index: number) => {
@@ -581,11 +583,11 @@ function AdminDashboard() {
             createdAt: new Date().toISOString(),
           },
         ];
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(initialStations));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(initialStations));
         updatedBicycles.push(...initialStations);
       } else {
         // Save updated bicycles back to localStorage
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
       }
       
       // Calculate stats
@@ -668,9 +670,9 @@ function AdminDashboard() {
               </div>
             <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Admin Dashboard
+                  {t('admin.dashboard')}
                 </h1>
-                <p className="text-gray-600 text-xs">Manage PaddleNepal</p>
+                <p className="text-gray-600 text-xs">{t('admin.managePaddleNepal')}</p>
             </div>
             </div>
             <div className="text-right">
@@ -685,14 +687,14 @@ function AdminDashboard() {
               className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-4 rounded-xl shadow-lg text-sm font-medium"
               >
               <Plus className="w-4 h-4 mr-2" />
-                Add User
+                {t('admin.addUser')}
               </Button>
               <Button
               onClick={handleAddStation}
               className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl shadow-lg text-sm font-medium"
               >
               <Plus className="w-4 h-4 mr-2" />
-                Add Station
+                {t('admin.addStation')}
               </Button>
               <Button
               onClick={() => {
@@ -716,10 +718,10 @@ function AdminDashboard() {
         <div className="px-4 py-2">
           <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
             {[
-              { id: 'overview', label: 'Overview', icon: BarChart3 },
-              { id: 'users', label: 'Users', icon: Users },
-              { id: 'bicycles', label: 'Stations', icon: MapPin },
-              { id: 'reviews', label: 'Reviews', icon: Activity },
+              { id: 'overview', label: t('admin.overview'), icon: BarChart3 },
+              { id: 'users', label: t('admin.users'), icon: Users },
+              { id: 'bicycles', label: t('admin.stations'), icon: MapPin },
+              { id: 'reviews', label: t('admin.reviews'), icon: Activity },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -747,30 +749,30 @@ function AdminDashboard() {
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.users.totalUsers || 0}</div>
-                  <div className="text-xs text-blue-100">Total Users</div>
+                  <div className="text-xs text-blue-100">{t('admin.totalUsers')}</div>
                   <div className="text-xs text-blue-200 mt-1">
-                    {getActiveUserCount()} currently active
+                    {getActiveUserCount()} {t('admin.currentlyActive')}
                   </div>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.bicycles.totalBicycles || 0}</div>
-                  <div className="text-xs text-green-100">Total Bikes</div>
+                  <div className="text-xs text-green-100">{t('admin.totalBikes')}</div>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.rentals.totalRentals || 0}</div>
-                  <div className="text-xs text-purple-100">Total Rentals</div>
+                  <div className="text-xs text-purple-100">{t('admin.totalRentals')}</div>
                   </div>
                 </div>
               </div>
 
             {/* Pie Charts Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <BikeStatusPieChart stats={stats} />
-              <UserActivityPieChart stats={stats} />
+              <BikeStatusPieChart stats={stats} t={t} />
+              <UserActivityPieChart stats={stats} t={t} />
             </div>
 
             {/* Recent Activity */}
@@ -778,7 +780,7 @@ function AdminDashboard() {
               <div className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-4">
                   <h3 className="text-white font-semibold flex items-center">
                   <Activity className="w-5 h-5 mr-2" />
-                  Recent Activity
+                  {t('admin.recentActivity')}
                   </h3>
                 </div>
                 <div className="p-6">
@@ -790,7 +792,7 @@ function AdminDashboard() {
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-semibold text-gray-900">{user.name}</div>
-                        <div className="text-xs text-gray-500">New user registered</div>
+                        <div className="text-xs text-gray-500">{t('admin.newUserRegistered')}</div>
                     </div>
                       <div className="text-xs text-gray-400">
                         {new Date(user.createdAt).toLocaleDateString()}
@@ -813,6 +815,7 @@ function AdminDashboard() {
 
 // Users Management Component
 function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState('');
@@ -862,8 +865,8 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const fetchUsers = async () => {
     try {
       // Get users from localStorage
-      const allUsers = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
-      const allRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const allUsers = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
+      const allRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       
       console.log('fetchUsers - allUsers:', allUsers);
       console.log('fetchUsers - allRentals:', allRentals);
@@ -914,9 +917,9 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       const updatedUsers = users.filter((user: any) => user.id !== userId);
-      localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
       
         fetchUsers();
     } catch (error) {
@@ -928,11 +931,11 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
     if (!confirm('Are you sure you want to promote this user to admin?')) return;
 
     try {
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       const updatedUsers = users.map((user: any) => 
         user.id === userId ? { ...user, role: 'admin' } : user
       );
-      localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
       
         fetchUsers();
     } catch (error) {
@@ -945,11 +948,11 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
     if (!confirm('Are you sure you want to demote this admin to user?')) return;
 
     try {
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       const updatedUsers = users.map((user: any) => 
         user.id === userId ? { ...user, role: 'user' } : user
       );
-      localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
       
         fetchUsers();
     } catch (error) {
@@ -971,8 +974,8 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
       console.log('Adding credits:', { selectedUser, creditsToAdd });
       
       // Get current data
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
-      const allRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
+      const allRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       
       // Find the user and calculate their current spending
       const userRentals = allRentals.filter((rental: any) => rental.userId === selectedUser.id);
@@ -1003,20 +1006,20 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
             }
           : user
       );
-      localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+      localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
       
       console.log('Updated users in localStorage:', updatedUsers);
       console.log('Updated user data:', updatedUsers.find((u: any) => u.id === selectedUser.id));
       
       // Update current user if it's the same user
-      const currentUser = JSON.parse(localStorage.getItem('paddlenepal_current_user') || 'null');
+      const currentUser = JSON.parse(localStorage.getItem('pedalnepal_current_user') || 'null');
       if (currentUser && currentUser.id === selectedUser.id) {
         const updatedCurrentUser = { 
           ...currentUser, 
           initialCredits: newInitialCredits,
           credits: newCurrentCredits 
         };
-        localStorage.setItem('paddlenepal_current_user', JSON.stringify(updatedCurrentUser));
+        localStorage.setItem('pedalnepal_current_user', JSON.stringify(updatedCurrentUser));
         console.log('Updated current user:', updatedCurrentUser);
       }
       
@@ -1053,7 +1056,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
       <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.filterByName')}</label>
             <input
               type="text"
               placeholder="Search by name..."
@@ -1063,16 +1066,16 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
           />
             </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.filterByStatus')}</label>
         <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 bg-white"
             >
-              <option value="">All Status</option>
-              <option value="active">Active Users</option>
-              <option value="inactive">Inactive Users</option>
-              <option value="admin">Admin Users</option>
+              <option value="">{t('admin.allStatus')}</option>
+              <option value="active">{t('admin.activeUsers')}</option>
+              <option value="inactive">{t('admin.inactiveUsers')}</option>
+              <option value="admin">{t('admin.adminUsers')}</option>
         </select>
           </div>
         </div>
@@ -1083,7 +1086,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
         <div className="bg-gradient-to-r from-green-500 to-teal-500 px-6 py-4">
           <h3 className="text-white font-semibold flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            User Management ({users.length})
+            {t('admin.userManagement')} ({users.length})
           </h3>
         </div>
         
@@ -1091,15 +1094,15 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <table className="w-full min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">SN</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Name</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Rides</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Station</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Duration</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Credits</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Spent</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">{t('admin.serialNumber')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">{t('admin.name')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">{t('admin.status')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('admin.rides')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">{t('admin.station')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">{t('admin.duration')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('admin.credits')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">{t('admin.spent')}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">{t('admin.actions')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1114,7 +1117,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                 )
                 .map((user, index) => {
                   // Calculate user statistics
-                  const allRentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+                  const allRentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
                   console.log('All rentals:', allRentals);
                   console.log('User ID:', user.id, 'User name:', user.name);
                   const userRentals = allRentals.filter((rental: any) => rental.userId === user.id);
@@ -1181,7 +1184,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   const totalSpent = completedRentals.reduce((total: number, rental: any) => total + (rental.price || 0), 0);
                   
                   // Determine user status
-                  const userStatus = user.role === 'admin' ? 'Admin' : (isUserActive(user) ? 'Active' : 'Inactive');
+                  const userStatus = user.role === 'admin' ? t('admin.statusAdmin') : (isUserActive(user) ? t('admin.statusActive') : t('admin.statusInactive'));
                   const statusColor = user.role === 'admin' 
                     ? 'bg-purple-100 text-purple-800 border border-purple-300'
                     : isUserActive(user)
@@ -1232,28 +1235,28 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                         onClick={() => openAddCreditsModal(user)}
                             className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"
                       >
-                            Add
+                            {t('admin.add')}
                       </button>
                       {user.role === 'user' ? (
                         <button
                           onClick={() => promoteToAdmin(user.id)}
                               className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs"
                         >
-                              Admin
+                              {t('admin.admin')}
                         </button>
                       ) : (
                         <button
                           onClick={() => demoteToUser(user.id)}
                               className="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs"
                         >
-                              Remove
+                              {t('admin.remove')}
                         </button>
                       )}
                       <button
                         onClick={() => deleteUser(user.id)}
                             className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
                       >
-                            Delete
+                            {t('admin.delete')}
                       </button>
                     </div>
                   </td>
@@ -1273,8 +1276,8 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
               <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Add Credits</h3>
-              <p className="text-gray-600">Add credits to user account</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('admin.addCredits')}</h3>
+              <p className="text-gray-600">{t('admin.addCreditsToUser')}</p>
             </div>
             
             {/* User Info */}
@@ -1285,7 +1288,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   <div className="text-sm text-gray-600">{selectedUser.email}</div>
                   </div>
                   <div className="text-right">
-                  <div className="text-xs text-gray-500">Current Credits</div>
+                  <div className="text-xs text-gray-500">{t('admin.currentCredits')}</div>
                   <div className="text-2xl font-bold text-green-600">रू{selectedUser.credits || 0}</div>
                   </div>
                 </div>
@@ -1293,7 +1296,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
             {/* Credits Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Credits to Add</label>
+              <label className="block text-sm font-medium text-gray-700 mb-3">{t('admin.creditsToAdd')}</label>
                 <div className="flex items-center space-x-3">
                   <button
                   onClick={() => setCreditsToAdd(Math.max(0, creditsToAdd - 50))}
@@ -1337,7 +1340,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
             {/* New Balance Preview */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
               <div className="text-center">
-                <div className="text-sm text-blue-600 mb-1">New Balance</div>
+                                 <div className="text-sm text-blue-600 mb-1">{t('admin.newBalance')}</div>
                 <div className="text-2xl font-bold text-blue-700">
                   रू{(selectedUser.credits || 0) + creditsToAdd} credits
                 </div>
@@ -1348,16 +1351,16 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
             <div className="flex space-x-3">
               <Button
                   onClick={() => setShowAddCreditsModal(false)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
-                >
-                  Cancel
-              </Button>
-              <Button
-                  onClick={addCredits}
-                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium"
-                >
-                  Add Credits
-              </Button>
+                                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
+                 >
+                   {t('admin.cancel')}
+               </Button>
+               <Button
+                   onClick={addCredits}
+                 className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium"
+                 >
+                   {t('admin.addCreditsButton')}
+               </Button>
             </div>
           </div>
         </div>
@@ -1368,6 +1371,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
 // Stations Management Component
 function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
+  const { t } = useLanguage();
   const [bicycles, setBicycles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -1400,7 +1404,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const fetchBicycles = async () => {
     try {
       // Get bicycles from localStorage
-      const allBicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const allBicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       
       // Group bicycles by unique stations
       const stationMap = new Map();
@@ -1454,7 +1458,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
         const [stationName, stationLocation] = stationKey.split('_');
         
         // Get all bicycles to count bikes at this station
-        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
         
         // Count all bikes that belong to this station
         const bikesAtThisStation = bicycles.filter((bike: any) =>
@@ -1473,7 +1477,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
         });
 
         // Get slots for this station
-        const slotsKey = `paddlenepal_slots_${stationKey}`;
+        const slotsKey = `pedalnepal_slots_${stationKey}`;
         const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
 
         // Use fixed slot count of 10, regardless of bike count
@@ -1545,9 +1549,9 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
     if (!confirm('Are you sure you want to delete this station?')) return;
 
     try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       const updatedBicycles = bicycles.filter((bicycle: any) => bicycle.id !== bicycleId);
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+      localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
       
       fetchBicycles();
     } catch (error) {
@@ -1583,7 +1587,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Name/Location</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.filterByNameLocation')}</label>
             <input
               type="text"
               placeholder="Search by station name or location..."
@@ -1593,15 +1597,15 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.filterByStatus')}</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200 bg-white"
             >
-              <option value="">All Status</option>
-              <option value="available">Available</option>
-              <option value="rented">Rented</option>
+              <option value="">{t('admin.allStatus')}</option>
+              <option value="available">{t('admin.available')}</option>
+              <option value="rented">{t('admin.rented')}</option>
             </select>
           </div>
         </div>
@@ -1613,7 +1617,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <div className="flex items-center justify-between">
                               <h3 className="text-white font-semibold flex items-center">
                     <MapPin className="w-5 h-5 mr-2" />
-                    Station Management ({filteredBicycles.length})
+                    {t('admin.stationManagement')} ({filteredBicycles.length})
                   </h3>
 
           </div>
@@ -1623,13 +1627,13 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SN</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Station Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Slots</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Maintenance</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Slots</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.serialNumber')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.stationName')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.location')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.totalSlots')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.inMaintenance')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.availableSlots')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('admin.actions')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1665,7 +1669,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                         {slotStats.maintenanceSlots}
                         {slotStats.maintenanceSlots > 0 && (
                           <span className="ml-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                            Maintenance
+                            {t('admin.maintenance')}
                           </span>
                         )}
                       </span>
@@ -1679,19 +1683,19 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                           onClick={() => manageSlots(`${bicycle.name}_${bicycle.location}`)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
-                          Manage Slots
+                          {t('admin.manageSlots')}
                         </button>
                         <button
                           onClick={() => router.push(`/admin/add-station?edit=${bicycle.id}`)}
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
-                          Edit
+                          {t('admin.edit')}
                         </button>
                         <button
                           onClick={() => deleteBicycle(bicycle.id)}
                           className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs"
                         >
-                          Delete
+                          {t('admin.delete')}
                         </button>
                       </div>
                     </td>
@@ -1706,8 +1710,8 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       {filteredBicycles.length === 0 && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
           <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Stations Found</h3>
-          <p className="text-gray-600">No stations available matching your filters.</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('admin.noStationsFound')}</h3>
+          <p className="text-gray-600">{t('admin.noStationsMessage')}</p>
         </div>
       )}
     </div>
@@ -1716,6 +1720,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
 // Reviews Management Component
 function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, reviews, complaints
@@ -1918,15 +1923,15 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Reviews & Complaints</h2>
-            <p className="text-gray-600">Manage customer feedback and complaints</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t('admin.reviewsComplaints')}</h2>
+            <p className="text-gray-600">{t('reviews.manageFeedback')}</p>
           </div>
           <div className="flex items-center space-x-2">
             <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              {reviews.filter(r => r.type === 'review').length} Reviews
+              {reviews.filter(r => r.type === 'review').length} {t('reviews.reviews')}
             </div>
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              {reviews.filter(r => r.type === 'complaint').length} Complaints
+              {reviews.filter(r => r.type === 'complaint').length} {t('reviews.complaints')}
             </div>
           </div>
         </div>
@@ -1938,7 +1943,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search reviews and complaints..."
+              placeholder={t('reviews.searchReviews')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1953,7 +1958,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              All
+              {t('reviews.all')}
             </button>
             <button
               onClick={() => setFilter('review')}
@@ -1963,7 +1968,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Reviews
+              {t('reviews.reviews')}
             </button>
             <button
               onClick={() => setFilter('complaint')}
@@ -1973,7 +1978,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Complaints
+              {t('reviews.complaints')}
             </button>
           </div>
         </div>
@@ -1985,13 +1990,13 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Station</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.user')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.type')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.title')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.rating')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.station')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.date')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.actions')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -2010,7 +2015,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(review.type)}`}>
-                      {review.type === 'review' ? 'Review' : 'Complaint'}
+                      {review.type === 'review' ? t('reviews.review') : t('reviews.complaint')}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -2030,10 +2035,10 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs">
-                        View
+                        {t('reviews.view')}
                       </button>
                       <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs">
-                        Reply
+                        {t('reviews.reply')}
                       </button>
                       
                     </div>
@@ -2048,8 +2053,8 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
       {filteredReviews.length === 0 && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
           <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reviews Found</h3>
-          <p className="text-gray-600">No reviews or complaints match your current filters.</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('reviews.noReviews')}</h3>
+          <p className="text-gray-600">{t('reviews.noReviews')}</p>
         </div>
       )}
 
@@ -2058,7 +2063,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {indexOfFirstReview + 1} to {Math.min(indexOfLastReview, filteredReviews.length)} of {filteredReviews.length} reviews
+              {t('rentals.showing')} {indexOfFirstReview + 1} {t('rentals.to')} {Math.min(indexOfLastReview, filteredReviews.length)} {t('rentals.of')} {filteredReviews.length} {t('reviews.reviews')}
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -2070,7 +2075,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
-                Previous
+                {t('common.back')}
               </button>
               
               <div className="flex items-center space-x-1">
@@ -2119,7 +2124,7 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
-                Next
+                {t('common.next')}
               </button>
             </div>
           </div>

@@ -9,8 +9,8 @@ export const Logo: React.FC<{ size?: number } & Omit<ImageProps, 'src' | 'alt' |
   ...props
 }) => (
   <Image
-    src="/Paddle Nepal logo.png"
-    alt="PaddleNepal Logo"
+            src="/Paddle Nepal logo.png"
+    alt="pedalNepal Logo"
     width={size}
     height={size}
     style={{ 

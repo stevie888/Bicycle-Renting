@@ -4,6 +4,7 @@ import clsx from "clsx";
 
 import { Providers } from "./providers";
 import { AuthProvider } from "@/components/AuthContext";
+import { LanguageProvider } from "@/components/LanguageContext";
 import { Navbar } from "@/components/navbar";
 import Footer from "@/components/Footer";
 import AuthWrapper from "@/components/AuthWrapper";
@@ -50,11 +51,13 @@ export default function RootLayout({
           popup={popup}
           themeProps={{ attribute: "class", defaultTheme: "light" }}
         >
-          <AuthProvider>
-            <AuthWrapper navbar={<Navbar />} footer={<Footer />}>
-              {children}
-            </AuthWrapper>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <AuthWrapper navbar={<Navbar />} footer={<Footer />}>
+                {children}
+              </AuthWrapper>
+            </AuthProvider>
+          </LanguageProvider>
         </Providers>
       </body>
     </html>

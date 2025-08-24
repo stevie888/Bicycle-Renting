@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { 
   ArrowLeftIcon,
   MapPinIcon,
@@ -34,6 +35,7 @@ interface Station {
 export default function AddStationPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'add' | 'pricing'>('add');
   const [formData, setFormData] = useState({
@@ -610,21 +612,21 @@ export default function AddStationPage() {
                         <button
                           onClick={() => router.push(`/admin/manage-slots?stationId=${station.name}_${station.location}`)}
                           className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
-                          title="Manage slots"
+                          title={t('admin.manageSlotsTitle')}
                         >
                           <Settings className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => editStation(station)}
                           className="p-1 text-green-500 hover:text-green-700 transition-colors"
-                          title="Edit station"
+                          title={t('admin.editStationTitle')}
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => deleteStation(station.name)}
                           className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                          title="Delete station"
+                          title={t('admin.deleteStationTitle')}
                         >
                           <Trash2Icon className="w-4 h-4" />
                         </button>

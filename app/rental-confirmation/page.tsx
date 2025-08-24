@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   CheckCircleIcon, 
@@ -31,6 +32,7 @@ interface Rental {
 function RentalConfirmationPageContent() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const [latestRental, setLatestRental] = useState<Rental | null>(null);
 
   // All hooks must be called before any conditional returns
@@ -44,7 +46,7 @@ function RentalConfirmationPageContent() {
 
     // Clean up any data inconsistencies first
     const cleanupRentals = () => {
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const userRentals = rentals.filter((rental: any) => rental.userId === user.id);
       
       // If user has multiple active rentals, keep only the most recent one
@@ -63,7 +65,7 @@ function RentalConfirmationPageContent() {
           return rental;
         });
         
-        localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
+        localStorage.setItem('pedalnepal_rentals', JSON.stringify(updatedRentals));
         return updatedRentals;
       }
       
@@ -370,8 +372,8 @@ function RentalConfirmationPageContent() {
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
               <CheckCircleIcon className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-1">Rental Confirmed!</h2>
-            <p className="text-green-100 text-sm">Your bike has been successfully rented</p>
+                            <h2 className="text-2xl font-bold text-white mb-1">{t('rental.rentalConfirmed')}!</h2>
+                          <p className="text-green-100 text-sm">{t('rental.rentalSuccess')}</p>
           </div>
 
           {/* Active Rental Management Notice */}
@@ -393,7 +395,7 @@ function RentalConfirmationPageContent() {
                 </div>
               </div>
             </div>
-          )}
+          )}R
 
           {/* Rental Details */}
           <div className="p-6">
@@ -410,6 +412,7 @@ function RentalConfirmationPageContent() {
                     </div>
                     <span className="font-semibold text-gray-900">Slot {latestRental.slotNumber}</span>
                   </div>
+
 
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">

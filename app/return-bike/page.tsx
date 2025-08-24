@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import { useLanguage } from '@/components/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ interface Rental {
 
 function ReturnBikePage() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   
   const [stations, setStations] = useState<Station[]>([]);
@@ -68,7 +70,7 @@ function ReturnBikePage() {
 
   const fetchStations = () => {
     try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       const uniqueStations = new Map<string, Station>();
       
       bicycles.forEach((bike: any) => {
@@ -91,7 +93,7 @@ function ReturnBikePage() {
 
   const fetchCurrentRental = () => {
     try {
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const userActiveRental = rentals.find((rental: Rental) => 
         rental.userId === user?.id && rental.status === 'active'
       );
@@ -143,7 +145,7 @@ function ReturnBikePage() {
 
   const fetchAvailableSlots = (station: Station) => {
     try {
-      const slotsKey = `paddlenepal_slots_${station.id}`;
+      const slotsKey = `pedalnepal_slots_${station.id}`;
       let allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
       
       // If no slots exist, create default slots with reserved slots for returns
@@ -208,7 +210,7 @@ function ReturnBikePage() {
 
   // Function to manage return slot availability
   const manageReturnSlotAvailability = (stationId: string) => {
-    const slotsKey = `paddlenepal_slots_${stationId}`;
+    const slotsKey = `pedalnepal_slots_${stationId}`;
     const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
     
     // Check if both return slots (9 and 10) are occupied
@@ -290,7 +292,7 @@ function ReturnBikePage() {
       });
       
       // Update the rental with end time and completed status
-      const rentals = JSON.parse(localStorage.getItem('paddlenepal_rentals') || '[]');
+      const rentals = JSON.parse(localStorage.getItem('pedalnepal_rentals') || '[]');
       const updatedRentals = rentals.map((rental: any) => {
         if (rental.id === currentRental.id) {
           return {
@@ -305,7 +307,7 @@ function ReturnBikePage() {
       });
       
       // Update the bike status to available
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       const updatedBicycles = bicycles.map((bicycle: any) => {
         if (bicycle.name === currentRental.bikeName) {
           return {
@@ -318,7 +320,7 @@ function ReturnBikePage() {
       
       // Update slot status if station and slot are selected
       if (selectedStation && selectedSlot) {
-        const slotsKey = `paddlenepal_slots_${selectedStation.id}`;
+        const slotsKey = `pedalnepal_slots_${selectedStation.id}`;
         const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
         const updatedSlots = allSlots.map((slot: Slot) => {
           if (slot.id === selectedSlot.id) {
@@ -339,8 +341,8 @@ function ReturnBikePage() {
       }
       
       // Save updated data
-      localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentals));
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+      localStorage.setItem('pedalnepal_rentals', JSON.stringify(updatedRentals));
+      localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
       
       // Update local state
       setCurrentRental({
@@ -362,18 +364,18 @@ function ReturnBikePage() {
           }
           return rental;
         });
-        localStorage.setItem('paddlenepal_rentals', JSON.stringify(updatedRentalsWithPrice));
+        localStorage.setItem('pedalnepal_rentals', JSON.stringify(updatedRentalsWithPrice));
         
         // Deduct credits from user account
         const updatedUser = { ...user, credits: (user.credits || 0) - finalPrice };
-        localStorage.setItem('paddlenepal_current_user', JSON.stringify(updatedUser));
+        localStorage.setItem('pedalnepal_current_user', JSON.stringify(updatedUser));
         
         // Also update the main users array for admin dashboard
-        const allUsers = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+        const allUsers = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
         const updatedUsers = allUsers.map((u: any) => 
           u.id === user.id ? { ...u, credits: updatedUser.credits } : u
         );
-        localStorage.setItem('paddlenepal_users', JSON.stringify(updatedUsers));
+        localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
       
       // Show completion message
       alert(`🎉 Ride Completed Successfully!
@@ -444,8 +446,8 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                  <ArrowLeft className="w-5 h-5 text-white" />
                </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Return Bike</h1>
-                <p className="text-gray-600 text-sm">Select station and slot to return your bike</p>
+                <h1 className="text-xl font-bold text-gray-900">{t('return.title')}</h1>
+                                  <p className="text-gray-600 text-sm">{t('return.selectStation')}</p>
               </div>
             </div>
           </div>

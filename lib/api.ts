@@ -24,7 +24,7 @@ const setStorageData = (key: string, data: any) => {
 // Initialize default data if not exists
 const initializeStorage = () => {
   // Initialize users if not exists
-  if (!getStorageData('paddlenepal_users')) {
+  if (!getStorageData('pedalnepal_users')) {
     const defaultUsers = [
       {
         id: '1',
@@ -51,7 +51,7 @@ const initializeStorage = () => {
       {
         id: '3',
         mobile: '+977-9841234569',
-        email: 'admin@paddlenepal.com',
+        email: 'admin@pedalnepal.com',
         name: 'Admin User',
         password: 'password',
         role: 'admin',
@@ -59,12 +59,23 @@ const initializeStorage = () => {
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
+      {
+        id: '4',
+        mobile: '9869251081',
+        email: 'samirgrg0888@gmail.com',
+        name: 'Samir',
+        password: '123',
+        role: 'user',
+        credits: 250,
+        profileImage: null,
+        createdAt: new Date().toISOString(),
+      },
     ];
-    setStorageData('paddlenepal_users', defaultUsers);
+    setStorageData('pedalnepal_users', defaultUsers);
   }
 
   // Initialize bicycles if not exists
-  if (!getStorageData('paddlenepal_bicycles')) {
+  if (!getStorageData('pedalnepal_bicycles')) {
     const defaultBicycles = [
       {
         description: 'Station 1',
@@ -91,11 +102,11 @@ const initializeStorage = () => {
         image: '/bicycle3.jpg',
       },
     ];
-    setStorageData('paddlenepal_bicycles', defaultBicycles);
+    setStorageData('pedalnepal_bicycles', defaultBicycles);
   }
 
   // Initialize rentals if not exists
-  if (!getStorageData('paddlenepal_rentals')) {
+  if (!getStorageData('pedalnepal_rentals')) {
     const defaultRentals = [
       {
         id: '1',
@@ -124,7 +135,7 @@ const initializeStorage = () => {
         slotNumber: 2,
       },
     ];
-    setStorageData('paddlenepal_rentals', defaultRentals);
+    setStorageData('pedalnepal_rentals', defaultRentals);
   }
 };
 
@@ -140,11 +151,11 @@ const ensureInitialized = () => {
   isInitialized = true;
   
   // Add a function to clear and reinitialize storage (for debugging)
-  (window as any).clearPaddleNepalStorage = () => {
-    localStorage.removeItem('paddlenepal_users');
-    localStorage.removeItem('paddlenepal_bicycles');
-    localStorage.removeItem('paddlenepal_rentals');
-    localStorage.removeItem('paddlenepal_current_user');
+  (window as any).clearpedalNepalStorage = () => {
+    localStorage.removeItem('pedalnepal_users');
+    localStorage.removeItem('pedalnepal_bicycles');
+    localStorage.removeItem('pedalnepal_rentals');
+    localStorage.removeItem('pedalnepal_current_user');
     isInitialized = false;
     initializeStorage();
     console.log('Storage cleared and reinitialized');
@@ -180,7 +191,7 @@ const ensureInitialized = () => {
         slotNumber: 2,
       },
     ];
-    localStorage.setItem('paddlenepal_rentals', JSON.stringify(defaultRentals));
+    localStorage.setItem('pedalnepal_rentals', JSON.stringify(defaultRentals));
     console.log('Rental data fixed with proper end times');
   };
 };
@@ -189,7 +200,7 @@ const ensureInitialized = () => {
 if (typeof window !== 'undefined') {
   (window as any).resetSlotDataWithReserved = () => {
     try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       const uniqueStations = new Map<string, any>();
       
       // Get unique stations
@@ -205,7 +216,7 @@ if (typeof window !== 'undefined') {
       
       // Reset slots for each station with reserved slots
       uniqueStations.forEach((station, stationKey) => {
-        const slotsKey = `paddlenepal_slots_${stationKey}`;
+        const slotsKey = `pedalnepal_slots_${stationKey}`;
         const newSlots = Array.from({ length: 10 }, (_, index) => ({
           id: `slot_${stationKey}_${index + 1}`,
           slotNumber: index + 1,
@@ -252,7 +263,7 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       const { mobile, password } = JSON.parse(options.body as string);
       console.log('Login attempt with mobile:', mobile);
       
-      const users = getStorageData('paddlenepal_users') || [];
+      const users = getStorageData('pedalnepal_users') || [];
       console.log('Available users in localStorage:', users);
       
       // Try to find user with exact match first
@@ -270,7 +281,18 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
         user = users.find((u: any) => u.mobile === mobileWithCode);
       }
       
+      // Additional check: try to find by mobile number without any formatting
+      if (!user) {
+        const cleanMobile = mobile.replace(/[^0-9]/g, '');
+        user = users.find((u: any) => {
+          const userMobile = u.mobile.replace(/[^0-9]/g, '');
+          return userMobile === cleanMobile;
+        });
+      }
+      
       console.log('Found user:', user);
+      console.log('Login attempt details:', { mobile, password });
+      console.log('User details if found:', user ? { id: user.id, mobile: user.mobile, password: user.password } : 'No user found');
       
       if (user && user.password === password) {
         console.log('Login successful for user:', user);
@@ -278,7 +300,11 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       } else {
         console.log('Login failed - invalid credentials');
         console.log('Available mobile numbers:', users.map((u: any) => u.mobile));
-        console.log('User found but password mismatch. Expected:', user?.password, 'Got:', password);
+        if (user) {
+          console.log('User found but password mismatch. Expected:', user.password, 'Got:', password);
+        } else {
+          console.log('No user found with mobile number:', mobile);
+        }
         throw new Error('Invalid mobile number or password');
       }
     }
@@ -287,7 +313,7 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       const userData = JSON.parse(options.body as string);
       console.log('Signup attempt with data:', userData);
       
-      const users = getStorageData('paddlenepal_users') || [];
+      const users = getStorageData('pedalnepal_users') || [];
       console.log('Current users in localStorage:', users);
       console.log('Looking for mobile:', userData.mobile);
       
@@ -310,35 +336,35 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       };
       
       users.push(newUser);
-      setStorageData('paddlenepal_users', users);
+      setStorageData('pedalnepal_users', users);
       console.log('New user saved to localStorage:', newUser);
-      console.log('Updated users list:', getStorageData('paddlenepal_users'));
+      console.log('Updated users list:', getStorageData('pedalnepal_users'));
       
       return { success: true, user: newUser, token: 'local-token-' + newUser.id };
     }
     
     if (endpoint.includes('/users/profile')) {
       const userId = endpoint.match(/userId=(\d+)/)?.[1];
-      const users = getStorageData('paddlenepal_users') || [];
+      const users = getStorageData('pedalnepal_users') || [];
       const user = users.find((u: any) => u.id === userId);
       return user || { error: 'User not found' };
     }
     
     if (endpoint.includes('/admin/users')) {
-      return getStorageData('paddlenepal_users') || [];
+      return getStorageData('pedalnepal_users') || [];
     }
     
             if (endpoint.includes('/bicycles')) {
-      return getStorageData('paddlenepal_bicycles') || [];
+      return getStorageData('pedalnepal_bicycles') || [];
     }
     
     if (endpoint.includes('/rentals')) {
-      return getStorageData('paddlenepal_rentals') || [];
+      return getStorageData('pedalnepal_rentals') || [];
     }
     
     if (endpoint.includes('/credits')) {
       const userId = endpoint.match(/userId=(\d+)/)?.[1];
-      const users = getStorageData('paddlenepal_users') || [];
+      const users = getStorageData('pedalnepal_users') || [];
       const user = users.find((u: any) => u.id === userId);
       return { credits: user?.credits || 0 };
     }
@@ -399,12 +425,12 @@ export const userAPI = {
     mobile?: string;
     profileImage?: string;
   }) => {
-    const users = getStorageData('paddlenepal_users') || [];
+    const users = getStorageData('pedalnepal_users') || [];
     const userIndex = users.findIndex((u: any) => u.id === userId);
     
     if (userIndex !== -1) {
       users[userIndex] = { ...users[userIndex], ...profileData };
-      setStorageData('paddlenepal_users', users);
+      setStorageData('pedalnepal_users', users);
       return { success: true, user: users[userIndex] };
     }
     
@@ -416,7 +442,7 @@ export const userAPI = {
 export const bicycleAPI = {
   // Get all bicycles
   getAll: async (filters?: { status?: string; location?: string }) => {
-    const bicycles = getStorageData('paddlenepal_bicycles') || [];
+    const bicycles = getStorageData('pedalnepal_bicycles') || [];
     
     if (filters) {
       return bicycles.filter((bike: any) => {
@@ -438,7 +464,7 @@ export const bicycleAPI = {
     dailyRate: number;
     image?: string;
   }) => {
-    const bicycles = getStorageData('paddlenepal_bicycles') || [];
+    const bicycles = getStorageData('pedalnepal_bicycles') || [];
     const newBicycle = {
       id: (bicycles.length + 1).toString(),
       ...bicycleData,
@@ -446,7 +472,7 @@ export const bicycleAPI = {
     };
     
     bicycles.push(newBicycle);
-    setStorageData('paddlenepal_bicycles', bicycles);
+    setStorageData('pedalnepal_bicycles', bicycles);
     
     return { success: true, bicycle: newBicycle };
   },
@@ -456,7 +482,7 @@ export const bicycleAPI = {
 export const rentalAPI = {
   // Get rentals
   getAll: async (filters?: { userId?: string; status?: string }) => {
-    const rentals = getStorageData('paddlenepal_rentals') || [];
+    const rentals = getStorageData('pedalnepal_rentals') || [];
     
     if (filters) {
       return rentals.filter((rental: any) => {
@@ -476,8 +502,8 @@ export const rentalAPI = {
     startTime: string;
     endTime?: string;
   }) => {
-    const rentals = getStorageData('paddlenepal_rentals') || [];
-    const bicycles = getStorageData('paddlenepal_bicycles') || [];
+    const rentals = getStorageData('pedalnepal_rentals') || [];
+    const bicycles = getStorageData('pedalnepal_bicycles') || [];
     
     // Find the bicycle to get its rate
     const bicycle = bicycles.find((b: any) => b.id === rentalData.bicycleId);
@@ -493,13 +519,13 @@ export const rentalAPI = {
     };
     
     rentals.push(newRental);
-    setStorageData('paddlenepal_rentals', rentals);
+    setStorageData('pedalnepal_rentals', rentals);
     
     // Update bicycle status to rented
     const bicycleIndex = bicycles.findIndex((b: any) => b.id === rentalData.bicycleId);
     if (bicycleIndex !== -1) {
       bicycles[bicycleIndex].status = 'rented';
-      setStorageData('paddlenepal_bicycles', bicycles);
+      setStorageData('pedalnepal_bicycles', bicycles);
     }
     
     return { success: true, rental: newRental };
@@ -510,7 +536,7 @@ export const rentalAPI = {
 export const creditsAPI = {
   // Get user's credit balance
   getBalance: async (userId: string) => {
-    const users = getStorageData('paddlenepal_users') || [];
+    const users = getStorageData('pedalnepal_users') || [];
     const user = users.find((u: any) => u.id === userId);
     return { credits: user?.credits || 0 };
   },
@@ -522,7 +548,7 @@ export const creditsAPI = {
     action: 'add' | 'remove';
     reason?: string;
   }) => {
-    const users = getStorageData('paddlenepal_users') || [];
+    const users = getStorageData('pedalnepal_users') || [];
     const userIndex = users.findIndex((u: any) => u.id === data.userId);
     
     if (userIndex !== -1) {
@@ -532,7 +558,7 @@ export const creditsAPI = {
         users[userIndex].credits = Math.max(0, users[userIndex].credits - data.credits);
       }
       
-      setStorageData('paddlenepal_users', users);
+      setStorageData('pedalnepal_users', users);
       return { success: true, user: users[userIndex] };
     }
     
@@ -553,14 +579,14 @@ export default api;
 
 // Add global functions for debugging and data management
 if (typeof window !== 'undefined') {
-  (window as any).clearPaddleNepalStorage = () => {
+  (window as any).clearpedalNepalStorage = () => {
     localStorage.removeItem('paddlenepal_users');
-    localStorage.removeItem('paddlenepal_bicycles');
-    localStorage.removeItem('paddlenepal_rentals');
-    localStorage.removeItem('paddlenepal_current_user');
+    localStorage.removeItem('pedalnepal_bicycles');
+    localStorage.removeItem('pedalnepal_rentals');
+    localStorage.removeItem('pedalnepal_current_user');
     // Clear all slot data
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('paddlenepal_slots_')) {
+      if (key.startsWith('pedalnepal_slots_')) {
         localStorage.removeItem(key);
       }
     });
@@ -598,17 +624,17 @@ if (typeof window !== 'undefined') {
         slotNumber: 2
       }
     ];
-    localStorage.setItem('paddlenepal_rentals', JSON.stringify(defaultRentals));
+    localStorage.setItem('pedalnepal_rentals', JSON.stringify(defaultRentals));
     location.reload();
   };
 
   (window as any).resetSlotDataWithReserved = () => {
     // Reset all station slot data to include reserved slots
-    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+    const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
     
     bicycles.forEach((bike: any) => {
       const stationKey = `${bike.description}_${bike.location}`;
-      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      const slotsKey = `pedalnepal_slots_${stationKey}`;
       
       const slots = [];
       for (let i = 1; i <= 10; i++) {
@@ -632,11 +658,11 @@ if (typeof window !== 'undefined') {
     console.log('Testing Smart Slot Management...');
     
     // Get all stations
-    const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+    const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
     
     bicycles.forEach((bike: any) => {
       const stationKey = `${bike.description}_${bike.location}`;
-      const slotsKey = `paddlenepal_slots_${stationKey}`;
+      const slotsKey = `pedalnepal_slots_${stationKey}`;
       const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
       
       console.log(`\nStation: ${bike.description}`);

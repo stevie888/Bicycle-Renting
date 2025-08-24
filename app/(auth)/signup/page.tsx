@@ -1,8 +1,11 @@
 "use client";
 import { BikeIcon } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 import AuthForm from "@/components/AuthForm";
 
 export default function SignupPage() {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 relative overflow-hidden">
       {/* Subtle Background Elements */}
@@ -20,17 +23,17 @@ export default function SignupPage() {
             <div className="mb-8 animate-slide-up">
               <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
                 <BikeIcon className="w-8 h-8 text-white" />
-                <span className="text-2xl font-bold">PaddleNepal</span>
+                <span className="text-2xl font-bold">pedalNepal</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Join the
+                {t('auth.joinThe')}
                 <br />
                 <span className="bg-gradient-to-r from-white to-accent-200 bg-clip-text text-transparent">
-                  Valley Adventure
+                  {t('auth.valleyAdventure')}
                 </span>
               </h1>
               <p className="text-xl text-white/90 leading-relaxed mb-8">
-                Create your account and start exploring the beautiful valleys of Nepal on two wheels.
+                {t('auth.createAccountMessage')}
               </p>
             </div>
 
@@ -47,8 +50,8 @@ export default function SignupPage() {
                         <path d="M12 10.5l-1.5-1.5h-3v-1.5h3l1.5-1.5v3z"/>
                       </svg>
                     </div>
-                    <p className="text-white/80 text-sm">Bicycle Adventure Image</p>
-                    <p className="text-white/60 text-xs mt-1">People exploring valleys on bikes</p>
+                    <p className="text-white/80 text-sm">{t('auth.bicycleAdventureImage')}</p>
+                    <p className="text-white/60 text-xs mt-1">{t('auth.exploringValleys')}</p>
                   </div>
                 </div>
               </div>
@@ -63,10 +66,10 @@ export default function SignupPage() {
             <div className="lg:hidden text-center mb-8 animate-slide-up">
               <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-6 py-3 rounded-2xl mb-4">
                 <BikeIcon className="w-6 h-6" />
-                <span className="text-xl font-bold">PaddleNepal</span>
+                <span className="text-xl font-bold">pedalNepal</span>
               </div>
-              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Join the Valley Adventure</h2>
-              <p className="text-neutral-600">Create your account to get started</p>
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">{t('auth.joinValleyAdventure')}</h2>
+              <p className="text-neutral-600">{t('auth.createAccountToStart')}</p>
             </div>
 
             {/* Signup Form */}
@@ -77,13 +80,13 @@ export default function SignupPage() {
             {/* Additional Info */}
             <div className="text-center mt-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
               <p className="text-sm text-neutral-600">
-                By creating an account, you agree to our{" "}
+                {t('auth.byCreatingAccount')}{" "}
                 <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2">
-                  Terms of Service
+                  {t('auth.termsOfService')}
                 </a>{" "}
-                and{" "}
+                {t('auth.and')}{" "}
                 <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2">
-                  Privacy Policy
+                  {t('auth.privacyPolicy')}
                 </a>
               </p>
             </div>

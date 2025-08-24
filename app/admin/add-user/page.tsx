@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { 
   ArrowLeftIcon,
   UserPlusIcon,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 export default function AddUserPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -39,12 +41,12 @@ export default function AddUserPage() {
 
     try {
       // Get existing users
-      const users = JSON.parse(localStorage.getItem('paddlenepal_users') || '[]');
+      const users = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
       
       // Check if mobile number already exists
       const existingUser = users.find((user: any) => user.mobile === formData.mobile);
       if (existingUser) {
-        alert('Mobile number already exists!');
+        alert(t('admin.mobileExists'));
         return;
       }
       
@@ -64,13 +66,13 @@ export default function AddUserPage() {
       
       // Add to localStorage
       users.push(newUser);
-      localStorage.setItem('paddlenepal_users', JSON.stringify(users));
+      localStorage.setItem('pedalnepal_users', JSON.stringify(users));
       
-      alert('User created successfully!');
+      alert(t('admin.userCreated'));
       router.push('/admin');
     } catch (error) {
       console.error('Error creating user:', error);
-      alert('Failed to create user');
+      alert(t('admin.createUserFailed'));
     } finally {
       setLoading(false);
     }
@@ -91,9 +93,9 @@ export default function AddUserPage() {
               </button>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Add New User
+                  {t('admin.addNewUser')}
                 </h1>
-                <p className="text-gray-600 text-sm">Create a new user account</p>
+                <p className="text-gray-600 text-sm">{t('admin.createNewUserAccount')}</p>
               </div>
             </div>
             <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -109,9 +111,9 @@ export default function AddUserPage() {
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-6">
             <h2 className="text-2xl font-bold text-white flex items-center">
               <UsersIcon className="w-6 h-6 mr-3" />
-              User Information
+              {t('admin.userInformation')}
             </h2>
-            <p className="text-blue-100 mt-2">Fill in the details to create a new user account</p>
+            <p className="text-blue-100 mt-2">{t('admin.fillUserDetails')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -120,12 +122,12 @@ export default function AddUserPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                   <UserIcon className="w-4 h-4 mr-2" />
-                  Username
+                  {t('admin.username')}
                 </label>
                 <Input
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="Enter username"
+                  placeholder={t('admin.enterUsername')}
                   required
                   className="w-full"
                 />
@@ -135,13 +137,13 @@ export default function AddUserPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                   <MailIcon className="w-4 h-4 mr-2" />
-                  Email
+                  {t('auth.email')}
                 </label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email address"
+                  placeholder={t('admin.enterEmail')}
                   required
                   className="w-full"
                 />
@@ -151,13 +153,13 @@ export default function AddUserPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                   <LockIcon className="w-4 h-4 mr-2" />
-                  Password
+                  {t('auth.password')}
                 </label>
                 <Input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Enter password"
+                  placeholder={t('admin.enterPassword')}
                   required
                   className="w-full"
                 />
@@ -167,12 +169,12 @@ export default function AddUserPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                   <PhoneIcon className="w-4 h-4 mr-2" />
-                  Mobile Number
+                  {t('auth.mobile')}
                 </label>
                 <Input
                   value={formData.mobile}
                   onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                  placeholder="Enter mobile number"
+                  placeholder={t('admin.enterMobile')}
                   required
                   className="w-full"
                 />
@@ -182,12 +184,12 @@ export default function AddUserPage() {
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                   <UserIcon className="w-4 h-4 mr-2" />
-                  Full Name
+                  {t('admin.fullName')}
                 </label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
+                  placeholder={t('admin.enterFullName')}
                   required
                   className="w-full"
                 />
@@ -196,15 +198,15 @@ export default function AddUserPage() {
               {/* Role */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Role
+                  {t('users.role')}
                 </label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
                 >
-                  <option value="user">Regular User</option>
-                  <option value="admin">Administrator</option>
+                  <option value="user">{t('admin.regularUser')}</option>
+                  <option value="admin">{t('admin.administrator')}</option>
                 </select>
               </div>
             </div>
@@ -216,14 +218,14 @@ export default function AddUserPage() {
                 onClick={() => router.push('/admin')}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
-                {loading ? 'Creating...' : 'Create User'}
+                {loading ? t('admin.creating') : t('admin.createUser')}
               </Button>
             </div>
           </form>
