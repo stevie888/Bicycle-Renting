@@ -116,8 +116,8 @@ const BikeStatusPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (ke
             // Return all data points
             return labels.map((label: string, index: number) => {
               const value = values[index];
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}: ${value} (${percentage}%)`;
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
             });
           },
         },
@@ -226,8 +226,8 @@ const UserActivityPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (
             // Return all data points
             return labels.map((label: string, index: number) => {
               const value = values[index];
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}: ${value} (${percentage}%)`;
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
             });
           },
         },
@@ -746,15 +746,15 @@ function AdminDashboard() {
           <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.users.totalUsers || 0}</div>
                   <div className="text-xs text-blue-100">{t('admin.totalUsers')}</div>
                   <div className="text-xs text-blue-200 mt-1">
                     {getActiveUserCount()} {t('admin.currentlyActive')}
                   </div>
+                  </div>
                 </div>
-              </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white shadow-xl">
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-1">{stats?.bicycles.totalBicycles || 0}</div>
@@ -1217,12 +1217,12 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                   </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         <span className="truncate block max-w-24" title={mostVisitedStation}>
-                          {mostVisitedStation}
+                        {mostVisitedStation}
                         </span>
                   </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         {totalHours}h
-                  </td>
+                      </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-green-600">
                         रू{user.credits || 0}
                       </td>
@@ -1351,16 +1351,16 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
             <div className="flex space-x-3">
               <Button
                   onClick={() => setShowAddCreditsModal(false)}
-                                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
-                 >
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
+                >
                    {t('admin.cancel')}
-               </Button>
-               <Button
-                   onClick={addCredits}
-                 className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium"
-                 >
+              </Button>
+              <Button
+                  onClick={addCredits}
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium"
+                >
                    {t('admin.addCreditsButton')}
-               </Button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1561,7 +1561,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   const manageSlots = (stationKey: string) => {
     // stationKey is already in the format "StationName_Location"
-    router.push(`/admin/manage-slots?stationId=${stationKey}`);
+      router.push(`/admin/manage-slots?stationId=${stationKey}`);
   };
 
 

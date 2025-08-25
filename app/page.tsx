@@ -104,49 +104,60 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center px-4 py-4 md:px-6 md:py-8">
-        <div className="max-w-4xl mx-auto text-center space-y-2 md:space-y-4">
-          <div className="inline-flex items-center gap-0.5 bg-primary-50 text-primary-700 px-2 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium">
-            <span>{t('home.subtitle')}</span>
-          </div>
-          
-          <h1 className="text-xl md:text-5xl lg:text-6xl font-bold text-neutral-900 leading-tight">
-            {t('home.title')}
-            <br />
-            <span className="text-primary-600">on Two Wheels</span>
-          </h1>
-          
-          <p className="text-xs md:text-xl text-neutral-600 max-w-2xl mx-auto leading-tight">
-            {t('home.subtitle')}
-            <span className="text-primary-600 font-semibold"> {t('bike.rentBike')}</span> and start your adventure today!
-          </p>
-          
-          <div className="flex justify-center">
-            <button 
-              onClick={handleRentBike}
-              className={`relative px-4 md:px-12 py-2 md:py-4 text-sm md:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer group flex items-center justify-center gap-2 md:gap-3 ${
-                hasActiveRental 
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white' 
-                  : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white'
-              }`}
-            >
-              <div className="w-4 h-4 md:w-5 md:h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <BikeIcon className="w-2 h-2 md:w-3 md:h-3 text-white" />
+      <section className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+          <div className="text-center space-y-6 md:space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-medium border border-primary-200">
+              <BikeIcon className="w-4 h-4" />
+              <span>{t('home.subtitle')}</span>
+            </div>
+            
+            {/* Main Heading */}
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
+                Explore Nepal
+                <br />
+                <span className="bg-gradient-to-r from-primary-600 to-blue-600 bg-clip-text text-transparent">
+                  on Two Wheels
+                </span>
+              </h1>
+              
+              <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Discover the breathtaking valleys, ancient temples, and vibrant culture of Nepal through our premium bike rental service. 
+                <span className="text-primary-600 font-semibold"> Adventure awaits at every turn!</span>
+              </p>
+            </div>
+            
+            {/* CTA Button */}
+            <div className="flex justify-center items-center">
+              <button 
+                onClick={handleRentBike}
+                className={`relative px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer group flex items-center justify-center gap-3 ${
+                  hasActiveRental 
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white' 
+                    : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white'
+                }`}
+              >
+                <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <BikeIcon className="w-3 h-3 text-white" />
+                </div>
+                <span>{hasActiveRental ? 'Manage Active Rental' : t('bike.rentBike')}</span>
+                <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </button>
+            </div>
+            
+            {/* Active Rental Warning */}
+            {hasActiveRental && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 max-w-2xl mx-auto">
+                <p className="text-orange-800 text-sm">
+                  <strong>Active Rental:</strong> {overdueMessage}
+                </p>
               </div>
-              <span>{hasActiveRental ? 'Manage Active Rental' : t('bike.rentBike')}</span>
-              <ArrowRightIcon className="w-3 h-3 md:w-4 md:h-4 group-hover:translate-x-1 transition-transform duration-200" />
-            </button>
+            )}
           </div>
-          
-          {hasActiveRental && (
-            <p className="text-xs text-red-600 max-w-md mx-auto">
-              {overdueMessage}
-              <br />
-              <span className="text-orange-600 font-medium">Click the button above to manage your rental</span>
-            </p>
-          )}
         </div>
       </section>
     </div>

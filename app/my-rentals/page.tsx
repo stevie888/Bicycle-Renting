@@ -380,104 +380,86 @@ function MyRentalsPageContent() {
               </div>
             </div>
 
-            {/* Rental Cards */}
-            <div className="space-y-1.5">
+            {/* Rental Cards - Horizontal Layout for Mobile & Desktop */}
+            <div className="space-y-3">
               {currentRentals.map((rental) => (
-                <div key={rental.id} className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  {/* Card Header */}
-                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="bg-primary-100 p-1 rounded-lg">
-                          <BikeIcon className="w-3.5 h-3.5 text-primary-600" />
+                <div key={rental.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200">
+                  {/* Horizontal Card Layout */}
+                  <div className="p-4">
+                    {/* Top Row: Bike Info & Status */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary-100 p-2 rounded-lg">
+                          <BikeIcon className="w-4 h-4 text-primary-600" />
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-gray-900">{rental.bikeName}</h3>
-                          <p className="text-xs text-gray-600">{t('rentals.rentalId')}: {rental.id}</p>
+                          <p className="text-xs text-gray-500">#{rental.id.slice(-6)}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium border ${getStatusColor(rental.status, rental)}`}>
-                          <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${getStatusColor(rental.status, rental)}`}>
+                          <div className="flex items-center gap-1">
                             {getStatusIcon(rental.status, rental)}
                             {getStatusText(rental.status, rental)}
                           </div>
                         </span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Card Body */}
-                  <div className="p-3">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                      {/* Location & Details */}
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
-                          <MapPinIcon className="w-3 h-3 text-primary-600" />
-                          {t('rentals.locationDetails')}
-                        </h4>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div className="w-1 h-1 bg-primary-600 rounded-full"></div>
-                            <span className="text-gray-600">{t('bike.station')}:</span>
-                            <span className="font-medium">{rental.station}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div className="w-1 h-1 bg-primary-600 rounded-full"></div>
-                            <span className="text-gray-600">{t('bike.slot')}:</span>
-                            <span className="font-medium">#{rental.slotNumber}</span>
-                          </div>
+                    {/* Horizontal Info Grid - 4 Columns */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {/* Location */}
+                      <div className="flex items-start gap-2">
+                        <MapPinIcon className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t('bike.station')}</div>
+                          <div className="text-sm font-medium text-gray-900 truncate">{rental.station}</div>
+                          <div className="text-xs text-gray-500">Slot #{rental.slotNumber}</div>
                         </div>
                       </div>
 
-                      {/* Rental Information */}
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
-                          <ClockIcon className="w-3 h-3 text-primary-600" />
-                          {t('rentals.rentalInfo')}
-                        </h4>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                            <span className="text-gray-600">{t('rental.duration')}:</span>
-                            <span className="font-medium">{formatDuration(rental.duration, rental.hours)}</span>
-                          </div>
-                          {rental.duration === 'hourly' && rental.hours && (
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                              <span className="text-gray-600">{t('rentals.period')}:</span>
-                              <span className="font-medium">{rental.hours} {rental.hours !== 1 ? t('rentals.hours') : t('rentals.hour')}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <div className="w-1 h-1 bg-orange-500 rounded-full"></div>
-                            <span className="text-gray-600">{t('bike.rate')}:</span>
-                            <span className="font-medium">{formatPrice(rental.price, rental.duration, rental.hours)}</span>
-                          </div>
+                      {/* Duration */}
+                      <div className="flex items-start gap-2">
+                        <ClockIcon className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t('rental.duration')}</div>
+                          <div className="text-sm font-medium text-gray-900">{formatDuration(rental.duration, rental.hours)}</div>
+                          <div className="text-xs text-gray-500">{formatPrice(rental.price, rental.duration, rental.hours)}</div>
                         </div>
                       </div>
 
-                      {/* Time & Cost */}
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-1.5 text-xs">
-                          <CalendarIcon className="w-3 h-3 text-primary-600" />
-                          {t('rentals.timeAndCost')}
-                        </h4>
-                        <div className="space-y-1">
-                          <div className="text-xs">
-                            <div className="text-gray-600 mb-0.5">{t('rental.startTime')}:</div>
-                            <div className="font-medium">{new Date(rental.startTime).toLocaleString()}</div>
+                      {/* Time Details */}
+                      <div className="flex items-start gap-2">
+                        <CalendarIcon className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t('rental.startTime')}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {new Date(rental.startTime).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(rental.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </div>
                           {rental.endTime && (
-                            <div className="text-xs">
-                              <div className="text-gray-600 mb-0.5">{t('rental.endTime')}:</div>
-                              <div className="font-medium">{new Date(rental.endTime).toLocaleString()}</div>
-                            </div>
+                            <>
+                              <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">{t('rental.endTime')}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {new Date(rental.endTime).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Date(rental.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </div>
+                            </>
                           )}
-                          <div className="pt-1.5 border-t border-gray-200">
-                            <div className="text-base font-bold text-primary-600">रू{rental.price}</div>
-                            <div className="text-xs text-gray-500">{t('rental.cost')}</div>
-                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment */}
+                      <div className="flex items-start gap-2">
+                        <DollarSignIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{t('rentals.totalPayment')}</div>
+                          <div className="text-lg font-bold text-primary-600">रू{rental.price}</div>
                         </div>
                       </div>
                     </div>

@@ -177,6 +177,8 @@ const translations = {
     'rentals.hours': 'Hours',
     'rentals.calculatedOnReturn': 'calculated on return',
     'rentals.overdue': 'Overdue',
+    'rentals.totalPayment': 'Total Payment',
+    'rentals.paymentAmount': 'Payment Amount',
     
     // Admin Dashboard
     'admin.dashboard': 'Admin Dashboard',
@@ -571,6 +573,8 @@ const translations = {
     'rentals.hours': 'घण्टाहरू',
     'rentals.calculatedOnReturn': 'फिर्तामा गणना गरिने',
     'rentals.overdue': 'ढिलो भयो',
+    'rentals.totalPayment': 'कुल भुक्तानी',
+    'rentals.paymentAmount': 'भुक्तानी रकम',
     
     // Admin Dashboard
     'admin.dashboard': 'एडमिन ड्यासबोर्ड',
