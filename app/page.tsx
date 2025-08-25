@@ -42,18 +42,18 @@ export default function Home() {
           isOverdue = currentTime > endTime;
           if (isOverdue) {
             overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-            setOverdueMessage(`Your rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`);
+            setOverdueMessage(t('home.rentalOverdue').replace('{hours}', overdueHours.toString()));
           } else {
-            setOverdueMessage("You have an active rental. Please end your current ride first.");
+            setOverdueMessage(t('home.hasActiveRental'));
           }
         } else if (rentalDuration === 'daily') {
           const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000));
           isOverdue = currentTime > endTime;
           if (isOverdue) {
             overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-            setOverdueMessage(`Your daily rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`);
+            setOverdueMessage(t('home.dailyRentalOverdue').replace('{hours}', overdueHours.toString()));
           } else {
-            setOverdueMessage("You have an active daily rental. Please end your current ride first.");
+            setOverdueMessage(t('home.hasActiveDailyRental'));
           }
         } else if (rentalDuration === 'pay-as-you-go') {
           // For pay-as-you-go, consider overdue after 24 hours
@@ -61,9 +61,9 @@ export default function Home() {
           isOverdue = currentTime > endTime;
           if (isOverdue) {
             overdueHours = Math.floor((currentTime.getTime() - endTime.getTime()) / (60 * 60 * 1000));
-            setOverdueMessage(`Your pay-as-you-go rental is ${overdueHours} hour(s) overdue. Please end your current ride first.`);
+            setOverdueMessage(t('home.payAsYouGoOverdue').replace('{hours}', overdueHours.toString()));
           } else {
-            setOverdueMessage("You have an active pay-as-you-go rental. Please end your current ride first.");
+            setOverdueMessage(t('home.hasActivePayAsYouGo'));
           }
         }
       }
@@ -97,7 +97,7 @@ export default function Home() {
       <div className="h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Redirecting to admin dashboard...</p>
+          <p className="mt-4 text-gray-600">{t('home.redirectingToAdmin')}</p>
         </div>
       </div>
     );
@@ -118,16 +118,16 @@ export default function Home() {
             {/* Main Heading */}
             <div className="space-y-4">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                Explore Nepal
+                {t('home.exploreNepal')}
                 <br />
                 <span className="bg-gradient-to-r from-primary-600 to-blue-600 bg-clip-text text-transparent">
-                  on Two Wheels
+                  {t('home.onTwoWheels')}
                 </span>
               </h1>
               
               <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Discover the breathtaking valleys, ancient temples, and vibrant culture of Nepal through our premium bike rental service. 
-                <span className="text-primary-600 font-semibold"> Adventure awaits at every turn!</span>
+                {t('home.description')}
+                <span className="text-primary-600 font-semibold"> {t('home.adventureAwaits')}</span>
               </p>
             </div>
             
@@ -144,7 +144,7 @@ export default function Home() {
                 <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                   <BikeIcon className="w-3 h-3 text-white" />
                 </div>
-                <span>{hasActiveRental ? 'Manage Active Rental' : t('bike.rentBike')}</span>
+                <span>{hasActiveRental ? t('home.manageActiveRental') : t('bike.rentBike')}</span>
                 <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
               </button>
             </div>
@@ -153,7 +153,7 @@ export default function Home() {
             {hasActiveRental && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 max-w-2xl mx-auto">
                 <p className="text-orange-800 text-sm">
-                  <strong>Active Rental:</strong> {overdueMessage}
+                  <strong>{t('home.activeRental')}</strong> {overdueMessage}
                 </p>
               </div>
             )}
