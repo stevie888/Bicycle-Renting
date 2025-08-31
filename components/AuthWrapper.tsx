@@ -49,7 +49,7 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
   // During SSR, render the full layout to avoid hydration mismatch
   if (!isClient) {
     return (
-      <div className="relative flex flex-col h-screen">
+      <div className="relative flex flex-col min-h-screen">
         {navbar}
         <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
           {children}
@@ -64,7 +64,7 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
   }
 
   return (
-    <div className="relative flex flex-col h-screen">
+    <div className="relative flex flex-col min-h-screen">
       {navbar}
       <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
         {children}

@@ -110,9 +110,14 @@ function BikeSelectionPageContent() {
 
     // Convert real slot data to bike slots
     const updatedSlots: BikeSlot[] = realSlots.map((slot: any) => {
-      // Ensure reserved slots (9-10) are never available for rental
-      const isReservedSlot = slot.slotNumber >= 9;
-      const isAvailable = !isReservedSlot && slot.status === 'active' && slot.status !== 'occupied';
+      // Check if slot has a bike returned to it (should be available for rental)
+      const hasReturnedBike = slot.status === 'active' && slot.notes === 'Bike returned';
+      
+      // Check if it's a regular active slot (1-8) with a bike
+      const isRegularActiveSlot = slot.slotNumber <= 8 && slot.status === 'active' && !slot.notes?.includes('Available for bike returns');
+      
+      // Slot is available if it's a regular active slot OR has a bike returned to it
+      const isAvailable = isRegularActiveSlot || hasReturnedBike;
       
       return {
         id: slot.id || `${stationId}-slot-${slot.slotNumber}`,
@@ -123,8 +128,8 @@ function BikeSelectionPageContent() {
         image: stationImage || "/Basantapur,Kathmandu.jpeg",
         price: 250,
         pricePerHour: 25,
-        status: isReservedSlot ? 'reserved' : slot.status,
-        notes: isReservedSlot ? 'Reserved for bike returns' : slot.notes
+        status: isAvailable ? 'active' : 'reserved',
+        notes: hasReturnedBike ? 'Bike available for rental' : (isRegularActiveSlot ? 'Regular bike slot' : 'Empty slot')
       };
     });
 
@@ -679,7 +684,7 @@ function BikeSelectionPageContent() {
       {showBookingModal && selectedSlot && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 p-4 overflow-y-auto flex items-start justify-center">
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl max-h-[85vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Rental</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">{t('bikeSelection.confirmRental')}</h3>
             
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -699,7 +704,7 @@ function BikeSelectionPageContent() {
 
               {/* Rental Duration Selection */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h5 className="font-semibold text-gray-900 mb-3">Select Rental Option</h5>
+                <h5 className="font-semibold text-gray-900 mb-3">{t('bikeSelection.selectRentalOption')}</h5>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleDurationChange('pay-as-you-go')}
@@ -711,9 +716,9 @@ function BikeSelectionPageContent() {
                   >
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <ClockIcon className="w-4 h-4" />
-                      <span className="font-semibold text-sm">Flexi Ride</span>
+                      <span className="font-semibold text-sm">{t('bikeSelection.flexiRide')}</span>
                     </div>
-                    <div className="text-xs text-gray-600">Pay only for time used</div>
+                    <div className="text-xs text-gray-600">{t('bikeSelection.payOnlyForTimeUsed')}</div>
                     <div className="text-xs font-medium text-primary-600 mt-1">रू25/hour</div>
                   </button>
                   <button
@@ -726,9 +731,9 @@ function BikeSelectionPageContent() {
                   >
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <ClockIcon className="w-4 h-4" />
-                      <span className="font-semibold text-sm">Fixed Ride</span>
+                      <span className="font-semibold text-sm">{t('bikeSelection.fixedRide')}</span>
                     </div>
-                    <div className="text-xs text-gray-600">Pre-paid hourly rental</div>
+                    <div className="text-xs text-gray-600">{t('bikeSelection.prepaidHourlyRental')}</div>
                     <div className="text-xs font-medium text-primary-600 mt-1">रू25/hour</div>
                   </button>
                 </div>
@@ -737,7 +742,7 @@ function BikeSelectionPageContent() {
               {/* Hour Selection for Hourly Rental */}
               {rentalDuration === 'hourly' && (
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <h5 className="font-semibold text-gray-900 mb-3">Select Number of Hours</h5>
+                  <h5 className="font-semibold text-gray-900 mb-3">{t('bikeSelection.selectNumberOfHours')}</h5>
                   <div className="flex items-center justify-center gap-4">
                     <button
                       onClick={() => handleHourChange(hourlyRentalHours - 1)}
@@ -748,7 +753,7 @@ function BikeSelectionPageContent() {
                     </button>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-primary-600">{hourlyRentalHours}</div>
-                      <div className="text-sm text-gray-600">hour{hourlyRentalHours !== 1 ? 's' : ''}</div>
+                      <div className="text-sm text-gray-600">{hourlyRentalHours !== 1 ? t('bikeSelection.hours') : t('bikeSelection.hour')}</div>
                     </div>
                     <button
                       onClick={() => handleHourChange(hourlyRentalHours + 1)}
@@ -760,7 +765,7 @@ function BikeSelectionPageContent() {
                   </div>
                   <div className="mt-3 text-center">
                     <p className="text-xs text-gray-500">
-                      Quick select: 
+                      {t('bikeSelection.quickSelect')}: 
                       <button onClick={() => handleHourChange(2)} className="ml-1 text-primary-600 hover:underline font-medium">2h</button> | 
                       <button onClick={() => handleHourChange(4)} className="ml-1 text-primary-600 hover:underline font-medium">4h</button> | 
                       <button onClick={() => handleHourChange(8)} className="ml-1 text-primary-600 hover:underline font-medium">8h</button> | 
@@ -774,18 +779,18 @@ function BikeSelectionPageContent() {
                 {rentalDuration === 'pay-as-you-go' ? (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Upfront Cost:</span>
+                      <span className="text-gray-600">{t('bikeSelection.upfrontCost')}:</span>
                       <span className="font-semibold text-green-600">रू0</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-500">
-                      <span>Rate:</span>
-                      <span>रू25/hour (charged when ride ends)</span>
+                      <span>{t('bikeSelection.rate')}:</span>
+                      <span>रू25/hour ({t('bikeSelection.chargedWhenRideEnds')})</span>
                     </div>
                     <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <span className="text-sm font-medium text-green-700">
-                          No upfront payment required! Pay only for the time you use.
+                          {t('bikeSelection.noUpfrontPaymentRequired')}
                         </span>
                       </div>
                     </div>
@@ -793,21 +798,21 @@ function BikeSelectionPageContent() {
                 ) : (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Rental Price:</span>
+                      <span className="text-gray-600">{t('bikeSelection.rentalPrice')}:</span>
                       <span className="font-semibold">रू{getCurrentRentalPrice()}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-500">
-                      <span>Rate:</span>
-                      <span>रू25 × {hourlyRentalHours} hour{hourlyRentalHours !== 1 ? 's' : ''}</span>
+                      <span>{t('bikeSelection.rate')}:</span>
+                      <span>रू25 × {hourlyRentalHours} {hourlyRentalHours !== 1 ? t('bikeSelection.hours') : t('bikeSelection.hour')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Your Credits:</span>
+                      <span className="text-gray-600">{t('bikeSelection.yourCredits')}:</span>
                       <span className={`font-semibold ${(user?.credits || 0) < getCurrentRentalPrice() ? 'text-red-600' : 'text-green-600'}`}>
                         रू{user?.credits || 0}
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
-                      <span className="text-gray-600">Remaining Credits:</span>
+                      <span className="text-gray-600">{t('bikeSelection.remainingCredits')}:</span>
                       <span className={`font-semibold ${(user?.credits || 0) - getCurrentRentalPrice() < 0 ? 'text-red-600' : 'text-primary-600'}`}>
                         रू{(user?.credits || 0) - getCurrentRentalPrice()}
                       </span>
@@ -819,12 +824,12 @@ function BikeSelectionPageContent() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                           <span className="text-sm font-medium text-red-700">
-                            Insufficient credits! You need रू{getCurrentRentalPrice()} for this rental.
+                            {t('bikeSelection.insufficientCredits')} रू{getCurrentRentalPrice()} {t('bikeSelection.forThisRental')}.
                           </span>
                         </div>
                         {(user?.credits || 0) < 25 && (
                           <div className="mt-2 text-xs text-red-600">
-                            Minimum रू25 credits required for hourly rentals.
+                            {t('bikeSelection.minimumCreditsRequired')}
                           </div>
                         )}
                       </div>
@@ -836,19 +841,19 @@ function BikeSelectionPageContent() {
               {/* Safety notes and Terms & Condition before confirmation */}
               <div className="space-y-3 my-3">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <h6 className="font-semibold text-yellow-900 mb-1">Safety Notes</h6>
+                  <h6 className="font-semibold text-yellow-900 mb-1">{t('bikeSelection.safetyNotes')}</h6>
                   <ul className="list-disc pl-5 text-yellow-900 text-xs space-y-1">
-                    <li>Always wear a helmet and follow local traffic rules.</li>
-                    <li>Check brakes, tires before riding.</li>
-                    <li>Ride only in safe, permitted areas; obey all signage.</li> 
+                    <li>{t('bikeSelection.safetyNote1')}</li>
+                    <li>{t('bikeSelection.safetyNote2')}</li>
+                    <li>{t('bikeSelection.safetyNote3')}</li> 
                   </ul>
                 </div>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <h6 className="font-semibold text-red-900 mb-1">Terms & Condition</h6>
+                  <h6 className="font-semibold text-red-900 mb-1">{t('bikeSelection.termsAndCondition')}</h6>
                   <ul className="list-disc pl-5 text-red-900 text-xs space-y-1">
-                    <li>Pedal Nepal is not responsible for accidents, injuries, or damages from bicycle use.</li>
-                    <li>Riders assume all risks and are responsible for fines/legal consequences of unsafe or unlawful riding.</li>
-                    <li>The company does not guarantee availability, performance, or uninterrupted service.</li>
+                    <li>{t('bikeSelection.termsNote1')}</li>
+                    <li>{t('bikeSelection.termsNote2')}</li>
+                    <li>{t('bikeSelection.termsNote3')}</li>
                   </ul>
                 </div>
                 
@@ -863,10 +868,10 @@ function BikeSelectionPageContent() {
                       className="mt-1 w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                     />
                     <label htmlFor="agree-terms" className="text-sm text-blue-900 cursor-pointer">
-                      <span className="font-medium">I have read and agreed to all the safety notes and terms presented</span>
+                      <span className="font-medium">{t('bikeSelection.agreeToTerms')}</span>
                       <br />
                       <span className="text-xs text-blue-700">
-                        By checking this box, you acknowledge that you understand the safety requirements and accept all terms and conditions of the rental service.
+                        {t('bikeSelection.termsAcknowledgment')}
                       </span>
                     </label>
                   </div>
@@ -878,7 +883,7 @@ function BikeSelectionPageContent() {
                   onClick={() => setShowBookingModal(false)}
                   className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={confirmRental}
@@ -889,7 +894,7 @@ function BikeSelectionPageContent() {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {agreedToTerms ? 'Confirm Rental' : 'Please Agree to Terms'}
+                  {agreedToTerms ? t('bikeSelection.confirmRental') : t('bikeSelection.pleaseAgreeToTerms')}
                 </button>
               </div>
             </div>

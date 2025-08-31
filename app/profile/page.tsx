@@ -5,12 +5,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins } from "lucide-react";
+import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins, Edit3, Save, Lock, Home, Wallet, Plus, History } from "lucide-react";
+
+type TabType = 'personal' | 'password' | 'wallet';
 
 export default function ProfilePage() {
   const { user, updateProfile, logout, loading, changePassword } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>('personal');
   const [edit, setEdit] = useState(false);
   const [profile, setProfile] = useState({
     name: "",
@@ -23,6 +26,8 @@ export default function ProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [walletAmount, setWalletAmount] = useState(1000); // Mock wallet balance
 
   // Sync profile state with user when user changes (not on edit)
   useEffect(() => {
@@ -84,126 +89,347 @@ export default function ProfilePage() {
     setNewPassword("");
   };
 
+  const handleWalletClick = () => {
+    setShowWalletModal(true);
+  };
+
+  const handleAddMoney = () => {
+    alert('Payment integration required for production. This feature will be implemented with actual payment gateways (e.g., Stripe, PayPal) for real transactions.');
+  };
+
   if (loading || !user) return null;
 
   // Only use initials or fallback icon for avatar
   const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
 
   return (
-    <div className="w-full max-w-lg mx-auto bg-white p-0 rounded-2xl shadow-xl flex flex-col gap-0 animate-fade-in">
-      {/* Header with back button and avatar */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl px-6 py-5 flex flex-col items-center relative">
-        <div className="w-16 h-16 rounded-full bg-primary-100 shadow-lg flex items-center justify-center mb-1 border-4 border-primary-300 overflow-hidden">
-          {initials ? (
-            <span className="text-2xl font-bold text-primary-700">{initials}</span>
-          ) : (
-            <UserIcon className="w-8 h-8 text-primary-500" />
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-white/90 backdrop-blur-lg shadow-sm border-b border-gray-100 sticky top-0 z-20">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => router.back()}
+                className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Profile</h1>
+                <p className="text-gray-600 text-sm">Manage your account settings</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/')}
+              className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-all duration-200"
+            >
+              <Home className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
-        {/* Removed name from header */}
       </div>
-      <div className="p-8 flex flex-col gap-8">
-        {showSuccess && (
-          <div className="mb-2 p-2 rounded bg-green-100 text-green-800 text-center border border-green-300">
-            {t('profile.updateSuccess')}
-          </div>
-        )}
-        {error && (
-          <div className="mb-2 p-2 rounded bg-red-100 text-red-800 text-center border border-red-300">
-            {error}
-          </div>
-        )}
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><UserIcon className="w-4 h-4 text-blue-400" /> {t('auth.name')}</label>
-            <input
-              className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
-              value={profile.name}
-              onChange={e => setProfile({ ...profile, name: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Mail className="w-4 h-4 text-blue-400" /> {t('auth.email')}</label>
-            <input
-              className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
-              value={profile.email}
-              onChange={e => setProfile({ ...profile, email: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Smartphone className="w-4 h-4 text-blue-400" /> {t('auth.mobile')}</label>
-            <input
-              className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
-              value={profile.mobile}
-              onChange={e => setProfile({ ...profile, mobile: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold text-gray-700 flex items-center gap-2"><Coins className="w-4 h-4 text-primary-500" /> {t('profile.credits')}</label>
-            <div className="border px-3 py-2 rounded-lg bg-gray-50 flex justify-between items-center">
-              <span className="text-gray-700">{user.credits || 0} {t('profile.credits')}</span>
-              <span className="text-sm text-gray-500">({Math.floor((user.credits || 0) / 50)} {t('profile.rentalsAvailable')})</span>
+
+      {/* Main Content */}
+      <div className="flex-1 px-4 py-6">
+        <div className="max-w-2xl mx-auto">
+          {/* Profile Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+                {initials ? (
+                  <span className="text-xl font-bold text-white">{initials}</span>
+                ) : (
+                  <UserIcon className="w-8 h-8 text-white" />
+                )}
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
+                <p className="text-gray-500 text-sm">{t('profile.activeUser')}</p>
+                <div className="flex items-center mt-1">
+                  <Coins className="w-4 h-4 text-green-500 mr-1" />
+                  <span className="text-sm text-gray-600">{user.credits || 0} {t('profile.credits')}</span>
+                </div>
+              </div>
             </div>
           </div>
-          {edit ? (
-            <button
-              onClick={handleSave}
-              className="w-full mt-2 bg-primary-600 text-white rounded-lg py-2 font-semibold hover:bg-primary-700 transition disabled:bg-gray-400"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? t('common.saving') : t('common.save')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
-              onClick={handleEditClick}
-            >
-              {t('common.edit')}
-            </button>
+
+          {/* Success/Error Messages */}
+          {showSuccess && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              {t('profile.updateSuccess')}
+            </div>
           )}
-        </div>
-        <div className="border-t pt-6 mt-2 flex flex-col gap-4">
-          <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
-            <label className="font-semibold text-gray-700">{t('profile.changePassword')}</label>
-            <Input
-              type="password"
-              placeholder={t('profile.oldPassword')}
-              value={oldPassword}
-              onChange={e => setOldPassword(e.target.value)}
-              className="rounded-lg"
-            />
-            <Input
-              type="password"
-              placeholder={t('profile.newPassword')}
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              className="rounded-lg"
-            />
-            <button
-              type="submit"
-              className="w-full mt-2 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition"
-              disabled={!oldPassword || !newPassword}
-            >
-              {t('profile.changePassword')}
-            </button>
-            {pwMsg && <div className="text-center text-sm text-green-600">{pwMsg}</div>}
-          </form>
-        </div>
-        <div className="flex justify-end mt-2">
-          <button
-            type="button"
-            className="w-32 bg-primary-100 text-primary-700 rounded-lg py-2 font-semibold hover:bg-primary-200 transition flex items-center justify-center"
-            onClick={() => router.push('/')}
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            {t('common.back')}
-          </button>
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Tab Navigation */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('personal')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === 'personal'
+                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <UserIcon className="w-4 h-4" />
+                  <span>{t('profile.personalInformation')}</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('password')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === 'password'
+                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Lock className="w-4 h-4" />
+                  <span>{t('profile.changePassword')}</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('wallet')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === 'wallet'
+                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Wallet className="w-4 h-4" />
+                  <span>{t('profile.digitalWallet')}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Personal Information Tab */}
+            {activeTab === 'personal' && (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">{t('profile.personalInformation')}</h3>
+                  {!edit && (
+                    <button
+                      type="button"
+                      className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
+                      onClick={handleEditClick}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span>{t('common.edit')}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.name')}</label>
+                      <input
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        value={profile.name}
+                        onChange={e => setProfile({ ...profile, name: e.target.value })}
+                        readOnly={!edit}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.email')}</label>
+                      <input
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        value={profile.email}
+                        onChange={e => setProfile({ ...profile, email: e.target.value })}
+                        readOnly={!edit}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.mobile')}</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      value={profile.mobile}
+                      onChange={e => setProfile({ ...profile, mobile: e.target.value })}
+                      readOnly={!edit}
+                    />
+                  </div>
+                </div>
+
+                {edit && (
+                  <div className="mt-6 flex space-x-3">
+                    <button
+                      onClick={handleSave}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 flex items-center space-x-2"
+                      disabled={isSubmitting}
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isSubmitting ? t('common.saving') : t('common.save')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
+                      onClick={() => setEdit(false)}
+                    >
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Change Password Tab */}
+            {activeTab === 'password' && (
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">{t('profile.changePassword')}</h3>
+                
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.oldPassword')}</label>
+                      <Input
+                        type="password"
+                        placeholder={t('profile.oldPassword')}
+                        value={oldPassword}
+                        onChange={e => setOldPassword(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.newPassword')}</label>
+                      <Input
+                        type="password"
+                        placeholder={t('profile.newPassword')}
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-300 flex items-center space-x-2"
+                    disabled={!oldPassword || !newPassword}
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>{t('profile.changePassword')}</span>
+                  </button>
+                  
+                  {pwMsg && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+                      {pwMsg}
+                    </div>
+                  )}
+                </form>
+              </div>
+            )}
+
+            {/* Wallet Tab */}
+            {activeTab === 'wallet' && (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">{t('profile.digitalWallet')}</h3>
+                  <button
+                    type="button"
+                    className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
+                    onClick={handleWalletClick}
+                  >
+                    <Wallet className="w-4 h-4" />
+                    <span>{t('profile.manageWallet')}</span>
+                  </button>
+                </div>
+                
+                <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-sm text-green-600 mb-1">{t('profile.availableBalance')}</div>
+                    <div className="text-3xl font-bold text-green-700">रू{walletAmount}</div>
+                  </div>
+                </div>
+
+                {/* Demo Notice */}
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="text-sm text-yellow-700">
+                      <p className="font-medium mb-1">Demo Wallet</p>
+                      <p className="text-xs">This is a demonstration wallet. Real payment integration will be required for production use.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Wallet Modal */}
+      {showWalletModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wallet className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('profile.digitalWallet')}</h3>
+              <p className="text-gray-600">{t('footer.managePaymentMethods')}</p>
+            </div>
+            
+            {/* Wallet Balance */}
+            <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-6">
+              <div className="text-center">
+                <div className="text-sm text-green-600 mb-1">{t('profile.availableBalance')}</div>
+                <div className="text-3xl font-bold text-green-700">रू{walletAmount}</div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={handleAddMoney}
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                {t('footer.addMoney')}
+              </button>
+              <button
+                onClick={() => alert('Transaction history will be available once payment integration is complete.')}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                {t('footer.transactionHistory')}
+              </button>
+            </div>
+
+            {/* Development Note */}
+            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium mb-1">Development Mode</p>
+                  <p className="text-xs">This wallet is currently in demo mode. For production, integrate with payment gateways like Stripe, PayPal, or local payment providers.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowWalletModal(false)}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
+            >
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

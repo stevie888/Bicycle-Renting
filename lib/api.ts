@@ -1,5 +1,40 @@
 // LocalStorage-based API for persistent data storage
 
+// External API configuration
+const EXTERNAL_API_BASE_URL = process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL || 'http://13.204.148.32';
+
+// Configuration to enable/disable external API
+const USE_EXTERNAL_API = process.env.NEXT_PUBLIC_USE_EXTERNAL_API === 'true'; // Set to false to use only localStorage
+
+// Helper function to make external API calls
+async function externalApiCall(endpoint: string, options: RequestInit = {}) {
+  try {
+    const url = `${EXTERNAL_API_BASE_URL}${endpoint}`;
+    console.log('Making external API call to:', url);
+    
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      // Add mode: 'cors' explicitly for better error handling
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`External API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('External API response:', data);
+    return data;
+  } catch (error) {
+    console.error('External API call failed:', error);
+    throw error;
+  }
+}
+
 // Helper functions for localStorage
 const getStorageData = (key: string) => {
   if (typeof window === 'undefined') return null;
@@ -382,10 +417,43 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
 export const authAPI = {
   // Login user with mobile number
   login: async (mobile: string, password: string) => {
-    return localStorageApiCall('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ mobile, password }),
-    });
+    if (USE_EXTERNAL_API) {
+      try {
+        // Try external API first
+        console.log('Attempting external login...');
+        const externalResponse = await externalApiCall('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ mobile, password }),
+        });
+        
+        // If external API succeeds, return the response
+        if (externalResponse.success || externalResponse.user) {
+          console.log('External login successful');
+          return externalResponse;
+        }
+        
+        throw new Error('External login failed');
+      } catch (externalError) {
+        console.log('External login failed, falling back to localStorage:', externalError);
+        
+        // Fallback to localStorage
+        try {
+          return await localStorageApiCall('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ mobile, password }),
+          });
+        } catch (localError) {
+          console.error('Both external and local login failed:', localError);
+          throw localError;
+        }
+      }
+    } else {
+      // Use only localStorage
+      return localStorageApiCall('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ mobile, password }),
+      });
+    }
   },
 
   // Signup user
@@ -395,10 +463,43 @@ export const authAPI = {
     password: string;
     name: string;
   }) => {
-    return localStorageApiCall('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    if (USE_EXTERNAL_API) {
+      try {
+        // Try external API first
+        console.log('Attempting external signup...');
+        const externalResponse = await externalApiCall('/auth/signup', {
+          method: 'POST',
+          body: JSON.stringify(userData),
+        });
+        
+        // If external API succeeds, return the response
+        if (externalResponse.success || externalResponse.user) {
+          console.log('External signup successful');
+          return externalResponse;
+        }
+        
+        throw new Error('External signup failed');
+      } catch (externalError) {
+        console.log('External signup failed, falling back to localStorage:', externalError);
+        
+        // Fallback to localStorage
+        try {
+          return await localStorageApiCall('/auth/signup', {
+            method: 'POST',
+            body: JSON.stringify(userData),
+          });
+        } catch (localError) {
+          console.error('Both external and local signup failed:', localError);
+          throw localError;
+        }
+      }
+    } else {
+      // Use only localStorage
+      return localStorageApiCall('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+    }
   },
 };
 
@@ -579,6 +680,55 @@ export default api;
 
 // Add global functions for debugging and data management
 if (typeof window !== 'undefined') {
+  // Test external API connection
+  (window as any).testExternalAPI = async () => {
+    try {
+      console.log('Testing external API connection...');
+      console.log('API URL:', EXTERNAL_API_BASE_URL);
+      console.log('Use External API:', USE_EXTERNAL_API);
+      
+      const response = await fetch(`${EXTERNAL_API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mobile: 'test',
+          password: 'test'
+        }),
+      });
+      
+      console.log('External API response status:', response.status);
+      const data = await response.json();
+      console.log('External API response data:', data);
+      
+      alert(`External API test completed. Status: ${response.status}\nURL: ${EXTERNAL_API_BASE_URL}`);
+    } catch (error) {
+      console.error('External API test failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`External API test failed: ${errorMessage}\nURL: ${EXTERNAL_API_BASE_URL}`);
+    }
+  };
+
+  // Toggle external API usage
+  (window as any).toggleExternalAPI = () => {
+    const currentSetting = localStorage.getItem('use_external_api');
+    const newSetting = currentSetting === 'false' ? 'true' : 'false';
+    localStorage.setItem('use_external_api', newSetting);
+    alert(`External API ${newSetting === 'true' ? 'enabled' : 'disabled'}. Please refresh the page.`);
+  };
+
+  // Show current API configuration
+  (window as any).showAPIConfig = () => {
+    console.log('=== API Configuration ===');
+    console.log('External API URL:', EXTERNAL_API_BASE_URL);
+    console.log('Use External API:', USE_EXTERNAL_API);
+    console.log('Environment Variables:');
+    console.log('- NEXT_PUBLIC_EXTERNAL_API_BASE_URL:', process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL);
+    console.log('- NEXT_PUBLIC_USE_EXTERNAL_API:', process.env.NEXT_PUBLIC_USE_EXTERNAL_API);
+    console.log('========================');
+  };
+
   (window as any).clearpedalNepalStorage = () => {
     localStorage.removeItem('paddlenepal_users');
     localStorage.removeItem('pedalnepal_bicycles');

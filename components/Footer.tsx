@@ -1,16 +1,16 @@
 "use client";
-import { Home, Wallet, Scan, History, User, LogOut, Bike, CreditCard, QrCode, Plus, Minus, Camera, X } from "lucide-react";
+import { Home, Scan, History, User, LogOut, Bike, QrCode, Camera, X } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthContext";
+import { useLanguage } from "./LanguageContext";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
 export default function Footer() {
   const { user, logout, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
-  const [showWalletModal, setShowWalletModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
-  const [walletAmount, setWalletAmount] = useState(1000); // Mock wallet balance
   const [isScanning, setIsScanning] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -23,17 +23,8 @@ export default function Footer() {
     router.push("/");
   };
 
-  const handleWalletClick = () => {
-    setShowWalletModal(true);
-  };
-
   const handleQRScannerClick = () => {
     setShowQRModal(true);
-  };
-
-  const handleAddMoney = () => {
-    setWalletAmount(prev => prev + 500);
-    alert('रू500 added to wallet!');
   };
 
   const handleScanQR = () => {
@@ -165,34 +156,26 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="w-full gap-4 shadow-lg border-t-1 flex items-center justify-center py-3 px-4 bg-white">
+      <footer className="w-full gap-4 shadow-lg border-t-1 flex items-center justify-center py-2 px-4 bg-white">
         {/* Home Button */}
         <Link href={"/"}>
           <button 
             type="button"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="Home"
+            title={t('footer.home')}
           >
             <Home className="h-5 w-5" />
           </button>
         </Link>
         
-        {/* Wallet Button */}
-        <button 
-          type="button"
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed"
-          title="Wallet (Coming Soon)"
-          disabled
-        >
-          <Wallet className="h-5 w-5" />
-        </button>
+
         
         {/* My Rentals Button */}
         <Link href="/my-rentals">
           <button 
             type="button"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="My Rentals"
+            title={t('footer.myRentals')}
           >
             <History className="h-5 w-5" />
           </button>
@@ -203,7 +186,7 @@ export default function Footer() {
           type="button"
           className="p-2 rounded-full hover:bg-gray-100 transition-colors bg-primary-50"
           onClick={handleQRScannerClick}
-          title="QR Scanner"
+                      title={t('footer.qrScanner')}
         >
           <Scan className="h-5 w-5" />
         </button>
@@ -213,7 +196,7 @@ export default function Footer() {
           <button 
             type="button"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="Available Bikes"
+            title={t('footer.availableBikes')}
           >
             <Bike className="h-5 w-5" />
           </button>
@@ -224,7 +207,7 @@ export default function Footer() {
           <button 
             type="button"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="Profile"
+            title={t('footer.profile')}
           >
             <User className="h-5 w-5" />
           </button>
@@ -236,61 +219,14 @@ export default function Footer() {
             type="button"
             className="p-2 rounded-full hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
             onClick={handleLogout}
-            title="Logout"
+            title={t('footer.logout')}
           >
             <LogOut className="h-5 w-5" />
           </button>
         )}
       </footer>
 
-      {/* Wallet Modal */}
-      {showWalletModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wallet className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Digital Wallet</h3>
-              <p className="text-gray-600">Manage your payment methods</p>
-            </div>
-            
-            {/* Wallet Balance */}
-            <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-6">
-              <div className="text-center">
-                <div className="text-sm text-green-600 mb-1">Available Balance</div>
-                <div className="text-3xl font-bold text-green-700">रू{walletAmount}</div>
-              </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={handleAddMoney}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Money
-              </button>
-              <button
-                onClick={() => alert('Payment history coming soon!')}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
-              >
-                <History className="w-4 h-4" />
-                Transaction History
-              </button>
-            </div>
-
-            {/* Close Button */}
-            <button
-              onClick={() => setShowWalletModal(false)}
-              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* QR Scanner Modal */}
       {showQRModal && (
@@ -300,8 +236,8 @@ export default function Footer() {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <QrCode className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">QR Scanner</h3>
-              <p className="text-gray-600">Scan bike QR code to rent</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('footer.qrScanner')}</h3>
+              <p className="text-gray-600">{t('footer.scanBikeQRCode')}</p>
             </div>
             
                          {/* Camera View */}
@@ -328,7 +264,7 @@ export default function Footer() {
                    <div className="w-32 h-32 bg-white rounded-lg mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300">
                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                    </div>
-                   <p className="text-sm text-gray-600">Starting camera...</p>
+                   <p className="text-sm text-gray-600">{t('footer.startingCamera')}</p>
                  </div>
                )}
                
@@ -338,7 +274,7 @@ export default function Footer() {
                    <div className="w-32 h-32 bg-red-50 rounded-lg mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-red-300">
                      <X className="w-16 h-16 text-red-400" />
                    </div>
-                   <p className="text-sm text-red-600 mb-2">Camera Error</p>
+                   <p className="text-sm text-red-600 mb-2">{t('footer.cameraError')}</p>
                    <p className="text-xs text-gray-500">{cameraError}</p>
                    <button
                      onClick={() => {
@@ -347,7 +283,7 @@ export default function Footer() {
                      }}
                      className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
                    >
-                     Try Again
+                     {t('footer.tryAgain')}
                    </button>
                  </div>
                )}
@@ -358,7 +294,7 @@ export default function Footer() {
                    <div className="w-32 h-32 bg-white rounded-lg mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300">
                      <Camera className="w-16 h-16 text-gray-400" />
                    </div>
-                   <p className="text-sm text-gray-600">Camera ready to scan</p>
+                   <p className="text-sm text-gray-600">{t('footer.cameraReadyToScan')}</p>
                  </div>
                )}
                
@@ -375,7 +311,7 @@ export default function Footer() {
                    </div>
                    {/* Scanning indicator */}
                    <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                     Scanning...
+                     {t('footer.scanning')}
                    </div>
                  </>
                )}
@@ -394,12 +330,12 @@ export default function Footer() {
                  {isScanning ? (
                    <>
                      <X className="w-4 h-4" />
-                     Stop Scanning
+                     {t('footer.stopScanning')}
                    </>
                  ) : (
                    <>
                      <Camera className="w-4 h-4" />
-                     Start Camera
+                     {t('footer.startCamera')}
                    </>
                  )}
                </button>
@@ -408,7 +344,7 @@ export default function Footer() {
                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
                >
                  <Bike className="w-4 h-4" />
-                 Select Station Manually
+                 {t('footer.selectStationManually')}
                </button>
              </div>
 
@@ -417,7 +353,7 @@ export default function Footer() {
               onClick={handleCloseQRModal}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
             >
-              Close
+              {t('common.close')}
             </button>
           </div>
         </div>

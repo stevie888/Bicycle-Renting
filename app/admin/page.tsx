@@ -791,7 +791,7 @@ function AdminDashboard() {
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
                         <div className="text-xs text-gray-500">{t('admin.newUserRegistered')}</div>
                     </div>
                       <div className="text-xs text-gray-400">
@@ -1490,7 +1490,7 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
             slotNumber: index + 1,
             status: (index >= 8) ? 'reserved' as const : 'active' as const,
             lastUpdated: new Date().toISOString(),
-            notes: (index >= 8) ? 'Reserved for bike returns' : ''
+            notes: (index >= 8) ? 'Available for bike returns' : 'Regular bike slot'
           }));
           localStorage.setItem(slotsKey, JSON.stringify(defaultSlots));
           
@@ -1503,13 +1503,31 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           };
         }
         
-        // Update existing slots to ensure slots 9-10 are properly marked as reserved
+        // Update existing slots to ensure proper status based on bike returns
         const updatedSlots = slots.map((slot: any) => {
-          if (slot.slotNumber >= 9) {
+          // If slot has a bike returned to it, keep it as active (available for rental)
+          if (slot.status === 'active' && slot.notes === 'Bike returned') {
+            return slot; // Keep as is - available for rental
+          }
+          // If slot is empty (marked as available for returns), keep it as reserved
+          if (slot.status === 'active' && slot.notes?.includes('Available for bike returns')) {
             return {
               ...slot,
               status: 'reserved' as const,
-              notes: 'Reserved for bike returns',
+              notes: 'Available for bike returns',
+              lastUpdated: new Date().toISOString()
+            };
+          }
+          // If it's a regular active slot (1-8), keep it as active (has bike)
+          if (slot.slotNumber <= 8 && slot.status === 'active') {
+            return slot; // Keep as is - has bike available for rental
+          }
+          // If it's slot 9-10 and not marked as having a returned bike, mark as reserved
+          if (slot.slotNumber >= 9 && slot.status === 'active' && !slot.notes?.includes('Bike returned')) {
+            return {
+              ...slot,
+              status: 'reserved' as const,
+              notes: 'Available for bike returns',
               lastUpdated: new Date().toISOString()
             };
           }
@@ -1521,7 +1539,17 @@ function StationsManagement({ refreshTrigger }: { refreshTrigger: number }) {
           localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
         }
         
-        const activeSlots = updatedSlots.filter((slot: any) => slot.status === 'active').length;
+        const activeSlots = updatedSlots.filter((slot: any) => {
+          // Regular slots (1-8) that are active and have bikes
+          if (slot.slotNumber <= 8 && slot.status === 'active' && !slot.notes?.includes('Available for bike returns')) {
+            return true;
+          }
+          // Any slot that has a bike returned to it (available for rental)
+          if (slot.status === 'active' && slot.notes === 'Bike returned') {
+            return true;
+          }
+          return false;
+        }).length;
         const maintenanceSlots = updatedSlots.filter((slot: any) => slot.status === 'in-maintenance').length;
         const reservedSlots = updatedSlots.filter((slot: any) => slot.status === 'reserved').length;
 

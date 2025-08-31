@@ -7,7 +7,7 @@ import { useLanguage } from '@/components/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, MapPin, Bike, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Bike, CheckCircle, AlertTriangle, Clock, Star, Send } from 'lucide-react';
 
 interface Station {
   id: string;
@@ -55,6 +55,11 @@ function ReturnBikePage() {
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [formattedDuration, setFormattedDuration] = useState('');
   const [totalCost, setTotalCost] = useState(0);
+  const [showRating, setShowRating] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [review, setReview] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -101,10 +106,10 @@ function ReturnBikePage() {
       if (userActiveRental) {
         setCurrentRental(userActiveRental);
         
-                           // Calculate rental duration
-          const startTime = new Date(userActiveRental.startTime);
-          const currentTime = new Date();
-          const durationMs = currentTime.getTime() - startTime.getTime();
+        // Calculate rental duration
+        const startTime = new Date(userActiveRental.startTime);
+        const currentTime = new Date();
+        const durationMs = currentTime.getTime() - startTime.getTime();
           const durationMinutes = Math.floor(durationMs / (1000 * 60));
           const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
           const remainingMinutes = durationMinutes % 60;
@@ -140,64 +145,39 @@ function ReturnBikePage() {
   const handleStationSelect = (station: Station) => {
     setSelectedStation(station);
     setSelectedSlot(null);
-    fetchAvailableSlots(station);
+    fetchAvailableSlots(station.id);
   };
 
-  const fetchAvailableSlots = (station: Station) => {
+  const fetchAvailableSlots = (stationId: string) => {
     try {
-      const slotsKey = `pedalnepal_slots_${station.id}`;
-      let allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
+      const slotsKey = `pedalnepal_slots_${stationId}`;
+      const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
       
-      // If no slots exist, create default slots with reserved slots for returns
-      if (allSlots.length === 0) {
-        allSlots = [];
-        for (let i = 1; i <= 10; i++) {
-          allSlots.push({
-            id: `${station.id}_slot_${i}`,
-            slotNumber: i,
-            status: i >= 9 ? 'reserved' : 'active', // Slots 9-10 are reserved for returns
-            lastUpdated: new Date().toISOString(),
-            notes: i >= 9 ? 'Reserved for bike returns' : undefined
-          });
+      console.log('All slots:', allSlots);
+      console.log('Current rental:', currentRental);
+      
+      // Get slots that are available for return:
+      // 1. User's original rental slot (where they rented from)
+      // 2. Empty slots (reserved slots or slots marked as available for returns)
+      const returnSlots = allSlots.filter((slot: Slot) => {
+        // Always include the user's original rental slot
+        if (currentRental && slot.slotNumber === currentRental.slotNumber) {
+          console.log(`Including original rental slot: ${slot.slotNumber}`);
+          return true;
         }
-        localStorage.setItem(slotsKey, JSON.stringify(allSlots));
-      }
-      
-      // Ensure reserved slots (9-10) are properly set for returns
-      const updatedSlots = allSlots.map((slot: Slot) => {
-                 if (slot.slotNumber >= 9) {
-           // Force slots 9-10 to be reserved for returns
-           return {
-             ...slot,
-             status: 'reserved' as const,
-             notes: 'Reserved for bike returns',
-             lastUpdated: new Date().toISOString()
-           };
-         }
-        return slot;
+        
+        // Include empty slots (reserved or marked as available for returns)
+        if (slot.status === 'reserved' || 
+            (slot.status === 'active' && slot.notes?.includes('Available for bike returns'))) {
+          console.log(`Including empty slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`);
+          return true;
+        }
+        
+        console.log(`Excluding slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`);
+        return false;
       });
       
-      // Save the updated slots
-      localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
-      
-                    // Get slots that are available for returns
-       // This includes:
-       // 1. Reserved slots (9-10) for returns
-       // 2. User's original rental slot (where they rented from)
-       const returnSlots = updatedSlots.filter((slot: Slot) => {
-         // Always include reserved slots (9-10) for returns
-         if (slot.status === 'reserved') {
-           return true;
-         }
-         
-         // Include the user's original rental slot (where they rented from)
-         if (currentRental && slot.slotNumber === currentRental.slotNumber) {
-           return true;
-         }
-         
-         return false;
-       });
-      
+      console.log('Available return slots:', returnSlots);
       setAvailableSlots(returnSlots);
     } catch (error) {
       console.error('Error fetching available slots:', error);
@@ -207,55 +187,6 @@ function ReturnBikePage() {
   const handleSlotSelect = (slot: Slot) => {
     setSelectedSlot(slot);
   };
-
-  // Function to manage return slot availability
-  const manageReturnSlotAvailability = (stationId: string) => {
-    const slotsKey = `pedalnepal_slots_${stationId}`;
-    const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
-    
-    // Check if both return slots (9 and 10) are occupied
-    const returnSlots = allSlots.filter((slot: Slot) => slot.slotNumber >= 9);
-    const occupiedReturnSlots = returnSlots.filter((slot: Slot) => 
-      slot.status === 'active' && slot.notes === 'Bike returned'
-    );
-    
-    // If both return slots are occupied, move one bike to an available slot
-    if (occupiedReturnSlots.length >= 2) {
-      const availableSlot = allSlots.find((slot: Slot) => 
-        slot.slotNumber <= 8 && slot.status === 'active' && 
-        !slot.notes?.includes('Reserved for bike returns')
-      );
-      
-      if (availableSlot) {
-        // Move the first occupied return slot bike to available slot
-        const firstOccupiedReturnSlot = occupiedReturnSlots[0];
-        const updatedSlots = allSlots.map((slot: Slot) => {
-          if (slot.id === firstOccupiedReturnSlot.id) {
-                         // Free up the return slot
-             return {
-               ...slot,
-               status: 'reserved',
-               notes: 'Reserved for bike returns',
-               lastUpdated: new Date().toISOString()
-             };
-          } else if (slot.id === availableSlot.id) {
-            // Occupy the available slot
-            return {
-              ...slot,
-              status: 'active',
-              notes: 'Bike moved from return slot',
-              lastUpdated: new Date().toISOString()
-            };
-          }
-          return slot;
-        });
-        
-        localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
-      }
-    }
-  };
-
-
 
   const handleEndRide = async () => {
     if (!currentRental || !user) return;
@@ -321,23 +252,34 @@ function ReturnBikePage() {
       // Update slot status if station and slot are selected
       if (selectedStation && selectedSlot) {
         const slotsKey = `pedalnepal_slots_${selectedStation.id}`;
-        const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
-        const updatedSlots = allSlots.map((slot: Slot) => {
-          if (slot.id === selectedSlot.id) {
+      const allSlots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
+        
+        // Create updated slots array
+      const updatedSlots = allSlots.map((slot: Slot) => {
+          // Mark the return slot as having a bike returned (available for rental)
+        if (slot.id === selectedSlot.id) {
+          return {
+            ...slot,
+            status: 'active' as const,
+            lastUpdated: new Date().toISOString(),
+            notes: 'Bike returned'
+          };
+        }
+          
+          // Mark the original rental slot as empty (available for returns)
+          if (currentRental && slot.slotNumber === currentRental.slotNumber) {
             return {
               ...slot,
-              status: 'active' as const,
+              status: 'reserved' as const,
               lastUpdated: new Date().toISOString(),
-              notes: 'Bike returned'
+              notes: 'Available for bike returns'
             };
           }
-          return slot;
-        });
-        
+          
+        return slot;
+      });
+      
         localStorage.setItem(slotsKey, JSON.stringify(updatedSlots));
-        
-        // Manage return slot availability after return
-        manageReturnSlotAvailability(selectedStation.id);
       }
       
       // Save updated data
@@ -372,7 +314,7 @@ function ReturnBikePage() {
         
         // Also update the main users array for admin dashboard
         const allUsers = JSON.parse(localStorage.getItem('pedalnepal_users') || '[]');
-        const updatedUsers = allUsers.map((u: any) => 
+      const updatedUsers = allUsers.map((u: any) => 
           u.id === user.id ? { ...u, credits: updatedUser.credits } : u
         );
         localStorage.setItem('pedalnepal_users', JSON.stringify(updatedUsers));
@@ -391,9 +333,9 @@ ${selectedStation && selectedSlot ? `📍 Returned to: ${selectedStation.name} a
 
 Thank you for using Pedal Nepal! 🚴‍♂️`);
       
-      // Redirect to return confirmation page if slot was selected, otherwise to my rentals
+      // Show rating section instead of redirecting immediately
       if (selectedStation && selectedSlot) {
-        router.push('/return-confirmation');
+        setShowRating(true);
       } else {
         router.push('/my-rentals');
       }
@@ -404,6 +346,52 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
     } finally {
       setIsEndingRide(false);
     }
+  };
+
+  const handleRatingSubmit = async () => {
+    if (rating === 0) {
+      alert('Please select a rating before submitting.');
+      return;
+    }
+    
+    setIsSubmittingReview(true);
+    
+    try {
+      // Save review to localStorage
+      const reviews = JSON.parse(localStorage.getItem('pedalnepal_reviews') || '[]');
+      const newReview = {
+        id: Date.now().toString(),
+        userId: user?.id,
+        userName: user?.name,
+        rentalId: currentRental?.id,
+        stationId: selectedStation?.id,
+        stationName: selectedStation?.name,
+        rating,
+        review,
+        createdAt: new Date().toISOString(),
+        bikeName: currentRental?.bikeName,
+        duration: formattedDuration,
+        cost: totalCost
+      };
+      
+      reviews.push(newReview);
+      localStorage.setItem('pedalnepal_reviews', JSON.stringify(reviews));
+      
+      // Show success message
+      alert('Thank you for your review! Your feedback helps us improve our service.');
+      
+      // Redirect to return confirmation
+      router.push('/return-confirmation');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Error submitting review. Please try again.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleSkipReview = () => {
+    router.push('/return-confirmation');
   };
 
   if (loading) {
@@ -440,9 +428,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
                              <button
-                 onClick={() => router.back()}
+                onClick={() => router.back()}
                  className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
-               >
+              >
                  <ArrowLeft className="w-5 h-5 text-white" />
                </button>
               <div>
@@ -466,7 +454,7 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
               <p className="text-gray-500">Slot</p>
               <p className="font-semibold">Slot {currentRental.slotNumber}</p>
             </div>
-                                     <div>
+            <div>
               <p className="text-gray-500">Duration</p>
               <p className="font-semibold">{formattedDuration}</p>
             </div>
@@ -515,13 +503,13 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
         {/* Slot Selection */}
         {selectedStation && (
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-               <CheckCircle className="w-5 h-5 mr-2 text-purple-600" />
-               Select Return Slot
-             </h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-purple-600" />
+              Select Return Slot
+            </h2>
              <p className="text-sm text-gray-600 mb-4">
-               You can return your bike to your original rental slot (Slot {currentRental?.slotNumber}) or the reserved return slots (9-10). This ensures efficient slot management.
-             </p>
+                You can return your bike to your original rental slot (Slot {currentRental?.slotNumber}) or any empty slot. This ensures efficient slot management.
+              </p>
             {availableSlots.length === 0 ? (
               <div className="text-center py-8">
                 <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
@@ -530,60 +518,189 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
               </div>
             ) : (
                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                 {availableSlots.map((slot) => (
-                   <div
-                     key={slot.id}
-                     onClick={() => handleSlotSelect(slot)}
+                {availableSlots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    onClick={() => handleSlotSelect(slot)}
                      className={`aspect-square p-4 rounded-xl border-2 cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
-                       selectedSlot?.id === slot.id
-                         ? 'border-purple-500 bg-purple-50'
-                         : 'border-gray-200 hover:border-gray-300'
-                     }`}
-                   >
+                      selectedSlot?.id === slot.id
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-2">
-                       <span className="text-white font-semibold text-sm">{slot.slotNumber}</span>
-                     </div>
-                     <p className="text-sm font-medium text-gray-900">Slot {slot.slotNumber}</p>
-                     <p className="text-xs text-gray-500">Available</p>
-                   </div>
-                 ))}
-               </div>
+                      <span className="text-white font-semibold text-sm">{slot.slotNumber}</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">Slot {slot.slotNumber}</p>
+                     <p className="text-xs text-gray-500">
+                        {currentRental && slot.slotNumber === currentRental.slotNumber 
+                          ? 'Your Rental Slot' 
+                          : 'Available for Return'
+                        }
+                      </p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {/* Return Button */}
-        {selectedStation && selectedSlot && (
+        {selectedStation && selectedSlot && !showRating && (
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                         <div className="text-center">
-               <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Return</h3>
-               <p className="text-gray-600 mb-4">
-                 Return your bike to {selectedStation.name} at slot {selectedSlot.slotNumber}
-               </p>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Return</h3>
+              <p className="text-gray-600 mb-4">
+                Return your bike to {selectedStation.name} at slot {selectedSlot.slotNumber}
+              </p>
                                                            <button
                   onClick={handleEndRide}
                   disabled={isEndingRide || (currentRental?.status as string) === 'completed'}
                   className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-3 border-0"
                 >
                  {isEndingRide ? (
-                   <div className="flex items-center">
-                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
                      Ending Ride...
-                   </div>
-                 ) : (
-                   <>
-                     <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-5 h-5 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                       </svg>
-                     </div>
+                      </svg>
+                    </div>
                      End My Ride - ₹{totalCost}
-                   </>
-                 )}
+                  </>
+                )}
                </button>
             </div>
           </div>
         )}
+
+                 {/* Rating Modal */}
+         {showRating && (
+           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+             <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+               {/* Modal Header */}
+               <div className="relative p-6 border-b border-gray-100">
+                 <div className="text-center">
+                   <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <Star className="w-8 h-8 text-white fill-current" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Rate Your Experience</h3>
+                   <p className="text-gray-600 text-sm">
+                     How was your ride with <span className="font-semibold">{currentRental?.bikeName}</span>?
+                   </p>
+                 </div>
+                 
+                 {/* Close Button */}
+                 <button
+                   onClick={handleSkipReview}
+                   className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                 >
+                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   </svg>
+                 </button>
+               </div>
+
+               {/* Modal Body */}
+               <div className="p-6">
+                 {/* Star Rating */}
+                 <div className="flex justify-center mb-6">
+                   <div className="flex space-x-3">
+                     {[1, 2, 3, 4, 5].map((star) => (
+                       <button
+                         key={star}
+                         onClick={() => setRating(star)}
+                         onMouseEnter={() => setHoverRating(star)}
+                         onMouseLeave={() => setHoverRating(0)}
+                         className="transition-all duration-200 transform hover:scale-125"
+                       >
+                         <Star
+                           className={`w-12 h-12 ${
+                             star <= (hoverRating || rating)
+                               ? 'text-yellow-400 fill-current drop-shadow-lg'
+                               : 'text-gray-300 hover:text-yellow-300'
+                           }`}
+                         />
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+
+                 {/* Rating Labels */}
+                 <div className="text-center mb-6">
+                   <p className="text-lg font-medium text-gray-800">
+                     {rating === 0 && 'Select a rating'}
+                     {rating === 1 && 'Poor'}
+                     {rating === 2 && 'Fair'}
+                     {rating === 3 && 'Good'}
+                     {rating === 4 && 'Very Good'}
+                     {rating === 5 && 'Excellent'}
+                   </p>
+                   {rating > 0 && (
+                     <p className="text-sm text-gray-500 mt-1">
+                       {rating === 1 && 'We\'re sorry to hear that'}
+                       {rating === 2 && 'We\'ll work to improve'}
+                       {rating === 3 && 'Thanks for your feedback'}
+                       {rating === 4 && 'We\'re glad you enjoyed it'}
+                       {rating === 5 && 'We\'re thrilled you loved it'}
+                     </p>
+                   )}
+                 </div>
+
+                 {/* Review Text Area */}
+                 <div className="mb-6">
+                   <label className="block text-sm font-medium text-gray-700 mb-3">
+                     Share your experience (optional)
+                   </label>
+                   <textarea
+                     value={review}
+                     onChange={(e) => setReview(e.target.value)}
+                     placeholder="Tell us about your ride experience, any issues, or suggestions for improvement..."
+                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+                     rows={4}
+                     maxLength={500}
+                   />
+                   <div className="text-right mt-2">
+                     <span className="text-xs text-gray-500">
+                       {review.length}/500 characters
+                     </span>
+                   </div>
+                 </div>
+
+                 {/* Action Buttons */}
+                 <div className="flex gap-3">
+                   <button
+                     onClick={handleSkipReview}
+                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:shadow-md"
+                   >
+                     Skip Review
+                   </button>
+                   <button
+                     onClick={handleRatingSubmit}
+                     disabled={rating === 0 || isSubmittingReview}
+                     className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                   >
+                     {isSubmittingReview ? (
+                       <>
+                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                         Submitting...
+                       </>
+                     ) : (
+                       <>
+                         <Send className="w-4 h-4" />
+                         Submit Review
+                       </>
+                     )}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
       </div>
     </div>
   );

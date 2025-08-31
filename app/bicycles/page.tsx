@@ -100,9 +100,32 @@ export default function BicyclesPage() {
       }
       
       const totalSlots = slots.length;
-      const activeSlots = slots.filter((slot: any) => slot.status === 'active' && !slot.notes?.includes('Reserved for bike returns')).length;
-      const reservedSlots = slots.filter((slot: any) => slot.notes?.includes('Reserved for bike returns')).length;
-      const maintenanceSlots = slots.filter((slot: any) => slot.status === 'in-maintenance' && !slot.notes?.includes('Reserved for bike returns')).length;
+      
+      // Count slots that are available for rental:
+      // 1. Regular active slots (1-8) that have bikes
+      // 2. Any slot (including 9-10) that has a bike returned to it
+      const activeSlots = slots.filter((slot: any) => {
+        // Regular slots (1-8) that are active and have bikes
+        if (slot.slotNumber <= 8 && slot.status === 'active' && !slot.notes?.includes('Available for bike returns')) {
+          return true;
+        }
+        // Any slot that has a bike returned to it (available for rental)
+        if (slot.status === 'active' && slot.notes === 'Bike returned') {
+          return true;
+        }
+        return false;
+      }).length;
+      
+      // Reserved slots (empty slots available for returns)
+      const reservedSlots = slots.filter((slot: any) => 
+        slot.status === 'reserved' || 
+        (slot.status === 'active' && slot.notes?.includes('Available for bike returns'))
+      ).length;
+      
+      // Maintenance slots
+      const maintenanceSlots = slots.filter((slot: any) => 
+        slot.status === 'in-maintenance'
+      ).length;
       
       return {
         totalSlots,
