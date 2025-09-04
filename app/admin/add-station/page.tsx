@@ -64,7 +64,7 @@ export default function AddStationPage() {
 
   const loadStations = () => {
     try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       
       // Group bicycles by station name to get unique stations
       const stationMap = new Map<string, Station>();
@@ -107,7 +107,7 @@ export default function AddStationPage() {
 
     try {
       // Get existing bicycles
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       
       if (editingStation) {
         // Update existing station
@@ -123,7 +123,7 @@ export default function AddStationPage() {
           return bicycle;
         });
         
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
         alert(`Successfully updated station "${formData.name}"`);
         
         // Reset editing state
@@ -146,7 +146,7 @@ export default function AddStationPage() {
           bicycles.push(newBicycle);
         }
         
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(bicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(bicycles));
         alert(`Successfully created station "${formData.name}" with ${formData.bikeCount} bike(s)`);
       }
       
@@ -208,7 +208,7 @@ export default function AddStationPage() {
 
       // Update localStorage
       try {
-        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
         const updatedBicycles = bicycles.map((bicycle: any) => {
           if (bicycle.name === stationName) {
             return {
@@ -218,7 +218,7 @@ export default function AddStationPage() {
           }
           return bicycle;
         });
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
         
         // Show success feedback
         setLastSaved(`${stationName} - ${field} updated to रू${value}`);
@@ -234,7 +234,7 @@ export default function AddStationPage() {
     setSavingPricing(true);
     
     try {
-      const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
       
       // Update pricing for all bicycles in each station
       const updatedBicycles = bicycles.map((bicycle: any) => {
@@ -250,7 +250,7 @@ export default function AddStationPage() {
         return bicycle;
       });
       
-      localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+      localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
       
       alert('Pricing updated successfully!');
     } catch (error) {
@@ -273,13 +273,13 @@ export default function AddStationPage() {
     setTimeout(() => {
       // Immediately update localStorage
       try {
-        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
         const updatedBicycles = bicycles.map((bicycle: any) => ({
           ...bicycle,
           hourlyRate: 25,
           dailyRate: 250
         }));
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
         alert('Pricing reset to defaults successfully!');
       } catch (error) {
         console.error('Error resetting pricing:', error);
@@ -291,9 +291,9 @@ export default function AddStationPage() {
   const deleteStation = (stationName: string) => {
     if (confirm(`Are you sure you want to delete station "${stationName}" and all its bikes?`)) {
       try {
-        const bicycles = JSON.parse(localStorage.getItem('paddlenepal_bicycles') || '[]');
+        const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
         const updatedBicycles = bicycles.filter((bicycle: any) => bicycle.name !== stationName);
-        localStorage.setItem('paddlenepal_bicycles', JSON.stringify(updatedBicycles));
+        localStorage.setItem('pedalnepal_bicycles', JSON.stringify(updatedBicycles));
         
         // Update local state to remove the deleted station
         setTimeout(() => {

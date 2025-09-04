@@ -377,6 +377,9 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
       reviews.push(newReview);
       localStorage.setItem('pedalnepal_reviews', JSON.stringify(reviews));
       
+      // Dispatch event to notify admin dashboard of new review
+      window.dispatchEvent(new CustomEvent('reviewsUpdated'));
+      
       // Show success message
       alert('Thank you for your review! Your feedback helps us improve our service.');
       

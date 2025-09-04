@@ -68,7 +68,7 @@ const translations = {
     'auth.privacyPolicy': 'Privacy Policy',
     
     // Homepage
-    'home.title': 'Welcome to PaddleNepal',
+    'home.title': 'Welcome to PedalNepal',
     'home.subtitle': 'Your trusted bike rental service',
     'home.getStarted': 'Get Started',
     'home.learnMore': 'Learn More',
@@ -323,7 +323,7 @@ const translations = {
     'admin.accessDenied': 'Access Denied',
     'admin.noPermission': "You don't have permission to access the admin dashboard.",
     'admin.goToHome': 'Go to Home',
-    'admin.managePaddleNepal': 'Manage PaddleNepal',
+    'admin.managePaddleNepal': 'Manage PedalNepal',
     'admin.currentlyActive': 'currently active',
     'admin.rentedBikes': 'Rented Bikes',
     'admin.emptySlots': 'Empty Slots',
@@ -537,7 +537,7 @@ const translations = {
     'auth.privacyPolicy': 'गोपनीयता नीति',
     
     // Homepage
-    'home.title': 'PaddleNepal मा स्वागत छ',
+    'home.title': 'PedalNepal मा स्वागत छ',
     'home.subtitle': 'तपाईंको विश्वसनीय साइकल भाडा सेवा',
     'home.getStarted': 'सुरु गर्नुहोस्',
     'home.learnMore': 'थप जान्नुहोस्',
@@ -792,7 +792,7 @@ const translations = {
     'admin.accessDenied': 'पहुँच अस्वीकृत',
     'admin.noPermission': 'तपाईंसँग एडमिन ड्यासबोर्डमा पहुँच गर्ने अनुमति छैन।',
     'admin.goToHome': 'घर जानुहोस्',
-    'admin.managePaddleNepal': 'प्याडलनेपाल व्यवस्थापन गर्नुहोस्',
+    'admin.managePaddleNepal': 'पेडलनेपाल व्यवस्थापन गर्नुहोस्',
     'admin.currentlyActive': 'हाल सक्रिय',
     'admin.rentedBikes': 'भाडामा लिइएका साइकलहरू',
     'admin.emptySlots': 'खाली स्लटहरू',
@@ -960,7 +960,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Load saved language preference
-    const savedLanguage = localStorage.getItem('paddlenepal_language') as Language;
+    const savedLanguage = localStorage.getItem('pedalnepal_language') as Language;
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ne')) {
       setLanguageState(savedLanguage);
     }
@@ -968,7 +968,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('paddlenepal_language', lang);
+          localStorage.setItem('pedalnepal_language', lang);
   };
 
   const t = (key: string): string => {

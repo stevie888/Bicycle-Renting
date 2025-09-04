@@ -161,8 +161,8 @@ const BikeStatusPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (ke
 
 const UserActivityPieChart = ({ stats, t }: { stats: DashboardStats | null; t: (key: string) => string }) => {
   // Calculate real-time active users (excluding logged out users)
-  const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
-  const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+  const activeSessions = JSON.parse(localStorage.getItem('pedalnepal_active_sessions') || '[]');
+  const inactiveSessions = JSON.parse(localStorage.getItem('pedalnepal_inactive_sessions') || '[]');
   const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
   
   const currentlyActiveUsers = activeSessions.filter((session: any) => {
@@ -269,8 +269,8 @@ function AdminDashboard() {
 
   // Function to get active user count for display
   const getActiveUserCount = () => {
-    const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
-    const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+    const activeSessions = JSON.parse(localStorage.getItem('pedalnepal_active_sessions') || '[]');
+    const inactiveSessions = JSON.parse(localStorage.getItem('pedalnepal_inactive_sessions') || '[]');
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     
     // Filter out users who have logged out
@@ -828,7 +828,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
   // Function to determine if user is currently active (using the system in real-time)
   const isUserActive = (user: any) => {
     // First check if user has explicitly logged out
-    const inactiveSessions = JSON.parse(localStorage.getItem('paddlenepal_inactive_sessions') || '[]');
+    const inactiveSessions = JSON.parse(localStorage.getItem('pedalnepal_inactive_sessions') || '[]');
     const userInactiveSession = inactiveSessions.find((session: any) => session.userId === user.id);
     
     // If user has logged out, they are immediately inactive
@@ -837,7 +837,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
     }
     
     // Get active sessions from localStorage
-    const activeSessions = JSON.parse(localStorage.getItem('paddlenepal_active_sessions') || '[]');
+    const activeSessions = JSON.parse(localStorage.getItem('pedalnepal_active_sessions') || '[]');
     
     // Check if user has an active session (logged in within last 30 minutes)
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -1755,170 +1755,159 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewsPerPage] = useState(5);
+  const [selectedReview, setSelectedReview] = useState<any>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
-  // Mock data for reviews and complaints
-  const mockReviews = [
-    {
-      id: 1,
-      userId: 'user1',
-      userName: 'Samir Kumar',
-      type: 'review',
-      title: 'Great Service!',
-      content: 'The bike rental service was excellent. Clean bikes and friendly staff.',
-      rating: 5,
-      station: 'Station 1',
-      createdAt: '2024-01-15T10:30:00Z',
-      status: 'active'
-    },
-    {
-      id: 2,
-      userId: 'user2',
-      userName: 'Priya Sharma',
-      type: 'complaint',
-      title: 'Bike Maintenance Issue',
-      content: 'The bike I rented had a flat tire. Please check maintenance regularly.',
-      rating: 2,
-      station: 'Station 2',
-      createdAt: '2024-01-14T15:45:00Z',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      userId: 'user3',
-      userName: 'Raj Patel',
-      type: 'review',
-      title: 'Convenient Location',
-      content: 'Station location is perfect for exploring the city. Will use again!',
-      rating: 4,
-      station: 'Station 3',
-      createdAt: '2024-01-13T09:20:00Z',
-      status: 'active'
-    },
-    {
-      id: 4,
-      userId: 'user4',
-      userName: 'Anita Singh',
-      type: 'complaint',
-      title: 'App Not Working',
-      content: 'The mobile app crashed when I tried to rent a bike. Please fix this issue.',
-      rating: 1,
-      station: 'Station 1',
-      createdAt: '2024-01-12T14:15:00Z',
-      status: 'resolved'
-    },
-    {
-      id: 5,
-      userId: 'user5',
-      userName: 'Mohan Das',
-      type: 'review',
-      title: 'Affordable Pricing',
-      content: 'Very reasonable rates for bike rentals. Good value for money.',
-      rating: 5,
-      station: 'Station 2',
-      createdAt: '2024-01-11T11:30:00Z',
-      status: 'active'
-    },
-    {
-      id: 6,
-      userId: 'user6',
-      userName: 'Sita Devi',
-      type: 'review',
-      title: 'Excellent Experience',
-      content: 'Had a wonderful time exploring the city. Bikes were in perfect condition.',
-      rating: 5,
-      station: 'Station 3',
-      createdAt: '2024-01-10T16:20:00Z',
-      status: 'active'
-    },
-    {
-      id: 7,
-      userId: 'user7',
-      userName: 'Amit Kumar',
-      type: 'complaint',
-      title: 'Late Delivery',
-      content: 'The bike was delivered 30 minutes late. Please improve delivery times.',
-      rating: 3,
-      station: 'Station 1',
-      createdAt: '2024-01-09T12:45:00Z',
-      status: 'pending'
-    },
-    {
-      id: 8,
-      userId: 'user8',
-      userName: 'Lakshmi Bai',
-      type: 'review',
-      title: 'Friendly Staff',
-      content: 'The staff was very helpful and guided me through the process.',
-      rating: 4,
-      station: 'Station 2',
-      createdAt: '2024-01-08T14:30:00Z',
-      status: 'active'
-    },
-    {
-      id: 9,
-      userId: 'user9',
-      userName: 'Ramesh Singh',
-      type: 'complaint',
-      title: 'Bike Quality Issue',
-      content: 'The bike had some mechanical issues. Needs better quality control.',
-      rating: 2,
-      station: 'Station 3',
-      createdAt: '2024-01-07T10:15:00Z',
-      status: 'resolved'
-    },
-    {
-      id: 10,
-      userId: 'user10',
-      userName: 'Geeta Patel',
-      type: 'review',
-      title: 'Great Value',
-      content: 'Affordable prices and good service. Highly recommended!',
-      rating: 5,
-      station: 'Station 1',
-      createdAt: '2024-01-06T09:00:00Z',
-      status: 'active'
-    },
-    {
-      id: 11,
-      userId: 'user11',
-      userName: 'Vikram Malhotra',
-      type: 'complaint',
-      title: 'App Interface Issues',
-      content: 'The app interface is confusing. Please improve the user experience.',
-      rating: 2,
-      station: 'Station 2',
-      createdAt: '2024-01-05T15:30:00Z',
-      status: 'pending'
-    },
-    {
-      id: 12,
-      userId: 'user12',
-      userName: 'Sunita Verma',
-      type: 'review',
-      title: 'Perfect for Tourists',
-      content: 'As a tourist, this service was perfect for exploring the city.',
-      rating: 5,
-      station: 'Station 3',
-      createdAt: '2024-01-04T11:20:00Z',
-      status: 'active'
+  // Function to fetch real reviews from localStorage
+  const fetchRealReviews = () => {
+    try {
+      const storedReviews = localStorage.getItem('pedalnepal_reviews');
+      if (storedReviews) {
+        const parsedReviews = JSON.parse(storedReviews);
+        
+        // Transform the data to match the expected format
+        const transformedReviews = parsedReviews.map((review: any, index: number) => ({
+          id: review.id || `review_${index + 1}`,
+          userId: review.userId || 'unknown',
+          userName: review.userName || 'Unknown User',
+          type: review.rating >= 4 ? 'review' : 'rating', // 4-5 stars = review, 1-3 stars = rating
+          title: review.review ? review.review.substring(0, 50) + (review.review.length > 50 ? '...' : '') : 'No Title',
+          content: review.review || 'No review content provided',
+          rating: review.rating || 0,
+          station: review.stationName || 'Unknown Station',
+          createdAt: review.createdAt || new Date().toISOString(),
+          status: 'active'
+        }));
+        
+        return transformedReviews;
+      }
+      
+      // No reviews exist yet - return empty array
+      return [];
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      return [];
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setReviews(mockReviews);
-      setLoading(false);
-    }, 1000);
+    // Fetch real reviews from localStorage
+    setLoading(true);
+    const realReviews = fetchRealReviews();
+    setReviews(realReviews);
+    setLoading(false);
+
+    // Add event listener for real-time updates when new reviews are added
+    const handleReviewsUpdate = () => {
+      const updatedReviews = fetchRealReviews();
+      setReviews(updatedReviews);
+    };
+
+    // Listen for custom event when reviews are updated
+    window.addEventListener('reviewsUpdated', handleReviewsUpdate);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('reviewsUpdated', handleReviewsUpdate);
+    };
   }, [refreshTrigger]);
 
-  const filteredReviews = reviews.filter(review => {
-    const matchesFilter = filter === 'all' || review.type === filter;
-    const matchesSearch = review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.userName.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  // Function to clear any existing dummy data
+  const clearDummyData = () => {
+    // Remove any old dummy data keys that might exist
+    const keysToRemove = [
+      'pedalnepal_dummy_reviews',
+      'pedalnepal_mock_reviews',
+      'pedalnepal_sample_reviews'
+    ];
+    
+    keysToRemove.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
+  // Function to handle viewing review details
+  const handleViewReview = (review: any) => {
+    setSelectedReview(review);
+    setShowViewModal(true);
+  };
+
+  // Function to handle replying to a review
+  const handleReplyToReview = (review: any) => {
+    setSelectedReview(review);
+    setReplyText('');
+    setShowReplyModal(true);
+  };
+
+  // Function to submit reply
+  const handleSubmitReply = async () => {
+    if (!replyText.trim() || !selectedReview) return;
+    
+    setIsSubmittingReply(true);
+    
+    try {
+      // Get existing reviews
+      const reviews = JSON.parse(localStorage.getItem('pedalnepal_reviews') || '[]');
+      
+      // Find and update the selected review with admin reply
+      const updatedReviews = reviews.map((review: any) => {
+        if (review.id === selectedReview.id) {
+          return {
+            ...review,
+            adminReply: replyText.trim(),
+            adminReplyDate: new Date().toISOString(),
+            status: 'replied'
+          };
+        }
+        return review;
+      });
+      
+      // Save updated reviews
+      localStorage.setItem('pedalnepal_reviews', JSON.stringify(updatedReviews));
+      
+      // Update local state
+      setReviews(updatedReviews);
+      
+      // Close modal and show success message
+      setShowReplyModal(false);
+      setSelectedReview(null);
+      setReplyText('');
+      
+      alert('Reply submitted successfully!');
+      
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      alert('Error submitting reply. Please try again.');
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  // Clear dummy data on component mount
+  useEffect(() => {
+    clearDummyData();
+  }, []);
+
+  const filteredReviews = (() => {
+    const base = reviews.filter(review => {
+      const matchesFilter = filter === 'all' || filter === 'ratings' || filter === 'rating' || review.type === filter;
+      const matchesSearch = review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           review.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           review.userName.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+
+    if (filter === 'ratings') {
+      return [...base].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+
+    return base;
+  })();
 
   // Pagination logic
   const indexOfLastReview = currentPage * reviewsPerPage;
@@ -1931,12 +1920,10 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
     setCurrentPage(1);
   }, [filter, searchTerm]);
 
-
-
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'review': return 'text-green-600 bg-green-100';
-      case 'complaint': return 'text-red-600 bg-red-100';
+      case 'rating': return 'text-blue-600 bg-blue-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -1945,39 +1932,103 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
   };
 
+  // Handle empty state when no reviews exist
+  if (reviews.length === 0 && !loading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t('admin.reviewsComplaints')}</h2>
+              <p className="text-sm sm:text-base text-gray-600">{t('reviews.manageFeedback')}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  const realReviews = fetchRealReviews();
+                  setReviews(realReviews);
+                  setLoading(false);
+                }}
+                className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Empty State */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-8 sm:p-12">
+          <div className="text-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No Reviews Yet</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-4">
+              Users haven't submitted any reviews or complaints yet. Reviews will appear here once users rate their bike rental experiences.
+            </p>
+            <div className="text-xs sm:text-sm text-gray-500">
+              <p>Reviews are collected when users complete their rides and rate their experience.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('admin.reviewsComplaints')}</h2>
-            <p className="text-gray-600">{t('reviews.manageFeedback')}</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t('admin.reviewsComplaints')}</h2>
+            <p className="text-sm sm:text-base text-gray-600">{t('reviews.manageFeedback')}</p>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              {reviews.filter(r => r.type === 'review').length} {t('reviews.reviews')}
-            </div>
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              {reviews.filter(r => r.type === 'complaint').length} {t('reviews.complaints')}
+            <div className="flex items-center">
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  const realReviews = fetchRealReviews();
+                  setReviews(realReviews);
+                  setLoading(false);
+                }}
+                className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-4 sm:p-6">
+        <div className="space-y-4">
+          {/* Search */}
+          <div>
             <input
               type="text"
               placeholder={t('reviews.searchReviews')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
             />
           </div>
-          <div className="flex space-x-2">
+          
+          {/* Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1999,87 +2050,97 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
               {t('reviews.reviews')}
             </button>
             <button
-              onClick={() => setFilter('complaint')}
+              onClick={() => setFilter('ratings')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'complaint' 
-                  ? 'bg-red-600 text-white' 
+                filter === 'ratings' 
+                  ? 'bg-yellow-500 text-white' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {t('reviews.complaints')}
+              Ratings
             </button>
           </div>
         </div>
       </div>
 
-      {/* Reviews List */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.user')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.type')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.title')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.rating')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.station')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.date')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reviews.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentReviews.map((review) => (
-                <tr key={review.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
-                        {review.userName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{review.userName}</div>
-                        <div className="text-sm text-gray-500">ID: {review.userId}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(review.type)}`}>
-                      {review.type === 'review' ? t('reviews.review') : t('reviews.complaint')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{review.title}</div>
-                    <div className="text-sm text-gray-500 max-w-xs truncate">{review.content}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-yellow-600 font-medium">{getRatingStars(review.rating)}</div>
-                    <div className="text-xs text-gray-500">{review.rating}/5</div>
-                  </td>
-                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                     {review.station}
-                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                     {new Date(review.createdAt).toLocaleDateString()}
-                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs">
-                        {t('reviews.view')}
-                      </button>
-                      <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs">
-                        {t('reviews.reply')}
-                      </button>
-                      
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Reviews List - Mobile Cards */}
+      <div className="space-y-3 sm:space-y-4">
+        {currentReviews.map((review) => (
+          <div key={review.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            {/* Header */}
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                    {review.userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900 text-sm sm:text-base">{review.userName}</div>
+                    <div className="text-xs text-gray-500">ID: {review.userId}</div>
+                  </div>
+                </div>
+                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getTypeColor(review.type)}`}>
+                  {review.type === 'review' ? 'Review' : 'Rating'}
+                </span>
+              </div>
+              
+              {/* Rating */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-lg text-yellow-600 font-medium">{getRatingStars(review.rating)}</div>
+                <div className="text-sm text-gray-500">{review.rating}/5</div>
+              </div>
+              
+              {/* Title and Content */}
+              <div className="mb-3">
+                <div className="font-medium text-gray-900 text-sm sm:text-base mb-1">{review.title}</div>
+                <div className="text-sm text-gray-600 line-clamp-2">{review.content}</div>
+              </div>
+              
+              {/* Station and Date */}
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>📍 {review.station}</span>
+                <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="px-4 sm:px-6 py-3 bg-gray-50">
+              <div className="flex items-center justify-between">
+                {review.adminReply && (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Replied
+                  </span>
+                )}
+                
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => handleViewReview(review)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {t('reviews.view')}
+                  </button>
+                  <button 
+                    onClick={() => handleReplyToReview(review)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      review.adminReply 
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {review.adminReply ? 'Edit Reply' : t('reviews.reply')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {filteredReviews.length === 0 && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-8 text-center">
           <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('reviews.noReviews')}</h3>
           <p className="text-gray-600">{t('reviews.noReviews')}</p>
@@ -2088,9 +2149,9 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-700 text-center sm:text-left">
               {t('rentals.showing')} {indexOfFirstReview + 1} {t('rentals.to')} {Math.min(indexOfLastReview, filteredReviews.length)} {t('rentals.of')} {filteredReviews.length} {t('reviews.reviews')}
             </div>
             <div className="flex items-center space-x-2">
@@ -2154,6 +2215,186 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
               >
                 {t('common.next')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Review Modal */}
+      {showViewModal && selectedReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">Review Details</h3>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              {/* User Info */}
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xl">
+                  {selectedReview.userName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">{selectedReview.userName}</h4>
+                  <p className="text-gray-600">ID: {selectedReview.userId}</p>
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getTypeColor(selectedReview.type)}`}>
+                    {selectedReview.type === 'review' ? 'Review' : 'Rating'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div className="text-center">
+                <div className="text-2xl text-yellow-600 font-medium mb-2">{getRatingStars(selectedReview.rating)}</div>
+                <p className="text-gray-600">{selectedReview.rating}/5 Rating</p>
+              </div>
+
+              {/* Review Content */}
+              <div>
+                <h5 className="font-semibold text-gray-900 mb-2">Review Content</h5>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700">{selectedReview.content}</p>
+                </div>
+              </div>
+
+              {/* Additional Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-2">Station</h5>
+                  <p className="text-gray-600">{selectedReview.station}</p>
+                </div>
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-2">Date</h5>
+                  <p className="text-gray-600">{new Date(selectedReview.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Admin Reply (if exists) */}
+              {selectedReview.adminReply && (
+                <div>
+                  <h5 className="font-semibold text-gray-900 mb-2">Admin Reply</h5>
+                  <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                    <p className="text-gray-700">{selectedReview.adminReply}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Replied on: {new Date(selectedReview.adminReplyDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    handleReplyToReview(selectedReview);
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-medium transition-colors"
+                >
+                  {selectedReview.adminReply ? 'Edit Reply' : 'Reply to Review'}
+                </button>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {showReplyModal && selectedReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {selectedReview.adminReply ? 'Edit Reply' : 'Reply to Review'}
+                </h3>
+                <button
+                  onClick={() => setShowReplyModal(false)}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* Review Summary */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>{selectedReview.userName}</strong> wrote:
+                </p>
+                <p className="text-gray-700 text-sm">{selectedReview.content}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Rating: {selectedReview.rating}/5
+                </p>
+              </div>
+
+              {/* Reply Text Area */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Reply
+                </label>
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Write your reply to this review..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+                  rows={4}
+                  maxLength={500}
+                />
+                <div className="text-right mt-2">
+                  <span className="text-xs text-gray-500">
+                    {replyText.length}/500 characters
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  onClick={() => setShowReplyModal(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReply}
+                  disabled={!replyText.trim() || isSubmittingReply}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmittingReply ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      {selectedReview.adminReply ? 'Update Reply' : 'Submit Reply'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

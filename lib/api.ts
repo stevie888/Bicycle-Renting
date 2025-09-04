@@ -344,7 +344,7 @@ async function localStorageApiCall(endpoint: string, options: RequestInit = {}) 
       }
     }
     
-    if (endpoint.includes('/auth/signup')) {
+    if (endpoint.includes('/auth/register')) {
       const userData = JSON.parse(options.body as string);
       console.log('Signup attempt with data:', userData);
       
@@ -467,7 +467,7 @@ export const authAPI = {
       try {
         // Try external API first
         console.log('Attempting external signup...');
-        const externalResponse = await externalApiCall('/auth/signup', {
+        const externalResponse = await externalApiCall('/auth/register', {
           method: 'POST',
           body: JSON.stringify(userData),
         });
@@ -484,7 +484,7 @@ export const authAPI = {
         
         // Fallback to localStorage
         try {
-          return await localStorageApiCall('/auth/signup', {
+          return await localStorageApiCall('/auth/register', {
             method: 'POST',
             body: JSON.stringify(userData),
           });
@@ -495,12 +495,12 @@ export const authAPI = {
       }
     } else {
       // Use only localStorage
-      return localStorageApiCall('/auth/signup', {
+      return localStorageApiCall('/auth/register', {
         method: 'POST',
         body: JSON.stringify(userData),
       });
     }
-  },
+  }
 };
 
 // User profile API calls
@@ -730,7 +730,7 @@ if (typeof window !== 'undefined') {
   };
 
   (window as any).clearpedalNepalStorage = () => {
-    localStorage.removeItem('paddlenepal_users');
+    localStorage.removeItem('pedalnepal_users');
     localStorage.removeItem('pedalnepal_bicycles');
     localStorage.removeItem('pedalnepal_rentals');
     localStorage.removeItem('pedalnepal_current_user');
