@@ -3,6 +3,9 @@ import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+// Force dynamic rendering to prevent prerendering issues
+export const dynamic = 'force-dynamic';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins, Edit3, Save, Lock, Home, Wallet, Plus, History } from "lucide-react";
