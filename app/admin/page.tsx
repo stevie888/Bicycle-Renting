@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useLanguage } from '@/components/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Card from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -2405,9 +2406,11 @@ function ReviewsManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
 export default function AdminDashboardWithErrorBoundary() {
   return (
+    <ProtectedRoute requireAuth={true} requireAdmin={true}>
     <ErrorBoundary>
       <AdminDashboard />
     </ErrorBoundary>
+    </ProtectedRoute>
   );
 }
 

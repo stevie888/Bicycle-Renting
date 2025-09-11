@@ -137,12 +137,12 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
-                {initials ? (
+          {initials ? (
                   <span className="text-xl font-bold text-white">{initials}</span>
-                ) : (
+          ) : (
                   <UserIcon className="w-8 h-8 text-white" />
-                )}
-              </div>
+          )}
+        </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
                 <p className="text-gray-500 text-sm">{t('profile.activeUser')}</p>
@@ -152,19 +152,19 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          </div>
+      </div>
 
           {/* Success/Error Messages */}
-          {showSuccess && (
+        {showSuccess && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
               {t('profile.updateSuccess')}
-            </div>
-          )}
-          {error && (
+          </div>
+        )}
+        {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
+            {error}
+          </div>
+        )}
 
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -234,56 +234,56 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.name')}</label>
-                      <input
+            <input
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        value={profile.name}
-                        onChange={e => setProfile({ ...profile, name: e.target.value })}
-                        readOnly={!edit}
-                      />
-                    </div>
+              value={profile.name}
+              onChange={e => setProfile({ ...profile, name: e.target.value })}
+              readOnly={!edit}
+            />
+          </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.email')}</label>
-                      <input
+            <input
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        value={profile.email}
-                        onChange={e => setProfile({ ...profile, email: e.target.value })}
-                        readOnly={!edit}
-                      />
-                    </div>
+              value={profile.email}
+              onChange={e => setProfile({ ...profile, email: e.target.value })}
+              readOnly={!edit}
+            />
+          </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.mobile')}</label>
-                    <input
+            <input
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      value={profile.mobile}
-                      onChange={e => setProfile({ ...profile, mobile: e.target.value })}
-                      readOnly={!edit}
-                    />
-                  </div>
-                </div>
+              value={profile.mobile}
+              onChange={e => setProfile({ ...profile, mobile: e.target.value })}
+              readOnly={!edit}
+            />
+          </div>
+            </div>
 
                 {edit && (
                   <div className="mt-6 flex space-x-3">
-                    <button
-                      onClick={handleSave}
+            <button
+              onClick={handleSave}
                       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 flex items-center space-x-2"
-                      disabled={isSubmitting}
-                    >
+              disabled={isSubmitting}
+            >
                       <Save className="w-4 h-4" />
                       <span>{isSubmitting ? t('common.saving') : t('common.save')}</span>
-                    </button>
-                    <button
-                      type="button"
+            </button>
+            <button
+              type="button"
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
                       onClick={() => setEdit(false)}
-                    >
+            >
                       {t('common.cancel')}
-                    </button>
+            </button>
                   </div>
-                )}
-              </div>
+          )}
+        </div>
             )}
 
             {/* Change Password Tab */}
@@ -295,42 +295,42 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.oldPassword')}</label>
-                      <Input
-                        type="password"
+            <Input
+              type="password"
                         placeholder={t('profile.oldPassword')}
-                        value={oldPassword}
-                        onChange={e => setOldPassword(e.target.value)}
+              value={oldPassword}
+              onChange={e => setOldPassword(e.target.value)}
                         className="w-full"
-                      />
+            />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.newPassword')}</label>
-                      <Input
-                        type="password"
+            <Input
+              type="password"
                         placeholder={t('profile.newPassword')}
-                        value={newPassword}
-                        onChange={e => setNewPassword(e.target.value)}
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
                         className="w-full"
-                      />
+            />
                     </div>
                   </div>
                   
-                  <button
-                    type="submit"
+            <button
+              type="submit"
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-300 flex items-center space-x-2"
-                    disabled={!oldPassword || !newPassword}
-                  >
+              disabled={!oldPassword || !newPassword}
+            >
                     <Lock className="w-4 h-4" />
                     <span>{t('profile.changePassword')}</span>
-                  </button>
+            </button>
                   
                   {pwMsg && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
                       {pwMsg}
                     </div>
                   )}
-                </form>
-              </div>
+          </form>
+        </div>
             )}
 
             {/* Wallet Tab */}
@@ -338,8 +338,8 @@ export default function ProfilePage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">{t('profile.digitalWallet')}</h3>
-                  <button
-                    type="button"
+          <button
+            type="button"
                     className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
                     onClick={handleWalletClick}
                   >
@@ -426,9 +426,9 @@ export default function ProfilePage() {
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
             >
               {t('common.close')}
-            </button>
-          </div>
+          </button>
         </div>
+      </div>
       )}
     </div>
   );

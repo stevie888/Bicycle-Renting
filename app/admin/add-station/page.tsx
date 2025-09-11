@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { 
   ArrowLeftIcon,
   MapPinIcon,
@@ -32,7 +33,7 @@ interface Station {
   createdAt: string;
 }
 
-export default function AddStationPage() {
+function AddStationPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -750,5 +751,13 @@ export default function AddStationPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AddStationPageWithProtection() {
+  return (
+    <ProtectedRoute requireAuth={true} requireAdmin={true}>
+      <AddStationPage />
+    </ProtectedRoute>
   );
 }

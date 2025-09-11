@@ -31,54 +31,62 @@ export default function AuthForm({ mode }: AuthFormProps) {
  const { login, register } = useAuth();
  const router = useRouter();
 
- const handleSubmit = async (e: React.FormEvent) => {
- e.preventDefault();
- setIsLoading(true);
- setError("");
- setSuccess("");
+   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
 
- try {
- if (mode === "login") {
- // Use AuthContext for login
- const success = await login(formData.mobile, formData.password);
- 
- if (success) {
- setSuccess("Login successful! Redirecting...");
- setTimeout(() => router.push("/"), 1000);
- } else {
- throw new Error("Invalid mobile number or password");
- }
- } else {
- // For signup, we'll use localStorage only for now since external API has file upload requirements
- // Note: File upload is currently for demonstration purposes only
- // In production, you would integrate with a file storage service
- if (!selectedFile) {
- setError("Please upload your ID document for verification");
- setIsLoading(false);
- return;
- }
+    try {
+      if (mode === "login") {
+        // Use AuthContext for login
+        const success = await login(formData.mobile, formData.password);
+        
+        if (success) {
+          setSuccess("Login successful! Redirecting...");
+          // Redirect to home page after successful login
+          setTimeout(() => {
+            router.push("/");
+            router.refresh(); // Refresh to ensure auth state is updated
+          }, 1000);
+        } else {
+          throw new Error("Invalid mobile number or password");
+        }
+      } else {
+        // For signup, we'll use localStorage only for now since external API has file upload requirements
+        // Note: File upload is currently for demonstration purposes only
+        // In production, you would integrate with a file storage service
+        if (!selectedFile) {
+          setError("Please upload your ID document for verification");
+          setIsLoading(false);
+          return;
+        }
 
- // Use AuthContext for signup
- const success = await register({
- mobile: formData.mobile,
- email: formData.email,
- password: formData.password,
- name: formData.name,
- });
- 
- if (success) {
- setSuccess("Account created successfully! Your ID will be verified within 24 hours.");
- setTimeout(() => router.push("/"), 2000);
- } else {
- throw new Error("Registration failed");
- }
- }
- } catch (err: any) {
- setError(err.message || "An error occurred");
- } finally {
- setIsLoading(false);
- }
- };
+        // Use AuthContext for signup
+        const success = await register({
+          mobile: formData.mobile,
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+        });
+        
+        if (success) {
+          setSuccess("Account created successfully! Your ID will be verified within 24 hours.");
+          // Redirect to home page after successful registration
+          setTimeout(() => {
+            router.push("/");
+            router.refresh(); // Refresh to ensure auth state is updated
+          }, 2000);
+        } else {
+          throw new Error("Registration failed");
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
  setFormData({

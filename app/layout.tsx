@@ -8,9 +8,12 @@ import { LanguageProvider } from "@/components/LanguageContext";
 import { Navbar } from "@/components/navbar";
 import Footer from "@/components/Footer";
 import AuthWrapper from "@/components/AuthWrapper";
+import TestUtils from "@/components/TestUtils";
 
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
+
+// Test utilities will be loaded client-side
 
 export const metadata: Metadata = {
   title: {
@@ -53,6 +56,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <AuthProvider>
+              <TestUtils />
               <AuthWrapper navbar={<Navbar />} footer={<Footer />}>
                 {children}
               </AuthWrapper>

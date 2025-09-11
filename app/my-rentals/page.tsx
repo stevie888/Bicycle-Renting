@@ -42,7 +42,7 @@ function MyRentalsPageContent() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'recent' | 'completed'>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const rentalsPerPage = 5;
+  const rentalsPerPage = 3;
 
   // All hooks must be called before any conditional returns
   useEffect(() => {

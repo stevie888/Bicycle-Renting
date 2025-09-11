@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Settings, CheckCircle, Wrench, AlertTriangle, User } from 'lucide-react';
 
@@ -479,8 +480,10 @@ function ManageSlots() {
 
 export default function ManageSlotsWithErrorBoundary() {
   return (
-    <ErrorBoundary>
-      <ManageSlots />
-    </ErrorBoundary>
+    <ProtectedRoute requireAuth={true} requireAdmin={true}>
+      <ErrorBoundary>
+        <ManageSlots />
+      </ErrorBoundary>
+    </ProtectedRoute>
   );
 }

@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -59,10 +60,41 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
     );
   }
 
+  // Define which routes require authentication
+  const protectedRoutes = [
+    '/profile', '/my-rentals', '/rental-confirmation', 
+    '/return-bike', '/return-confirmation', '/bike-selection'
+  ];
+  
+  const adminRoutes = ['/admin'];
+
+  const isProtectedRoute = protectedRoutes.some(route => pathname?.startsWith(route));
+  const isAdminRoute = adminRoutes.some(route => pathname?.startsWith(route));
+
+  // For auth pages, don't wrap with ProtectedRoute
   if (isAuthPage) {
     return <div className="min-h-screen">{children}</div>;
   }
 
+  // For protected routes, wrap with ProtectedRoute
+  if (isProtectedRoute || isAdminRoute) {
+    return (
+      <ProtectedRoute 
+        requireAuth={isProtectedRoute} 
+        requireAdmin={isAdminRoute}
+      >
+        <div className="relative flex flex-col min-h-screen">
+          {navbar}
+          <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
+            {children}
+          </main>
+          {footer}
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // For public routes, render normally
   return (
     <div className="relative flex flex-col min-h-screen">
       {navbar}

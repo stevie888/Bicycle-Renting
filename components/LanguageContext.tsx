@@ -108,7 +108,6 @@ const translations = {
     'bike.station': 'Station',
     'bike.km': 'km',
     'bike.perDay': '/day',
-    'bike.perHour': '/hr',
     
     // Bike Selection
     'bikeSelection.title': 'Select Your Bike',
@@ -261,7 +260,6 @@ const translations = {
     'admin.createUserFailed': 'Failed to create user',
     'admin.addNewStation': 'Add New Station',
     'admin.manageStationsAndPricing': 'Manage stations and pricing',
-    'admin.addStation': 'Add Station',
     'admin.manageStations': 'Manage Stations',
     'admin.stationInformation': 'Station Information',
     'admin.fillStationDetails': 'Fill in the details to create a new station',
@@ -277,7 +275,6 @@ const translations = {
     'admin.dailyRate': 'Daily Rate',
     'admin.cancelEdit': 'Cancel Edit',
     'admin.updating': 'Updating...',
-    'admin.creating': 'Creating...',
     'admin.updateStation': 'Update Station',
     'admin.createStation': 'Create Station',
     'admin.manageSlotsAndPricing': 'Manage slots, pricing, and station operations',
@@ -325,9 +322,7 @@ const translations = {
     'admin.goToHome': 'Go to Home',
     'admin.managePaddleNepal': 'Manage PedalNepal',
     'admin.currentlyActive': 'currently active',
-    'admin.rentedBikes': 'Rented Bikes',
     'admin.emptySlots': 'Empty Slots',
-    'admin.availableBikes': 'Available Bikes',
     'admin.rented': 'Rented',
     'admin.empty': 'Empty',
     'admin.available': 'Available',
@@ -338,7 +333,6 @@ const translations = {
     'admin.admin': 'Admin',
     'admin.remove': 'Remove',
     'admin.delete': 'Delete',
-    'admin.manageSlots': 'Manage Slots',
     'admin.edit': 'Edit',
     'admin.addCredits': 'Add Credits',
     'admin.addCreditsToUser': 'Add credits to user account',
@@ -355,14 +349,9 @@ const translations = {
     'admin.manageSlotsTitle': 'Manage slots',
     'admin.editStationTitle': 'Edit station',
     'admin.deleteStationTitle': 'Delete station',
-    'admin.hourlyRate': 'Hourly Rate',
-    'admin.dailyRate': 'Daily Rate',
     'admin.perHour': 'per hour',
     'admin.perDay': 'per day',
     'admin.slotStatus': 'Slot Status',
-    'admin.totalSlots': 'Total Slots',
-    'admin.available': 'Available',
-    'admin.maintenance': 'Maintenance',
     'admin.occupied': 'Occupied',
     'admin.currentPricing': 'Current Pricing',
     'admin.hourly': 'Hourly',
@@ -419,7 +408,6 @@ const translations = {
     'reviews.manageFeedback': 'Manage customer feedback and complaints',
     'reviews.searchReviews': 'Search reviews and complaints...',
     'reviews.user': 'User',
-    'reviews.title': 'Title',
     'reviews.station': 'Station',
     'reviews.actions': 'Actions',
     'reviews.view': 'View',
@@ -577,7 +565,6 @@ const translations = {
     'bike.station': 'स्टेशन',
     'bike.km': 'कि.मि.',
     'bike.perDay': '/दिन',
-    'bike.perHour': '/घण्टा',
     
     // Bike Selection
     'bikeSelection.title': 'आफ्नो साइकल छान्नुहोस्',
@@ -661,8 +648,6 @@ const translations = {
     'rentals.completed': 'पूर्ण भाडाहरू',
     'rentals.noRentals': 'कुनै भाडा फेला परेनन्',
     'rentals.status': 'स्थिति',
-    'rentals.active': 'सक्रिय',
-    'rentals.completed': 'पूर्ण',
     'rentals.cancelled': 'रद्द',
     'rentals.loadingRentals': 'तपाईंका भाडाहरू लोड गर्दै...',
     'rentals.noRentalsYet': 'अहिलेसम्म कुनै भाडा छैन',
@@ -730,7 +715,6 @@ const translations = {
     'admin.createUserFailed': 'प्रयोगकर्ता सिर्जना गर्न असफल',
     'admin.addNewStation': 'नयाँ स्टेशन थप्नुहोस्',
     'admin.manageStationsAndPricing': 'स्टेशनहरू र मूल्य निर्धारण व्यवस्थापन गर्नुहोस्',
-    'admin.addStation': 'स्टेशन थप्नुहोस्',
     'admin.manageStations': 'स्टेशनहरू व्यवस्थापन गर्नुहोस्',
     'admin.stationInformation': 'स्टेशन जानकारी',
     'admin.fillStationDetails': 'नयाँ स्टेशन सिर्जना गर्न विवरणहरू भर्नुहोस्',
@@ -746,7 +730,6 @@ const translations = {
     'admin.dailyRate': 'दैनिक दर',
     'admin.cancelEdit': 'सम्पादन रद्द गर्नुहोस्',
     'admin.updating': 'अपडेट गर्दै...',
-    'admin.creating': 'सिर्जना गर्दै...',
     'admin.updateStation': 'स्टेशन अपडेट गर्नुहोस्',
     'admin.createStation': 'स्टेशन सिर्जना गर्नुहोस्',
     'admin.manageSlotsAndPricing': 'स्लटहरू, मूल्य निर्धारण र स्टेशन कार्यहरू व्यवस्थापन गर्नुहोस्',
@@ -794,9 +777,7 @@ const translations = {
     'admin.goToHome': 'घर जानुहोस्',
     'admin.managePaddleNepal': 'पेडलनेपाल व्यवस्थापन गर्नुहोस्',
     'admin.currentlyActive': 'हाल सक्रिय',
-    'admin.rentedBikes': 'भाडामा लिइएका साइकलहरू',
     'admin.emptySlots': 'खाली स्लटहरू',
-    'admin.availableBikes': 'उपलब्ध साइकलहरू',
     'admin.rented': 'भाडामा लिइएको',
     'admin.empty': 'खाली',
     'admin.available': 'उपलब्ध',
@@ -807,7 +788,6 @@ const translations = {
     'admin.admin': 'एडमिन',
     'admin.remove': 'हटाउनुहोस्',
     'admin.delete': 'मेटाउनुहोस्',
-    'admin.manageSlots': 'स्लटहरू व्यवस्थापन गर्नुहोस्',
     'admin.edit': 'सम्पादन गर्नुहोस्',
     'admin.addCredits': 'क्रेडिटहरू थप्नुहोस्',
     'admin.addCreditsToUser': 'प्रयोगकर्ता खातामा क्रेडिटहरू थप्नुहोस्',
@@ -824,19 +804,13 @@ const translations = {
     'admin.manageSlotsTitle': 'स्लटहरू व्यवस्थापन गर्नुहोस्',
     'admin.editStationTitle': 'स्टेशन सम्पादन गर्नुहोस्',
     'admin.deleteStationTitle': 'स्टेशन मेटाउनुहोस्',
-    'admin.hourlyRate': 'घण्टाको दर',
-    'admin.dailyRate': 'दैनिक दर',
     'admin.perHour': 'प्रति घण्टा',
     'admin.perDay': 'प्रति दिन',
     'admin.slotStatus': 'स्लट स्थिति',
-    'admin.totalSlots': 'कुल स्लटहरू',
-    'admin.available': 'उपलब्ध',
-    'admin.maintenance': 'मर्मत',
     'admin.occupied': 'कब्जा गरिएको',
     'admin.currentPricing': 'हालको मूल्य निर्धारण',
     'admin.hourly': 'घण्टामा',
     'admin.daily': 'दैनिक',
-    'admin.allStatus': 'सबै स्थिति',
     
     // User Management
     'users.title': 'प्रयोगकर्ता व्यवस्थापन',
@@ -889,7 +863,6 @@ const translations = {
     'reviews.manageFeedback': 'ग्राहकको प्रतिक्रिया र शिकायतहरू व्यवस्थापन गर्नुहोस्',
     'reviews.searchReviews': 'समीक्षा र शिकायतहरू खोज्नुहोस्...',
     'reviews.user': 'प्रयोगकर्ता',
-    'reviews.title': 'शीर्षक',
     'reviews.station': 'स्टेशन',
     'reviews.actions': 'कार्यहरू',
     'reviews.view': 'हेर्नुहोस्',
@@ -972,7 +945,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string): string => {
-    return translations[language][key] || key;
+    return (translations[language] as any)[key] || key;
   };
 
   return (

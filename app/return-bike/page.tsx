@@ -696,14 +696,14 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                        <>
                          <Send className="w-4 h-4" />
                          Submit Review
-                       </>
-                     )}
+                  </>
+                )}
                    </button>
                  </div>
                </div>
-             </div>
-           </div>
-         )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

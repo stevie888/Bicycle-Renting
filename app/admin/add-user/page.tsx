@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { 
   ArrowLeftIcon,
   UserPlusIcon,
@@ -15,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function AddUserPage() {
+function AddUserPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -232,5 +233,13 @@ export default function AddUserPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddUserPageWithProtection() {
+  return (
+    <ProtectedRoute requireAuth={true} requireAdmin={true}>
+      <AddUserPage />
+    </ProtectedRoute>
   );
 }
