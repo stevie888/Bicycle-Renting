@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
+
+// Force dynamic rendering to prevent prerendering issues
+export const dynamic = 'force-dynamic';
 import { 
   MapPinIcon, 
   BikeIcon, 
