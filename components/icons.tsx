@@ -4,24 +4,23 @@ import Image, { ImageProps } from "next/image";
 
 import { IconSvgProps } from "@/types";
 
-export const Logo: React.FC<{ size?: number } & Omit<ImageProps, 'src' | 'alt' | 'width' | 'height'>> = ({
-  size = 80,
-  ...props
-}) => (
+export const Logo: React.FC<
+  { size?: number } & Omit<ImageProps, "src" | "alt" | "width" | "height">
+> = ({ size = 80, ...props }) => (
   <Image
-            src="/Paddle Nepal logo.png"
+    src="/Paddle Nepal logo.png"
     alt="pedalNepal Logo"
     width={size}
     height={size}
-    style={{ 
-      display: 'inline-block', 
-      verticalAlign: 'middle',
-      borderRadius: '50%',
-      objectFit: 'contain'
+    style={{
+      display: "inline-block",
+      verticalAlign: "middle",
+      borderRadius: "50%",
+      objectFit: "contain",
     }}
     priority
     {...props}
-    />
+  />
 );
 
 export const DiscordIcon: React.FC<IconSvgProps> = ({

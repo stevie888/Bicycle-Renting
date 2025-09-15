@@ -11,11 +11,11 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export default function ProtectedRoute({ 
-  children, 
-  requireAuth = true, 
+export default function ProtectedRoute({
+  children,
+  requireAuth = true,
   requireAdmin = false,
-  redirectTo 
+  redirectTo,
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -30,32 +30,47 @@ export default function ProtectedRoute({
     if (!isClient || loading) return;
 
     // Define public routes that don't require authentication
-    const publicRoutes = ['/login', '/signup', '/', '/bicycles'];
+    const publicRoutes = ["/login", "/signup", "/", "/bicycles"];
     const isPublicRoute = publicRoutes.includes(pathname);
 
     // If route requires authentication and user is not logged in
     if (requireAuth && !user && !isPublicRoute) {
-      const redirectPath = redirectTo || '/login';
-      console.log('ProtectedRoute: Redirecting to', redirectPath, 'from', pathname);
+      const redirectPath = redirectTo || "/login";
+      console.log(
+        "ProtectedRoute: Redirecting to",
+        redirectPath,
+        "from",
+        pathname,
+      );
       router.push(redirectPath);
       return;
     }
 
     // If user is logged in and trying to access auth pages, redirect to home
-    if (user && (pathname === '/login' || pathname === '/signup')) {
-      console.log('ProtectedRoute: User already logged in, redirecting to home');
-      router.push('/');
+    if (user && (pathname === "/login" || pathname === "/signup")) {
+      console.log(
+        "ProtectedRoute: User already logged in, redirecting to home",
+      );
+      router.push("/");
       return;
     }
 
     // If route requires admin access and user is not admin
-    if (requireAdmin && user && user.role !== 'admin') {
-      console.log('ProtectedRoute: Admin access required, redirecting to home');
-      router.push('/');
+    if (requireAdmin && user && user.role !== "admin") {
+      console.log("ProtectedRoute: Admin access required, redirecting to home");
+      router.push("/");
       return;
     }
-
-  }, [user, loading, pathname, requireAuth, requireAdmin, redirectTo, router, isClient]);
+  }, [
+    user,
+    loading,
+    pathname,
+    requireAuth,
+    requireAdmin,
+    redirectTo,
+    router,
+    isClient,
+  ]);
 
   // Show loading spinner while checking authentication
   if (!isClient || loading) {
@@ -70,7 +85,7 @@ export default function ProtectedRoute({
   }
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/', '/bicycles'];
+  const publicRoutes = ["/login", "/signup", "/", "/bicycles"];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   // If route requires authentication and user is not logged in, don't render children
@@ -79,12 +94,12 @@ export default function ProtectedRoute({
   }
 
   // If user is logged in and trying to access auth pages, don't render children
-  if (user && (pathname === '/login' || pathname === '/signup')) {
+  if (user && (pathname === "/login" || pathname === "/signup")) {
     return null;
   }
 
   // If route requires admin access and user is not admin, don't render children
-  if (requireAdmin && user && user.role !== 'admin') {
+  if (requireAdmin && user && user.role !== "admin") {
     return null;
   }
 

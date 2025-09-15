@@ -10,7 +10,10 @@ export default function LoginPage() {
       {/* Subtle Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-pulse-slow"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-pulse-slow" style={{animationDelay: '1s'}}></div>
+        <div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-100 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-pulse-slow"
+          style={{ animationDelay: "1s" }}
+        ></div>
       </div>
 
       <div className="relative z-10 flex min-h-screen">
@@ -25,24 +28,28 @@ export default function LoginPage() {
                 <span className="text-2xl font-bold">pedalNepal</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('auth.welcomeBack')}
+                {t("auth.welcomeBack")}
                 <br />
                 <span className="bg-gradient-to-r from-white to-accent-200 bg-clip-text text-transparent">
                   Valley Tours
                 </span>
               </h1>
               <p className="text-xl text-white/90 leading-relaxed">
-                Ready to explore the beautiful valleys of Nepal? Sign in to continue your adventure.
+                Ready to explore the beautiful valleys of Nepal? Sign in to
+                continue your adventure.
               </p>
             </div>
 
             {/* Aesthetic Valley Tour Features - Reduced spacing */}
-            <div className="space-y-4 animate-slide-up" style={{animationDelay: '0.2s'}}>
+            <div
+              className="space-y-4 animate-slide-up"
+              style={{ animationDelay: "0.2s" }}
+            >
               {/* Scenic Valley Views */}
               <div className="relative">
                 <div className="w-full h-28 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary-600 to-primary-500"></div>
-                  
+
                   {/* Valley Hills */}
                   <div className="absolute bottom-0 left-0 w-full h-14">
                     <div className="absolute bottom-0 left-0 w-20 h-12 bg-primary-700 rounded-t-full"></div>
@@ -50,7 +57,7 @@ export default function LoginPage() {
                     <div className="absolute bottom-0 left-28 w-24 h-14 bg-primary-700 rounded-t-full"></div>
                     <div className="absolute bottom-0 right-8 w-18 h-11 bg-primary-600 rounded-t-full"></div>
                   </div>
-                  
+
                   {/* Simple Bicycle Icon */}
                   <div className="absolute top-3 right-4">
                     <div className="w-10 h-7 relative">
@@ -61,10 +68,14 @@ export default function LoginPage() {
                       <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-1 border border-primary-600"></div>
                     </div>
                   </div>
-                  
+
                   <div className="absolute bottom-2 left-4">
-                    <h3 className="font-semibold text-lg text-white">Scenic Valley Views</h3>
-                    <p className="text-white/80 text-sm">Breathtaking landscapes</p>
+                    <h3 className="font-semibold text-lg text-white">
+                      Scenic Valley Views
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      Breathtaking landscapes
+                    </p>
                   </div>
                 </div>
               </div>
@@ -73,13 +84,13 @@ export default function LoginPage() {
               <div className="relative">
                 <div className="w-full h-28 bg-gradient-to-br from-warning-500 to-warning-600 rounded-2xl relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-warning-600 to-warning-500"></div>
-                  
+
                   {/* Temple Silhouette */}
                   <div className="absolute bottom-0 left-4 w-8 h-12 bg-warning-700 rounded-t-lg">
                     <div className="w-6 h-2 bg-warning-800 absolute top-0 left-1"></div>
                     <div className="w-2 h-2 bg-warning-800 absolute top-2 left-3"></div>
                   </div>
-                  
+
                   {/* Prayer Flags */}
                   <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
                     <div className="flex gap-1">
@@ -90,10 +101,14 @@ export default function LoginPage() {
                       <div className="w-1 h-6 bg-white rounded-full"></div>
                     </div>
                   </div>
-                  
+
                   <div className="absolute bottom-2 left-4">
-                    <h3 className="font-semibold text-lg text-white">Cultural Heritage</h3>
-                    <p className="text-white/80 text-sm">Ancient temples & traditions</p>
+                    <h3 className="font-semibold text-lg text-white">
+                      Cultural Heritage
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      Ancient temples & traditions
+                    </p>
                   </div>
                 </div>
               </div>
@@ -102,7 +117,7 @@ export default function LoginPage() {
               <div className="relative">
                 <div className="w-full h-28 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-2xl relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-secondary-600 to-secondary-500"></div>
-                  
+
                   {/* Mountain Peaks */}
                   <div className="absolute bottom-0 left-0 w-full h-14">
                     <div className="absolute bottom-0 left-2 w-6 h-10 bg-secondary-700 transform rotate-12"></div>
@@ -110,13 +125,17 @@ export default function LoginPage() {
                     <div className="absolute bottom-0 left-16 w-7 h-11 bg-secondary-700 transform rotate-8"></div>
                     <div className="absolute bottom-0 right-4 w-5 h-9 bg-secondary-600 transform -rotate-12"></div>
                   </div>
-                  
+
                   {/* Trail Path */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-white/60 rounded-full"></div>
-                  
+
                   <div className="absolute bottom-2 left-4">
-                    <h3 className="font-semibold text-lg text-white">Adventure Trails</h3>
-                    <p className="text-white/80 text-sm">Explore hidden pathways</p>
+                    <h3 className="font-semibold text-lg text-white">
+                      Adventure Trails
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      Explore hidden pathways
+                    </p>
                   </div>
                 </div>
               </div>
@@ -133,24 +152,40 @@ export default function LoginPage() {
                 <BikeIcon className="w-6 h-6" />
                 <span className="text-xl font-bold">pedalNepal</span>
               </div>
-              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Welcome Back</h2>
-              <p className="text-neutral-600">Sign in to continue your valley adventure</p>
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                Welcome Back
+              </h2>
+              <p className="text-neutral-600">
+                Sign in to continue your valley adventure
+              </p>
             </div>
 
             {/* Login Form */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-strong border border-neutral-200 animate-slide-up" style={{animationDelay: '0.1s'}}>
-      <AuthForm mode="login" />
+            <div
+              className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-strong border border-neutral-200 animate-slide-up"
+              style={{ animationDelay: "0.1s" }}
+            >
+              <AuthForm mode="login" />
             </div>
 
             {/* Additional Info */}
-            <div className="text-center mt-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
+            <div
+              className="text-center mt-8 animate-slide-up"
+              style={{ animationDelay: "0.3s" }}
+            >
               <p className="text-sm text-neutral-600">
                 By signing in, you agree to our{" "}
-                <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2">
+                <a
+                  href="#"
+                  className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2"
+                >
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2">
+                <a
+                  href="#"
+                  className="text-primary-600 hover:text-primary-700 font-semibold underline decoration-2 underline-offset-2"
+                >
                   Privacy Policy
                 </a>
               </p>
@@ -160,4 +195,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

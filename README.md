@@ -87,13 +87,13 @@ Use the browser console to test the external API connection:
 
 ```javascript
 // Test external API connection
-testExternalAPI()
+testExternalAPI();
 
 // Toggle between external and local APIs
-toggleExternalAPI()
+toggleExternalAPI();
 
 // Clear local storage
-clearpedalNepalStorage()
+clearpedalNepalStorage();
 ```
 
 ### Setup pnpm (optional)

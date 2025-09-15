@@ -28,7 +28,7 @@ const Card = React.forwardRef<HTMLDivElement, Props & CardProps>(
         </CardBody>
       </HeroCard>
     );
-  }
+  },
 );
 
 Card.displayName = "Card";

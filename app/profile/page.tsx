@@ -1,22 +1,36 @@
 "use client";
+
+// Force dynamic rendering to prevent prerendering issues
+export const dynamic = "force-dynamic";
+
 import { useAuth } from "@/components/AuthContext";
 import { useLanguage } from "@/components/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-// Force dynamic rendering to prevent prerendering issues
-export const dynamic = 'force-dynamic';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, Mail, Smartphone, ArrowLeft, Coins, Edit3, Save, Lock, Home, Wallet, Plus, History } from "lucide-react";
+import {
+  User as UserIcon,
+  Mail,
+  Smartphone,
+  ArrowLeft,
+  Coins,
+  Edit3,
+  Save,
+  Lock,
+  Home,
+  Wallet,
+  Plus,
+  History,
+} from "lucide-react";
 
-type TabType = 'personal' | 'password' | 'wallet';
+type TabType = "personal" | "password" | "wallet";
 
 export default function ProfilePage() {
   const { user, updateProfile, logout, loading, changePassword } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('personal');
+  const [activeTab, setActiveTab] = useState<TabType>("personal");
   const [edit, setEdit] = useState(false);
   const [profile, setProfile] = useState({
     name: "",
@@ -62,11 +76,11 @@ export default function ProfilePage() {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
       } else {
-        setError(t('profile.updateFailed'));
+        setError(t("profile.updateFailed"));
       }
     } catch (error) {
-      console.error('Update profile error:', error);
-      setError(t('profile.updateError'));
+      console.error("Update profile error:", error);
+      setError(t("profile.updateError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -80,13 +94,13 @@ export default function ProfilePage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword) {
-      setPwMsg(t('profile.fillBothFields'));
+      setPwMsg(t("profile.fillBothFields"));
       return;
     }
     if (await changePassword(oldPassword, newPassword)) {
-      setPwMsg(t('profile.passwordChanged'));
+      setPwMsg(t("profile.passwordChanged"));
     } else {
-      setPwMsg(t('profile.oldPasswordIncorrect'));
+      setPwMsg(t("profile.oldPasswordIncorrect"));
     }
     setOldPassword("");
     setNewPassword("");
@@ -97,13 +111,21 @@ export default function ProfilePage() {
   };
 
   const handleAddMoney = () => {
-    alert('Payment integration required for production. This feature will be implemented with actual payment gateways (e.g., Stripe, PayPal) for real transactions.');
+    alert(
+      "Payment integration required for production. This feature will be implemented with actual payment gateways (e.g., Stripe, PayPal) for real transactions.",
+    );
   };
 
   if (loading || !user) return null;
 
   // Only use initials or fallback icon for avatar
-  const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
@@ -120,11 +142,13 @@ export default function ProfilePage() {
               </button>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Profile</h1>
-                <p className="text-gray-600 text-sm">Manage your account settings</p>
+                <p className="text-gray-600 text-sm">
+                  Manage your account settings
+                </p>
               </div>
             </div>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push("/")}
               className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-all duration-200"
             >
               <Home className="w-5 h-5 text-gray-600" />
@@ -140,75 +164,83 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
-          {initials ? (
-                  <span className="text-xl font-bold text-white">{initials}</span>
-          ) : (
+                {initials ? (
+                  <span className="text-xl font-bold text-white">
+                    {initials}
+                  </span>
+                ) : (
                   <UserIcon className="w-8 h-8 text-white" />
-          )}
-        </div>
+                )}
+              </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
-                <p className="text-gray-500 text-sm">{t('profile.activeUser')}</p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {user.name}
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  {t("profile.activeUser")}
+                </p>
                 <div className="flex items-center mt-1">
                   <Coins className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-gray-600">{user.credits || 0} {t('profile.credits')}</span>
+                  <span className="text-sm text-gray-600">
+                    {user.credits || 0} {t("profile.credits")}
+                  </span>
                 </div>
               </div>
             </div>
-      </div>
+          </div>
 
           {/* Success/Error Messages */}
-        {showSuccess && (
+          {showSuccess && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              {t('profile.updateSuccess')}
-          </div>
-        )}
-        {error && (
+              {t("profile.updateSuccess")}
+            </div>
+          )}
+          {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
+              {error}
+            </div>
+          )}
 
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="flex border-b border-gray-200">
               <button
-                onClick={() => setActiveTab('personal')}
+                onClick={() => setActiveTab("personal")}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-                  activeTab === 'personal'
-                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  activeTab === "personal"
+                    ? "text-green-600 border-b-2 border-green-600 bg-green-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-center space-x-2">
                   <UserIcon className="w-4 h-4" />
-                  <span>{t('profile.personalInformation')}</span>
+                  <span>{t("profile.personalInformation")}</span>
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('password')}
+                onClick={() => setActiveTab("password")}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-                  activeTab === 'password'
-                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  activeTab === "password"
+                    ? "text-green-600 border-b-2 border-green-600 bg-green-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-center space-x-2">
                   <Lock className="w-4 h-4" />
-                  <span>{t('profile.changePassword')}</span>
+                  <span>{t("profile.changePassword")}</span>
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('wallet')}
+                onClick={() => setActiveTab("wallet")}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
-                  activeTab === 'wallet'
-                    ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  activeTab === "wallet"
+                    ? "text-green-600 border-b-2 border-green-600 bg-green-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-center space-x-2">
                   <Wallet className="w-4 h-4" />
-                  <span>{t('profile.digitalWallet')}</span>
+                  <span>{t("profile.digitalWallet")}</span>
                 </div>
               </button>
             </div>
@@ -217,10 +249,12 @@ export default function ProfilePage() {
           {/* Tab Content */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Personal Information Tab */}
-            {activeTab === 'personal' && (
+            {activeTab === "personal" && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('profile.personalInformation')}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {t("profile.personalInformation")}
+                  </h3>
                   {!edit && (
                     <button
                       type="button"
@@ -228,7 +262,7 @@ export default function ProfilePage() {
                       onClick={handleEditClick}
                     >
                       <Edit3 className="w-4 h-4" />
-                      <span>{t('common.edit')}</span>
+                      <span>{t("common.edit")}</span>
                     </button>
                   )}
                 </div>
@@ -236,125 +270,151 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.name')}</label>
-            <input
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("profile.name")}
+                      </label>
+                      <input
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              value={profile.name}
-              onChange={e => setProfile({ ...profile, name: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
+                        value={profile.name}
+                        onChange={(e) =>
+                          setProfile({ ...profile, name: e.target.value })
+                        }
+                        readOnly={!edit}
+                      />
+                    </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.email')}</label>
-            <input
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("profile.email")}
+                      </label>
+                      <input
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              value={profile.email}
-              onChange={e => setProfile({ ...profile, email: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
+                        value={profile.email}
+                        onChange={(e) =>
+                          setProfile({ ...profile, email: e.target.value })
+                        }
+                        readOnly={!edit}
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.mobile')}</label>
-            <input
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("profile.mobile")}
+                    </label>
+                    <input
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              value={profile.mobile}
-              onChange={e => setProfile({ ...profile, mobile: e.target.value })}
-              readOnly={!edit}
-            />
-          </div>
-            </div>
+                      value={profile.mobile}
+                      onChange={(e) =>
+                        setProfile({ ...profile, mobile: e.target.value })
+                      }
+                      readOnly={!edit}
+                    />
+                  </div>
+                </div>
 
                 {edit && (
                   <div className="mt-6 flex space-x-3">
-            <button
-              onClick={handleSave}
+                    <button
+                      onClick={handleSave}
                       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 flex items-center space-x-2"
-              disabled={isSubmitting}
-            >
+                      disabled={isSubmitting}
+                    >
                       <Save className="w-4 h-4" />
-                      <span>{isSubmitting ? t('common.saving') : t('common.save')}</span>
-            </button>
-            <button
-              type="button"
+                      <span>
+                        {isSubmitting ? t("common.saving") : t("common.save")}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
                       onClick={() => setEdit(false)}
-            >
-                      {t('common.cancel')}
-            </button>
+                    >
+                      {t("common.cancel")}
+                    </button>
                   </div>
-          )}
-        </div>
+                )}
+              </div>
             )}
 
             {/* Change Password Tab */}
-            {activeTab === 'password' && (
+            {activeTab === "password" && (
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">{t('profile.changePassword')}</h3>
-                
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  {t("profile.changePassword")}
+                </h3>
+
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.oldPassword')}</label>
-            <Input
-              type="password"
-                        placeholder={t('profile.oldPassword')}
-              value={oldPassword}
-              onChange={e => setOldPassword(e.target.value)}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("profile.oldPassword")}
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder={t("profile.oldPassword")}
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
                         className="w-full"
-            />
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.newPassword')}</label>
-            <Input
-              type="password"
-                        placeholder={t('profile.newPassword')}
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("profile.newPassword")}
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder={t("profile.newPassword")}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
                         className="w-full"
-            />
+                      />
                     </div>
                   </div>
-                  
-            <button
-              type="submit"
+
+                  <button
+                    type="submit"
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 disabled:bg-gray-400 disabled:text-gray-300 flex items-center space-x-2"
-              disabled={!oldPassword || !newPassword}
-            >
+                    disabled={!oldPassword || !newPassword}
+                  >
                     <Lock className="w-4 h-4" />
-                    <span>{t('profile.changePassword')}</span>
-            </button>
-                  
+                    <span>{t("profile.changePassword")}</span>
+                  </button>
+
                   {pwMsg && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
                       {pwMsg}
                     </div>
                   )}
-          </form>
-        </div>
+                </form>
+              </div>
             )}
 
             {/* Wallet Tab */}
-            {activeTab === 'wallet' && (
+            {activeTab === "wallet" && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('profile.digitalWallet')}</h3>
-          <button
-            type="button"
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {t("profile.digitalWallet")}
+                  </h3>
+                  <button
+                    type="button"
                     className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center space-x-1"
                     onClick={handleWalletClick}
                   >
                     <Wallet className="w-4 h-4" />
-                    <span>{t('profile.manageWallet')}</span>
+                    <span>{t("profile.manageWallet")}</span>
                   </button>
                 </div>
-                
+
                 <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-4">
                   <div className="text-center">
-                    <div className="text-sm text-green-600 mb-1">{t('profile.availableBalance')}</div>
-                    <div className="text-3xl font-bold text-green-700">रू{walletAmount}</div>
+                    <div className="text-sm text-green-600 mb-1">
+                      {t("profile.availableBalance")}
+                    </div>
+                    <div className="text-3xl font-bold text-green-700">
+                      रू{walletAmount}
+                    </div>
                   </div>
                 </div>
 
@@ -364,7 +424,10 @@ export default function ProfilePage() {
                     <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
                     <div className="text-sm text-yellow-700">
                       <p className="font-medium mb-1">Demo Wallet</p>
-                      <p className="text-xs">This is a demonstration wallet. Real payment integration will be required for production use.</p>
+                      <p className="text-xs">
+                        This is a demonstration wallet. Real payment integration
+                        will be required for production use.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -382,15 +445,23 @@ export default function ProfilePage() {
               <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('profile.digitalWallet')}</h3>
-              <p className="text-gray-600">{t('footer.managePaymentMethods')}</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                {t("profile.digitalWallet")}
+              </h3>
+              <p className="text-gray-600">
+                {t("footer.managePaymentMethods")}
+              </p>
             </div>
-            
+
             {/* Wallet Balance */}
             <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl p-4 mb-6">
               <div className="text-center">
-                <div className="text-sm text-green-600 mb-1">{t('profile.availableBalance')}</div>
-                <div className="text-3xl font-bold text-green-700">रू{walletAmount}</div>
+                <div className="text-sm text-green-600 mb-1">
+                  {t("profile.availableBalance")}
+                </div>
+                <div className="text-3xl font-bold text-green-700">
+                  रू{walletAmount}
+                </div>
               </div>
             </div>
 
@@ -401,14 +472,18 @@ export default function ProfilePage() {
                 className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                {t('footer.addMoney')}
+                {t("footer.addMoney")}
               </button>
               <button
-                onClick={() => alert('Transaction history will be available once payment integration is complete.')}
+                onClick={() =>
+                  alert(
+                    "Transaction history will be available once payment integration is complete.",
+                  )
+                }
                 className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2"
               >
                 <History className="w-4 h-4" />
-                {t('footer.transactionHistory')}
+                {t("footer.transactionHistory")}
               </button>
             </div>
 
@@ -418,7 +493,11 @@ export default function ProfilePage() {
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div className="text-sm text-blue-700">
                   <p className="font-medium mb-1">Development Mode</p>
-                  <p className="text-xs">This wallet is currently in demo mode. For production, integrate with payment gateways like Stripe, PayPal, or local payment providers.</p>
+                  <p className="text-xs">
+                    This wallet is currently in demo mode. For production,
+                    integrate with payment gateways like Stripe, PayPal, or
+                    local payment providers.
+                  </p>
                 </div>
               </div>
             </div>
@@ -428,10 +507,10 @@ export default function ProfilePage() {
               onClick={() => setShowWalletModal(false)}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium"
             >
-              {t('common.close')}
-          </button>
+              {t("common.close")}
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );

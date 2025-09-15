@@ -1,176 +1,179 @@
 // LocalStorage-based API for persistent data storage
 
 // External API configuration
-const EXTERNAL_API_BASE_URL = process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL || 'http://13.204.148.32';
+const EXTERNAL_API_BASE_URL =
+  process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL || "http://13.204.148.32";
 
 // Configuration to enable/disable external API
-const USE_EXTERNAL_API = process.env.NEXT_PUBLIC_USE_EXTERNAL_API === 'true'; // Set to false to use only localStorage
+const USE_EXTERNAL_API = process.env.NEXT_PUBLIC_USE_EXTERNAL_API === "true"; // Set to false to use only localStorage
 
 // Helper function to make external API calls
 async function externalApiCall(endpoint: string, options: RequestInit = {}) {
   try {
     const url = `${EXTERNAL_API_BASE_URL}${endpoint}`;
-    console.log('Making external API call to:', url);
-    
+    console.log("Making external API call to:", url);
+
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
       // Add mode: 'cors' explicitly for better error handling
-      mode: 'cors',
+      mode: "cors",
     });
 
     if (!response.ok) {
-      throw new Error(`External API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `External API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = await response.json();
-    console.log('External API response:', data);
+    console.log("External API response:", data);
     return data;
   } catch (error) {
-    console.error('External API call failed:', error);
+    console.error("External API call failed:", error);
     throw error;
   }
 }
 
 // Helper functions for localStorage
 const getStorageData = (key: string) => {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error('Error reading from localStorage:', error);
+    console.error("Error reading from localStorage:", error);
     return null;
   }
 };
 
 const setStorageData = (key: string, data: any) => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
-    console.error('Error writing to localStorage:', error);
+    console.error("Error writing to localStorage:", error);
   }
 };
 
 // Initialize default data if not exists
 const initializeStorage = () => {
   // Initialize users if not exists
-  if (!getStorageData('pedalnepal_users')) {
+  if (!getStorageData("pedalnepal_users")) {
     const defaultUsers = [
       {
-        id: '1',
-        mobile: '+977-9841234567',
-        email: 'john@example.com',
-        name: 'John Doe',
-        password: 'password',
-        role: 'user',
+        id: "1",
+        mobile: "+977-9841234567",
+        email: "john@example.com",
+        name: "John Doe",
+        password: "password",
+        role: "user",
         credits: 250,
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
       {
-        id: '2',
-        mobile: '+977-9841234568',
-        email: 'samirgrg0888@gmail.com',
-        name: 'Samir',
-        password: 'password',
-        role: 'user',
+        id: "2",
+        mobile: "+977-9841234568",
+        email: "samirgrg0888@gmail.com",
+        name: "Samir",
+        password: "password",
+        role: "user",
         credits: 175,
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
       {
-        id: '3',
-        mobile: '+977-9841234569',
-        email: 'admin@pedalnepal.com',
-        name: 'Admin User',
-        password: 'password',
-        role: 'admin',
+        id: "3",
+        mobile: "+977-9841234569",
+        email: "admin@pedalnepal.com",
+        name: "Admin User",
+        password: "password",
+        role: "admin",
         credits: 1000,
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
       {
-        id: '4',
-        mobile: '9869251081',
-        email: 'samirgrg0888@gmail.com',
-        name: 'Samir',
-        password: '123',
-        role: 'user',
+        id: "4",
+        mobile: "9869251081",
+        email: "samirgrg0888@gmail.com",
+        name: "Samir",
+        password: "123",
+        role: "user",
         credits: 250,
         profileImage: null,
         createdAt: new Date().toISOString(),
       },
     ];
-    setStorageData('pedalnepal_users', defaultUsers);
+    setStorageData("pedalnepal_users", defaultUsers);
   }
 
   // Initialize bicycles if not exists
-  if (!getStorageData('pedalnepal_bicycles')) {
+  if (!getStorageData("pedalnepal_bicycles")) {
     const defaultBicycles = [
       {
-        description: 'Station 1',
-        location: 'Basantapur, Kathmandu',
-        status: 'available',
+        description: "Station 1",
+        location: "Basantapur, Kathmandu",
+        status: "available",
         hourlyRate: 200,
         dailyRate: 1500,
-        image: '/bicycle1.jpg',
+        image: "/bicycle1.jpg",
       },
       {
-        description: 'Station 2',
-        location: 'Patan, Lalitpur',
-        status: 'available',
+        description: "Station 2",
+        location: "Patan, Lalitpur",
+        status: "available",
         hourlyRate: 150,
         dailyRate: 1200,
-        image: '/bicycle2.jpg',
+        image: "/bicycle2.jpg",
       },
       {
-        description: 'Station 3',
-        location: 'Durbar Square, Bhaktapur',
-        status: 'rented',
+        description: "Station 3",
+        location: "Durbar Square, Bhaktapur",
+        status: "rented",
         hourlyRate: 180,
         dailyRate: 1400,
-        image: '/bicycle3.jpg',
+        image: "/bicycle3.jpg",
       },
     ];
-    setStorageData('pedalnepal_bicycles', defaultBicycles);
+    setStorageData("pedalnepal_bicycles", defaultBicycles);
   }
 
   // Initialize rentals if not exists
-  if (!getStorageData('pedalnepal_rentals')) {
+  if (!getStorageData("pedalnepal_rentals")) {
     const defaultRentals = [
       {
-        id: '1',
-        userId: '2', // Samir's user ID
-        bicycleId: '3',
-        startTime: '2024-01-15T10:00:00Z',
-        endTime: '2024-01-15T12:30:00Z', // 2.5 hours duration
-        status: 'completed',
+        id: "1",
+        userId: "2", // Samir's user ID
+        bicycleId: "3",
+        startTime: "2024-01-15T10:00:00Z",
+        endTime: "2024-01-15T12:30:00Z", // 2.5 hours duration
+        status: "completed",
         totalCost: 360,
         price: 75,
-        station: 'Station 1',
-        bikeName: 'Station 1',
+        station: "Station 1",
+        bikeName: "Station 1",
         slotNumber: 1,
       },
       {
-        id: '2',
-        userId: '2', // Samir's user ID
-        bicycleId: '1',
-        startTime: '2024-01-16T14:00:00Z',
-        endTime: '2024-01-16T15:30:00Z', // 1.5 hours duration
-        status: 'completed',
+        id: "2",
+        userId: "2", // Samir's user ID
+        bicycleId: "1",
+        startTime: "2024-01-16T14:00:00Z",
+        endTime: "2024-01-16T15:30:00Z", // 1.5 hours duration
+        status: "completed",
         totalCost: 300,
         price: 75,
-        station: 'Station 1',
-        bikeName: 'Station 1',
+        station: "Station 1",
+        bikeName: "Station 1",
         slotNumber: 2,
       },
     ];
-    setStorageData('pedalnepal_rentals', defaultRentals);
+    setStorageData("pedalnepal_rentals", defaultRentals);
   }
 };
 
@@ -178,77 +181,79 @@ const initializeStorage = () => {
 let isInitialized = false;
 
 const ensureInitialized = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   if (isInitialized) return;
-  
+
   initializeStorage();
-  console.log('LocalStorage initialized with default data');
+  console.log("LocalStorage initialized with default data");
   isInitialized = true;
-  
+
   // Add a function to clear and reinitialize storage (for debugging)
   (window as any).clearpedalNepalStorage = () => {
-    localStorage.removeItem('pedalnepal_users');
-    localStorage.removeItem('pedalnepal_bicycles');
-    localStorage.removeItem('pedalnepal_rentals');
-    localStorage.removeItem('pedalnepal_current_user');
+    localStorage.removeItem("pedalnepal_users");
+    localStorage.removeItem("pedalnepal_bicycles");
+    localStorage.removeItem("pedalnepal_rentals");
+    localStorage.removeItem("pedalnepal_current_user");
     isInitialized = false;
     initializeStorage();
-    console.log('Storage cleared and reinitialized');
+    console.log("Storage cleared and reinitialized");
   };
-  
+
   // Add a function to fix rental data specifically
   (window as any).fixRentalData = () => {
     const defaultRentals = [
       {
-        id: '1',
-        userId: '2', // Samir's user ID
-        bicycleId: '3',
-        startTime: '2024-01-15T10:00:00Z',
-        endTime: '2024-01-15T12:30:00Z', // 2.5 hours duration
-        status: 'completed',
+        id: "1",
+        userId: "2", // Samir's user ID
+        bicycleId: "3",
+        startTime: "2024-01-15T10:00:00Z",
+        endTime: "2024-01-15T12:30:00Z", // 2.5 hours duration
+        status: "completed",
         totalCost: 360,
         price: 75,
-        station: 'Station 1',
-        bikeName: 'Station 1',
+        station: "Station 1",
+        bikeName: "Station 1",
         slotNumber: 1,
       },
       {
-        id: '2',
-        userId: '2', // Samir's user ID
-        bicycleId: '1',
-        startTime: '2024-01-16T14:00:00Z',
-        endTime: '2024-01-16T15:30:00Z', // 1.5 hours duration
-        status: 'completed',
+        id: "2",
+        userId: "2", // Samir's user ID
+        bicycleId: "1",
+        startTime: "2024-01-16T14:00:00Z",
+        endTime: "2024-01-16T15:30:00Z", // 1.5 hours duration
+        status: "completed",
         totalCost: 300,
         price: 75,
-        station: 'Station 1',
-        bikeName: 'Station 1',
+        station: "Station 1",
+        bikeName: "Station 1",
         slotNumber: 2,
       },
     ];
-    localStorage.setItem('pedalnepal_rentals', JSON.stringify(defaultRentals));
-    console.log('Rental data fixed with proper end times');
+    localStorage.setItem("pedalnepal_rentals", JSON.stringify(defaultRentals));
+    console.log("Rental data fixed with proper end times");
   };
 };
 
 // Add this function to help reset slot data with reserved slots
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (window as any).resetSlotDataWithReserved = () => {
     try {
-      const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
+      const bicycles = JSON.parse(
+        localStorage.getItem("pedalnepal_bicycles") || "[]",
+      );
       const uniqueStations = new Map<string, any>();
-      
+
       // Get unique stations
       bicycles.forEach((bike: any) => {
         const stationKey = `${bike.name}_${bike.location}`;
         if (!uniqueStations.has(stationKey)) {
           uniqueStations.set(stationKey, {
             name: bike.name,
-            location: bike.location
+            location: bike.location,
           });
         }
       });
-      
+
       // Reset slots for each station with reserved slots
       uniqueStations.forEach((station, stationKey) => {
         const slotsKey = `pedalnepal_slots_${stationKey}`;
@@ -256,159 +261,180 @@ if (typeof window !== 'undefined') {
           id: `slot_${stationKey}_${index + 1}`,
           slotNumber: index + 1,
           // Keep slots 9 and 10 empty for bike returns
-          status: (index >= 8) ? 'in-maintenance' : 'active',
+          status: index >= 8 ? "in-maintenance" : "active",
           lastUpdated: new Date().toISOString(),
-          notes: index >= 8 ? 'Reserved for bike returns' : ''
+          notes: index >= 8 ? "Reserved for bike returns" : "",
         }));
-        
+
         localStorage.setItem(slotsKey, JSON.stringify(newSlots));
         console.log(`Reset slots for ${station.name} with reserved slots 9-10`);
       });
-      
-      console.log('Slot data reset successfully with reserved slots!');
-      alert('Slot data reset successfully! Slots 9-10 are now reserved for bike returns.');
-      
+
+      console.log("Slot data reset successfully with reserved slots!");
+      alert(
+        "Slot data reset successfully! Slots 9-10 are now reserved for bike returns.",
+      );
+
       // Refresh the page to see changes
       window.location.reload();
     } catch (error) {
-      console.error('Error resetting slot data:', error);
-      alert('Error resetting slot data. Please try again.');
+      console.error("Error resetting slot data:", error);
+      alert("Error resetting slot data. Please try again.");
     }
   };
 }
 
 // LocalStorage API call function
-async function localStorageApiCall(endpoint: string, options: RequestInit = {}) {
+async function localStorageApiCall(
+  endpoint: string,
+  options: RequestInit = {},
+) {
   // Only run on client-side
-  if (typeof window === 'undefined') {
-    throw new Error('API calls can only be made on the client-side');
+  if (typeof window === "undefined") {
+    throw new Error("API calls can only be made on the client-side");
   }
-  
+
   // Ensure storage is initialized
   ensureInitialized();
-  
+
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  const method = options.method || 'GET';
-  
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  const method = options.method || "GET";
+
   try {
     // Handle different endpoints
-    if (endpoint.includes('/auth/login')) {
+    if (endpoint.includes("/auth/login")) {
       const { mobile, password } = JSON.parse(options.body as string);
-      console.log('Login attempt with mobile:', mobile);
-      
-      const users = getStorageData('pedalnepal_users') || [];
-      console.log('Available users in localStorage:', users);
-      
+      console.log("Login attempt with mobile:", mobile);
+
+      const users = getStorageData("pedalnepal_users") || [];
+      console.log("Available users in localStorage:", users);
+
       // Try to find user with exact match first
       let user = users.find((u: any) => u.mobile === mobile);
-      
+
       // If not found, try to find by mobile number without country code
-      if (!user && mobile.startsWith('+977-')) {
-        const mobileWithoutCode = mobile.replace('+977-', '');
+      if (!user && mobile.startsWith("+977-")) {
+        const mobileWithoutCode = mobile.replace("+977-", "");
         user = users.find((u: any) => u.mobile === mobileWithoutCode);
       }
-      
+
       // If still not found, try to find by mobile number with country code
-      if (!user && !mobile.startsWith('+977-')) {
+      if (!user && !mobile.startsWith("+977-")) {
         const mobileWithCode = `+977-${mobile}`;
         user = users.find((u: any) => u.mobile === mobileWithCode);
       }
-      
+
       // Additional check: try to find by mobile number without any formatting
       if (!user) {
-        const cleanMobile = mobile.replace(/[^0-9]/g, '');
+        const cleanMobile = mobile.replace(/[^0-9]/g, "");
         user = users.find((u: any) => {
-          const userMobile = u.mobile.replace(/[^0-9]/g, '');
+          const userMobile = u.mobile.replace(/[^0-9]/g, "");
           return userMobile === cleanMobile;
         });
       }
-      
-      console.log('Found user:', user);
-      console.log('Login attempt details:', { mobile, password });
-      console.log('User details if found:', user ? { id: user.id, mobile: user.mobile, password: user.password } : 'No user found');
-      
+
+      console.log("Found user:", user);
+      console.log("Login attempt details:", { mobile, password });
+      console.log(
+        "User details if found:",
+        user
+          ? { id: user.id, mobile: user.mobile, password: user.password }
+          : "No user found",
+      );
+
       if (user && user.password === password) {
-        console.log('Login successful for user:', user);
-        return { success: true, user, token: 'local-token-' + user.id };
+        console.log("Login successful for user:", user);
+        return { success: true, user, token: "local-token-" + user.id };
       } else {
-        console.log('Login failed - invalid credentials');
-        console.log('Available mobile numbers:', users.map((u: any) => u.mobile));
+        console.log("Login failed - invalid credentials");
+        console.log(
+          "Available mobile numbers:",
+          users.map((u: any) => u.mobile),
+        );
         if (user) {
-          console.log('User found but password mismatch. Expected:', user.password, 'Got:', password);
+          console.log(
+            "User found but password mismatch. Expected:",
+            user.password,
+            "Got:",
+            password,
+          );
         } else {
-          console.log('No user found with mobile number:', mobile);
+          console.log("No user found with mobile number:", mobile);
         }
-        throw new Error('Invalid mobile number or password');
+        throw new Error("Invalid mobile number or password");
       }
     }
-    
-    if (endpoint.includes('/auth/register')) {
+
+    if (endpoint.includes("/auth/register")) {
       const userData = JSON.parse(options.body as string);
-      console.log('Signup attempt with data:', userData);
-      
-      const users = getStorageData('pedalnepal_users') || [];
-      console.log('Current users in localStorage:', users);
-      console.log('Looking for mobile:', userData.mobile);
-      
+      console.log("Signup attempt with data:", userData);
+
+      const users = getStorageData("pedalnepal_users") || [];
+      console.log("Current users in localStorage:", users);
+      console.log("Looking for mobile:", userData.mobile);
+
       // Check if mobile number already exists
       const existingUser = users.find((u: any) => u.mobile === userData.mobile);
-      console.log('Existing user found:', existingUser);
-      
+      console.log("Existing user found:", existingUser);
+
       if (existingUser) {
-        console.log('Mobile number already exists:', userData.mobile);
+        console.log("Mobile number already exists:", userData.mobile);
         throw new Error(`Mobile number ${userData.mobile} already registered`);
       }
-      
+
       const newUser = {
         id: (users.length + 1).toString(),
         ...userData,
-        role: 'user',
+        role: "user",
         credits: 250,
         profileImage: null,
         createdAt: new Date().toISOString(),
       };
-      
+
       users.push(newUser);
-      setStorageData('pedalnepal_users', users);
-      console.log('New user saved to localStorage:', newUser);
-      console.log('Updated users list:', getStorageData('pedalnepal_users'));
-      
-      return { success: true, user: newUser, token: 'local-token-' + newUser.id };
+      setStorageData("pedalnepal_users", users);
+      console.log("New user saved to localStorage:", newUser);
+      console.log("Updated users list:", getStorageData("pedalnepal_users"));
+
+      return {
+        success: true,
+        user: newUser,
+        token: "local-token-" + newUser.id,
+      };
     }
-    
-    if (endpoint.includes('/users/profile')) {
+
+    if (endpoint.includes("/users/profile")) {
       const userId = endpoint.match(/userId=(\d+)/)?.[1];
-      const users = getStorageData('pedalnepal_users') || [];
+      const users = getStorageData("pedalnepal_users") || [];
       const user = users.find((u: any) => u.id === userId);
-      return user || { error: 'User not found' };
+      return user || { error: "User not found" };
     }
-    
-    if (endpoint.includes('/admin/users')) {
-      return getStorageData('pedalnepal_users') || [];
+
+    if (endpoint.includes("/admin/users")) {
+      return getStorageData("pedalnepal_users") || [];
     }
-    
-            if (endpoint.includes('/bicycles')) {
-      return getStorageData('pedalnepal_bicycles') || [];
+
+    if (endpoint.includes("/bicycles")) {
+      return getStorageData("pedalnepal_bicycles") || [];
     }
-    
-    if (endpoint.includes('/rentals')) {
-      return getStorageData('pedalnepal_rentals') || [];
+
+    if (endpoint.includes("/rentals")) {
+      return getStorageData("pedalnepal_rentals") || [];
     }
-    
-    if (endpoint.includes('/credits')) {
+
+    if (endpoint.includes("/credits")) {
       const userId = endpoint.match(/userId=(\d+)/)?.[1];
-      const users = getStorageData('pedalnepal_users') || [];
+      const users = getStorageData("pedalnepal_users") || [];
       const user = users.find((u: any) => u.id === userId);
       return { credits: user?.credits || 0 };
     }
-    
+
     // Default response for unknown endpoints
-    return { success: true, message: 'LocalStorage API response' };
-    
+    return { success: true, message: "LocalStorage API response" };
   } catch (error) {
-    console.error('LocalStorage API call error:', error);
+    console.error("LocalStorage API call error:", error);
     throw error;
   }
 }
@@ -420,37 +446,40 @@ export const authAPI = {
     if (USE_EXTERNAL_API) {
       try {
         // Try external API first
-        console.log('Attempting external login...');
-        const externalResponse = await externalApiCall('/auth/login', {
-          method: 'POST',
+        console.log("Attempting external login...");
+        const externalResponse = await externalApiCall("/auth/login", {
+          method: "POST",
           body: JSON.stringify({ mobile, password }),
         });
-        
+
         // If external API succeeds, return the response
         if (externalResponse.success || externalResponse.user) {
-          console.log('External login successful');
+          console.log("External login successful");
           return externalResponse;
         }
-        
-        throw new Error('External login failed');
+
+        throw new Error("External login failed");
       } catch (externalError) {
-        console.log('External login failed, falling back to localStorage:', externalError);
-        
+        console.log(
+          "External login failed, falling back to localStorage:",
+          externalError,
+        );
+
         // Fallback to localStorage
         try {
-          return await localStorageApiCall('/auth/login', {
-            method: 'POST',
+          return await localStorageApiCall("/auth/login", {
+            method: "POST",
             body: JSON.stringify({ mobile, password }),
           });
         } catch (localError) {
-          console.error('Both external and local login failed:', localError);
+          console.error("Both external and local login failed:", localError);
           throw localError;
         }
       }
     } else {
       // Use only localStorage
-      return localStorageApiCall('/auth/login', {
-        method: 'POST',
+      return localStorageApiCall("/auth/login", {
+        method: "POST",
         body: JSON.stringify({ mobile, password }),
       });
     }
@@ -466,41 +495,44 @@ export const authAPI = {
     if (USE_EXTERNAL_API) {
       try {
         // Try external API first
-        console.log('Attempting external signup...');
-        const externalResponse = await externalApiCall('/auth/register', {
-          method: 'POST',
+        console.log("Attempting external signup...");
+        const externalResponse = await externalApiCall("/auth/register", {
+          method: "POST",
           body: JSON.stringify(userData),
         });
-        
+
         // If external API succeeds, return the response
         if (externalResponse.success || externalResponse.user) {
-          console.log('External signup successful');
+          console.log("External signup successful");
           return externalResponse;
         }
-        
-        throw new Error('External signup failed');
+
+        throw new Error("External signup failed");
       } catch (externalError) {
-        console.log('External signup failed, falling back to localStorage:', externalError);
-        
+        console.log(
+          "External signup failed, falling back to localStorage:",
+          externalError,
+        );
+
         // Fallback to localStorage
         try {
-          return await localStorageApiCall('/auth/register', {
-            method: 'POST',
+          return await localStorageApiCall("/auth/register", {
+            method: "POST",
             body: JSON.stringify(userData),
           });
         } catch (localError) {
-          console.error('Both external and local signup failed:', localError);
+          console.error("Both external and local signup failed:", localError);
           throw localError;
         }
       }
     } else {
       // Use only localStorage
-      return localStorageApiCall('/auth/register', {
-        method: 'POST',
+      return localStorageApiCall("/auth/register", {
+        method: "POST",
         body: JSON.stringify(userData),
       });
     }
-  }
+  },
 };
 
 // User profile API calls
@@ -508,34 +540,37 @@ export const userAPI = {
   // Get user profile
   getProfile: async (userId: string) => {
     return localStorageApiCall(`/users/profile?userId=${userId}`, {
-      method: 'GET',
+      method: "GET",
     });
   },
 
   // Get all users (admin only)
   getAll: async () => {
-    return localStorageApiCall('/admin/users', {
-      method: 'GET',
+    return localStorageApiCall("/admin/users", {
+      method: "GET",
     });
   },
 
   // Update user profile
-  updateProfile: async (userId: string, profileData: {
-    name?: string;
-    email?: string;
-    mobile?: string;
-    profileImage?: string;
-  }) => {
-    const users = getStorageData('pedalnepal_users') || [];
+  updateProfile: async (
+    userId: string,
+    profileData: {
+      name?: string;
+      email?: string;
+      mobile?: string;
+      profileImage?: string;
+    },
+  ) => {
+    const users = getStorageData("pedalnepal_users") || [];
     const userIndex = users.findIndex((u: any) => u.id === userId);
-    
+
     if (userIndex !== -1) {
       users[userIndex] = { ...users[userIndex], ...profileData };
-      setStorageData('pedalnepal_users', users);
+      setStorageData("pedalnepal_users", users);
       return { success: true, user: users[userIndex] };
     }
-    
-    return { error: 'User not found' };
+
+    return { error: "User not found" };
   },
 };
 
@@ -543,16 +578,17 @@ export const userAPI = {
 export const bicycleAPI = {
   // Get all bicycles
   getAll: async (filters?: { status?: string; location?: string }) => {
-    const bicycles = getStorageData('pedalnepal_bicycles') || [];
-    
+    const bicycles = getStorageData("pedalnepal_bicycles") || [];
+
     if (filters) {
       return bicycles.filter((bike: any) => {
         if (filters.status && bike.status !== filters.status) return false;
-        if (filters.location && !bike.location.includes(filters.location)) return false;
+        if (filters.location && !bike.location.includes(filters.location))
+          return false;
         return true;
       });
     }
-    
+
     return bicycles;
   },
 
@@ -565,16 +601,16 @@ export const bicycleAPI = {
     dailyRate: number;
     image?: string;
   }) => {
-    const bicycles = getStorageData('pedalnepal_bicycles') || [];
+    const bicycles = getStorageData("pedalnepal_bicycles") || [];
     const newBicycle = {
       id: (bicycles.length + 1).toString(),
       ...bicycleData,
-      status: 'available',
+      status: "available",
     };
-    
+
     bicycles.push(newBicycle);
-    setStorageData('pedalnepal_bicycles', bicycles);
-    
+    setStorageData("pedalnepal_bicycles", bicycles);
+
     return { success: true, bicycle: newBicycle };
   },
 };
@@ -583,8 +619,8 @@ export const bicycleAPI = {
 export const rentalAPI = {
   // Get rentals
   getAll: async (filters?: { userId?: string; status?: string }) => {
-    const rentals = getStorageData('pedalnepal_rentals') || [];
-    
+    const rentals = getStorageData("pedalnepal_rentals") || [];
+
     if (filters) {
       return rentals.filter((rental: any) => {
         if (filters.userId && rental.userId !== filters.userId) return false;
@@ -592,7 +628,7 @@ export const rentalAPI = {
         return true;
       });
     }
-    
+
     return rentals;
   },
 
@@ -603,32 +639,34 @@ export const rentalAPI = {
     startTime: string;
     endTime?: string;
   }) => {
-    const rentals = getStorageData('pedalnepal_rentals') || [];
-    const bicycles = getStorageData('pedalnepal_bicycles') || [];
-    
+    const rentals = getStorageData("pedalnepal_rentals") || [];
+    const bicycles = getStorageData("pedalnepal_bicycles") || [];
+
     // Find the bicycle to get its rate
     const bicycle = bicycles.find((b: any) => b.id === rentalData.bicycleId);
     if (!bicycle) {
-      throw new Error('Bicycle not found');
+      throw new Error("Bicycle not found");
     }
-    
+
     const newRental = {
       id: (rentals.length + 1).toString(),
       ...rentalData,
-      status: 'active',
+      status: "active",
       totalCost: bicycle.hourlyRate * 2, // Calculate based on duration
     };
-    
+
     rentals.push(newRental);
-    setStorageData('pedalnepal_rentals', rentals);
-    
+    setStorageData("pedalnepal_rentals", rentals);
+
     // Update bicycle status to rented
-    const bicycleIndex = bicycles.findIndex((b: any) => b.id === rentalData.bicycleId);
+    const bicycleIndex = bicycles.findIndex(
+      (b: any) => b.id === rentalData.bicycleId,
+    );
     if (bicycleIndex !== -1) {
-      bicycles[bicycleIndex].status = 'rented';
-      setStorageData('pedalnepal_bicycles', bicycles);
+      bicycles[bicycleIndex].status = "rented";
+      setStorageData("pedalnepal_bicycles", bicycles);
     }
-    
+
     return { success: true, rental: newRental };
   },
 };
@@ -637,7 +675,7 @@ export const rentalAPI = {
 export const creditsAPI = {
   // Get user's credit balance
   getBalance: async (userId: string) => {
-    const users = getStorageData('pedalnepal_users') || [];
+    const users = getStorageData("pedalnepal_users") || [];
     const user = users.find((u: any) => u.id === userId);
     return { credits: user?.credits || 0 };
   },
@@ -646,24 +684,27 @@ export const creditsAPI = {
   updateCredits: async (data: {
     userId: string;
     credits: number;
-    action: 'add' | 'remove';
+    action: "add" | "remove";
     reason?: string;
   }) => {
-    const users = getStorageData('pedalnepal_users') || [];
+    const users = getStorageData("pedalnepal_users") || [];
     const userIndex = users.findIndex((u: any) => u.id === data.userId);
-    
+
     if (userIndex !== -1) {
-      if (data.action === 'add') {
+      if (data.action === "add") {
         users[userIndex].credits += data.credits;
       } else {
-        users[userIndex].credits = Math.max(0, users[userIndex].credits - data.credits);
+        users[userIndex].credits = Math.max(
+          0,
+          users[userIndex].credits - data.credits,
+        );
       }
-      
-      setStorageData('pedalnepal_users', users);
+
+      setStorageData("pedalnepal_users", users);
       return { success: true, user: users[userIndex] };
     }
-    
-    return { error: 'User not found' };
+
+    return { error: "User not found" };
   },
 };
 
@@ -679,64 +720,77 @@ export const api = {
 export default api;
 
 // Add global functions for debugging and data management
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // Test external API connection
   (window as any).testExternalAPI = async () => {
     try {
-      console.log('Testing external API connection...');
-      console.log('API URL:', EXTERNAL_API_BASE_URL);
-      console.log('Use External API:', USE_EXTERNAL_API);
-      
+      console.log("Testing external API connection...");
+      console.log("API URL:", EXTERNAL_API_BASE_URL);
+      console.log("Use External API:", USE_EXTERNAL_API);
+
       const response = await fetch(`${EXTERNAL_API_BASE_URL}/auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          mobile: 'test',
-          password: 'test'
+          mobile: "test",
+          password: "test",
         }),
       });
-      
-      console.log('External API response status:', response.status);
+
+      console.log("External API response status:", response.status);
       const data = await response.json();
-      console.log('External API response data:', data);
-      
-      alert(`External API test completed. Status: ${response.status}\nURL: ${EXTERNAL_API_BASE_URL}`);
+      console.log("External API response data:", data);
+
+      alert(
+        `External API test completed. Status: ${response.status}\nURL: ${EXTERNAL_API_BASE_URL}`,
+      );
     } catch (error) {
-      console.error('External API test failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`External API test failed: ${errorMessage}\nURL: ${EXTERNAL_API_BASE_URL}`);
+      console.error("External API test failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      alert(
+        `External API test failed: ${errorMessage}\nURL: ${EXTERNAL_API_BASE_URL}`,
+      );
     }
   };
 
   // Toggle external API usage
   (window as any).toggleExternalAPI = () => {
-    const currentSetting = localStorage.getItem('use_external_api');
-    const newSetting = currentSetting === 'false' ? 'true' : 'false';
-    localStorage.setItem('use_external_api', newSetting);
-    alert(`External API ${newSetting === 'true' ? 'enabled' : 'disabled'}. Please refresh the page.`);
+    const currentSetting = localStorage.getItem("use_external_api");
+    const newSetting = currentSetting === "false" ? "true" : "false";
+    localStorage.setItem("use_external_api", newSetting);
+    alert(
+      `External API ${newSetting === "true" ? "enabled" : "disabled"}. Please refresh the page.`,
+    );
   };
 
   // Show current API configuration
   (window as any).showAPIConfig = () => {
-    console.log('=== API Configuration ===');
-    console.log('External API URL:', EXTERNAL_API_BASE_URL);
-    console.log('Use External API:', USE_EXTERNAL_API);
-    console.log('Environment Variables:');
-    console.log('- NEXT_PUBLIC_EXTERNAL_API_BASE_URL:', process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL);
-    console.log('- NEXT_PUBLIC_USE_EXTERNAL_API:', process.env.NEXT_PUBLIC_USE_EXTERNAL_API);
-    console.log('========================');
+    console.log("=== API Configuration ===");
+    console.log("External API URL:", EXTERNAL_API_BASE_URL);
+    console.log("Use External API:", USE_EXTERNAL_API);
+    console.log("Environment Variables:");
+    console.log(
+      "- NEXT_PUBLIC_EXTERNAL_API_BASE_URL:",
+      process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL,
+    );
+    console.log(
+      "- NEXT_PUBLIC_USE_EXTERNAL_API:",
+      process.env.NEXT_PUBLIC_USE_EXTERNAL_API,
+    );
+    console.log("========================");
   };
 
   (window as any).clearpedalNepalStorage = () => {
-    localStorage.removeItem('pedalnepal_users');
-    localStorage.removeItem('pedalnepal_bicycles');
-    localStorage.removeItem('pedalnepal_rentals');
-    localStorage.removeItem('pedalnepal_current_user');
+    localStorage.removeItem("pedalnepal_users");
+    localStorage.removeItem("pedalnepal_bicycles");
+    localStorage.removeItem("pedalnepal_rentals");
+    localStorage.removeItem("pedalnepal_current_user");
     // Clear all slot data
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('pedalnepal_slots_')) {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("pedalnepal_slots_")) {
         localStorage.removeItem(key);
       }
     });
@@ -746,80 +800,86 @@ if (typeof window !== 'undefined') {
   (window as any).fixRentalData = () => {
     const defaultRentals = [
       {
-        id: '1',
-        userId: '2',
-        bikeId: '1-bike-1',
-        startTime: '2024-01-15T10:00:00.000Z',
-        endTime: '2024-01-15T12:30:00.000Z',
-        status: 'completed',
+        id: "1",
+        userId: "2",
+        bikeId: "1-bike-1",
+        startTime: "2024-01-15T10:00:00.000Z",
+        endTime: "2024-01-15T12:30:00.000Z",
+        status: "completed",
         price: 62,
-        duration: 'hourly',
+        duration: "hourly",
         hours: 2.5,
-        bikeName: 'Bike 1',
-        station: 'Station 1',
-        slotNumber: 1
+        bikeName: "Bike 1",
+        station: "Station 1",
+        slotNumber: 1,
       },
       {
-        id: '2',
-        userId: '2',
-        bikeId: '1-bike-2',
-        startTime: '2024-01-16T14:00:00.000Z',
-        endTime: '2024-01-16T15:30:00.000Z',
-        status: 'completed',
+        id: "2",
+        userId: "2",
+        bikeId: "1-bike-2",
+        startTime: "2024-01-16T14:00:00.000Z",
+        endTime: "2024-01-16T15:30:00.000Z",
+        status: "completed",
         price: 37,
-        duration: 'hourly',
+        duration: "hourly",
         hours: 1.5,
-        bikeName: 'Bike 2',
-        station: 'Station 1',
-        slotNumber: 2
-      }
+        bikeName: "Bike 2",
+        station: "Station 1",
+        slotNumber: 2,
+      },
     ];
-    localStorage.setItem('pedalnepal_rentals', JSON.stringify(defaultRentals));
+    localStorage.setItem("pedalnepal_rentals", JSON.stringify(defaultRentals));
     location.reload();
   };
 
   (window as any).resetSlotDataWithReserved = () => {
     // Reset all station slot data to include reserved slots
-    const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
-    
+    const bicycles = JSON.parse(
+      localStorage.getItem("pedalnepal_bicycles") || "[]",
+    );
+
     bicycles.forEach((bike: any) => {
       const stationKey = `${bike.description}_${bike.location}`;
       const slotsKey = `pedalnepal_slots_${stationKey}`;
-      
+
       const slots = [];
       for (let i = 1; i <= 10; i++) {
         slots.push({
           id: `${stationKey}_slot_${i}`,
           slotNumber: i,
-          status: i >= 9 ? 'in-maintenance' : 'active',
+          status: i >= 9 ? "in-maintenance" : "active",
           lastUpdated: new Date().toISOString(),
-          notes: i >= 9 ? 'Reserved for bike returns' : undefined
+          notes: i >= 9 ? "Reserved for bike returns" : undefined,
         });
       }
-      
+
       localStorage.setItem(slotsKey, JSON.stringify(slots));
     });
-    
+
     location.reload();
   };
 
   (window as any).testSmartSlotManagement = () => {
     // Test function to simulate smart slot management
-    console.log('Testing Smart Slot Management...');
-    
+    console.log("Testing Smart Slot Management...");
+
     // Get all stations
-    const bicycles = JSON.parse(localStorage.getItem('pedalnepal_bicycles') || '[]');
-    
+    const bicycles = JSON.parse(
+      localStorage.getItem("pedalnepal_bicycles") || "[]",
+    );
+
     bicycles.forEach((bike: any) => {
       const stationKey = `${bike.description}_${bike.location}`;
       const slotsKey = `pedalnepal_slots_${stationKey}`;
-      const slots = JSON.parse(localStorage.getItem(slotsKey) || '[]');
-      
+      const slots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
+
       console.log(`\nStation: ${bike.description}`);
-      console.log('Current slot status:');
+      console.log("Current slot status:");
       slots.forEach((slot: any) => {
-        console.log(`  Slot ${slot.slotNumber}: ${slot.status} - ${slot.notes || 'No notes'}`);
+        console.log(
+          `  Slot ${slot.slotNumber}: ${slot.status} - ${slot.notes || "No notes"}`,
+        );
       });
     });
   };
-} 
+}

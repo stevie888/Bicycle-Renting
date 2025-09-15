@@ -35,11 +35,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-  popup,
 }: {
   children: React.ReactNode;
-  popup: React.ReactNode;
-} & any) {
+}) {
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -47,11 +45,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className={clsx(
           "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable
+          fontSans.variable,
         )}
       >
         <Providers
-          popup={popup}
           themeProps={{ attribute: "class", defaultTheme: "light" }}
         >
           <LanguageProvider>

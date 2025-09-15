@@ -10,7 +10,11 @@ interface AuthWrapperProps {
   footer: React.ReactNode;
 }
 
-export default function AuthWrapper({ children, navbar, footer }: AuthWrapperProps) {
+export default function AuthWrapper({
+  children,
+  navbar,
+  footer,
+}: AuthWrapperProps) {
   const pathname = usePathname();
   const { user, updateActivity } = useAuth();
   const [isAuthPage, setIsAuthPage] = useState(false);
@@ -18,7 +22,9 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
 
   useEffect(() => {
     setIsClient(true);
-    setIsAuthPage(pathname?.startsWith('/login') || pathname?.startsWith('/signup'));
+    setIsAuthPage(
+      pathname?.startsWith("/login") || pathname?.startsWith("/signup"),
+    );
   }, [pathname]);
 
   // Track user activity when they interact with the app
@@ -30,9 +36,16 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
     };
 
     // Track various user interactions
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    events.forEach(event => {
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    events.forEach((event) => {
       document.addEventListener(event, handleUserActivity, { passive: true });
     });
 
@@ -40,7 +53,7 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
     const activityInterval = setInterval(updateActivity, 5 * 60 * 1000);
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         document.removeEventListener(event, handleUserActivity);
       });
       clearInterval(activityInterval);
@@ -62,14 +75,20 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
 
   // Define which routes require authentication
   const protectedRoutes = [
-    '/profile', '/my-rentals', '/rental-confirmation', 
-    '/return-bike', '/return-confirmation', '/bike-selection'
+    "/profile",
+    "/my-rentals",
+    "/rental-confirmation",
+    "/return-bike",
+    "/return-confirmation",
+    "/bike-selection",
   ];
-  
-  const adminRoutes = ['/admin'];
 
-  const isProtectedRoute = protectedRoutes.some(route => pathname?.startsWith(route));
-  const isAdminRoute = adminRoutes.some(route => pathname?.startsWith(route));
+  const adminRoutes = ["/admin"];
+
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname?.startsWith(route),
+  );
+  const isAdminRoute = adminRoutes.some((route) => pathname?.startsWith(route));
 
   // For auth pages, don't wrap with ProtectedRoute
   if (isAuthPage) {
@@ -79,8 +98,8 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
   // For protected routes, wrap with ProtectedRoute
   if (isProtectedRoute || isAdminRoute) {
     return (
-      <ProtectedRoute 
-        requireAuth={isProtectedRoute} 
+      <ProtectedRoute
+        requireAuth={isProtectedRoute}
         requireAdmin={isAdminRoute}
       >
         <div className="relative flex flex-col min-h-screen">
@@ -104,4 +123,4 @@ export default function AuthWrapper({ children, navbar, footer }: AuthWrapperPro
       {footer}
     </div>
   );
-} 
+}

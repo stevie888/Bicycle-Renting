@@ -1,16 +1,25 @@
 "use client";
-import { EyeIcon, RouteIcon, MapPinIcon, BikeIcon, ClockIcon, StarIcon, ArrowRightIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 // Force dynamic rendering to prevent prerendering issues
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+import {
+  EyeIcon,
+  RouteIcon,
+  MapPinIcon,
+  BikeIcon,
+  ClockIcon,
+  StarIcon,
+  ArrowRightIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import Card from "@/components/ui/card";
 
 export default function StationsPage() {
   const router = useRouter();
-  
+
   const stations = [
     {
       id: 1,
@@ -47,11 +56,14 @@ export default function StationsPage() {
       <section className="py-12 px-6 bg-white border-b border-neutral-200">
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-neutral-900 mb-4">All Stations</h1>
+            <h1 className="text-4xl font-bold text-neutral-900 mb-4">
+              All Stations
+            </h1>
             <p className="text-lg text-neutral-600 mb-8">
-              Find the perfect bike station near you. All stations are equipped with quality bicycles and convenient locations.
+              Find the perfect bike station near you. All stations are equipped
+              with quality bicycles and convenient locations.
             </p>
-            
+
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
               <div className="bg-primary-50 p-4 rounded-lg">
@@ -60,35 +72,49 @@ export default function StationsPage() {
                     <MapPinIcon className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-neutral-600">Total Stations</span>
-                    <p className="text-lg font-bold text-primary-700">{stations.length}</p>
+                    <span className="text-sm font-medium text-neutral-600">
+                      Total Stations
+                    </span>
+                    <p className="text-lg font-bold text-primary-700">
+                      {stations.length}
+                    </p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-green-50 p-4 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="bg-green-600 p-2 rounded-lg">
                     <BikeIcon className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-neutral-600">Available Bikes</span>
+                    <span className="text-sm font-medium text-neutral-600">
+                      Available Bikes
+                    </span>
                     <p className="text-lg font-bold text-green-700">
-                      {stations.reduce((sum, station) => sum + station.available, 0)}
+                      {stations.reduce(
+                        (sum, station) => sum + station.available,
+                        0,
+                      )}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-orange-50 p-4 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="bg-orange-600 p-2 rounded-lg">
                     <ClockIcon className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-neutral-600">In Use</span>
+                    <span className="text-sm font-medium text-neutral-600">
+                      In Use
+                    </span>
                     <p className="text-lg font-bold text-orange-700">
-                      {stations.reduce((sum, station) => sum + station.occupied, 0)}
+                      {stations.reduce(
+                        (sum, station) => sum + station.occupied,
+                        0,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -120,7 +146,9 @@ export default function StationsPage() {
                       </div>
                       <div className="flex items-center gap-1 bg-primary-50 px-3 py-1 rounded-full">
                         <StarIcon className="w-4 h-4 text-warning-500 fill-current" />
-                        <span className="text-sm font-semibold text-neutral-700">{station.rating}</span>
+                        <span className="text-sm font-semibold text-neutral-700">
+                          {station.rating}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -134,8 +162,12 @@ export default function StationsPage() {
                             <BikeIcon className="w-4 h-4 text-white" />
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-neutral-600">Available</span>
-                            <p className="text-lg font-bold text-primary-700">{station.available}</p>
+                            <span className="text-sm font-medium text-neutral-600">
+                              Available
+                            </span>
+                            <p className="text-lg font-bold text-primary-700">
+                              {station.available}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -145,8 +177,12 @@ export default function StationsPage() {
                             <ClockIcon className="w-4 h-4 text-white" />
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-neutral-600">In Use</span>
-                            <p className="text-lg font-bold text-secondary-700">{station.occupied}</p>
+                            <span className="text-sm font-medium text-neutral-600">
+                              In Use
+                            </span>
+                            <p className="text-lg font-bold text-secondary-700">
+                              {station.occupied}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -154,21 +190,25 @@ export default function StationsPage() {
 
                     <div className="mb-6">
                       <div className="flex items-center justify-between bg-neutral-50 p-4 rounded-lg">
-                        <span className="text-sm font-medium text-neutral-600">Distance</span>
-                        <span className="text-lg font-bold text-primary-700">{station.distance}</span>
+                        <span className="text-sm font-medium text-neutral-600">
+                          Distance
+                        </span>
+                        <span className="text-lg font-bold text-primary-700">
+                          {station.distance}
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex gap-3">
-                      <Button 
-                        type="button" 
+                      <Button
+                        type="button"
                         variant="ghost"
                         className="flex-1 text-neutral-700 hover:text-primary-700 hover:bg-primary-50 transition-all duration-200 font-medium"
                       >
                         <RouteIcon className="w-4 h-4 mr-2" />
                         Directions
                       </Button>
-                      <Button 
+                      <Button
                         className="flex-1 bg-primary-600 hover:bg-primary-700 text-white shadow-medium hover:shadow-lg transition-all duration-200 font-medium"
                         onPress={() => router.push(`/stations/${station.id}`)}
                       >
@@ -185,4 +225,4 @@ export default function StationsPage() {
       </section>
     </div>
   );
-} 
+}

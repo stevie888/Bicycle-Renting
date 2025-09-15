@@ -47,7 +47,7 @@ const Modal = React.forwardRef<HTMLDivElement, Props & ModalProps>(
         </HeroModal>
       </>
     );
-  }
+  },
 );
 
 Modal.displayName = "Modal";

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   render() {
@@ -35,8 +35,12 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Something went wrong!</h2>
-            <p className="text-gray-600 mb-4">We're sorry, but something unexpected happened.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Something went wrong!
+            </h2>
+            <p className="text-gray-600 mb-4">
+              We're sorry, but something unexpected happened.
+            </p>
             <button
               onClick={() => {
                 this.setState({ hasError: false, error: undefined });
