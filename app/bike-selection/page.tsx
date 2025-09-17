@@ -45,9 +45,8 @@ interface Station {
 
 type RentalDuration = "hourly" | "daily" | "pay-as-you-go";
 
-function BikeSelectionPageContent() {
+function BikeSelectionPageContent({ searchParams }: { searchParams: URLSearchParams }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const { t } = useLanguage();
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -64,6 +63,25 @@ function BikeSelectionPageContent() {
   const stationName = searchParams.get("name");
   const stationLocation = searchParams.get("location");
   const stationImage = searchParams.get("image");
+
+  // If no URL parameters, redirect to stations page
+  if (!stationId || !stationName || !stationLocation) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">
+            Invalid station information. Please go back and try again.
+          </p>
+          <button
+            onClick={() => router.push("/bicycles")}
+            className="mt-4 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go Back to Stations
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Function to get slot data from localStorage
   const getSlotData = (stationName: string, location: string) => {
@@ -152,7 +170,25 @@ function BikeSelectionPageContent() {
     setBikeSlots(updatedSlots);
   };
 
-  // All hooks must be called before any conditional returns
+  // Initialize station data immediately (no async operations)
+  useEffect(() => {
+    if (stationId && stationName && stationLocation && stationImage) {
+      setStation({
+        id: stationId,
+        name: stationName,
+        location: stationLocation,
+        image: stationImage,
+        coordinates: { lat: 27.7172, lng: 85.324 }, // Default coordinates
+      });
+    }
+  }, [stationId, stationName, stationLocation, stationImage]);
+
+  // Initialize bike slots data immediately
+  useEffect(() => {
+    updateBikeSlotsWithRealData();
+  }, [stationName, stationLocation, stationId, stationImage]);
+
+  // Authentication and rental checks (run after initial data is set)
   useEffect(() => {
     // Wait for authentication to load before checking user
     if (loading) return;
@@ -162,7 +198,7 @@ function BikeSelectionPageContent() {
       return;
     }
 
-    // Check if user has an active rental BEFORE setting up the page
+    // Check if user has an active rental
     const existingRentals = JSON.parse(
       localStorage.getItem("pedalnepal_rentals") || "[]",
     );
@@ -223,28 +259,14 @@ function BikeSelectionPageContent() {
       router.push("/rental-confirmation");
       return; // Exit early - don't set up the page
     }
+  }, [user, loading, router]);
 
-    // Only set up the page if user has NO active rental
-    // Set station info
-    if (stationId && stationName && stationLocation && stationImage) {
-      setStation({
-        id: stationId,
-        name: stationName,
-        location: stationLocation,
-        image: stationImage,
-        coordinates: { lat: 27.7172, lng: 85.324 }, // Default coordinates
-      });
-    }
-
-    // Update bike slots with real data
-    updateBikeSlotsWithRealData();
-
-    // Listen for slot status changes from admin panel
+  // Event listeners for slot updates
+  useEffect(() => {
     const handleSlotStatusChanged = () => {
       updateBikeSlotsWithRealData();
     };
 
-    // Listen for focus events to refresh data when returning from admin panel
     const handleFocus = () => {
       updateBikeSlotsWithRealData();
     };
@@ -256,15 +278,7 @@ function BikeSelectionPageContent() {
       window.removeEventListener("slotStatusChanged", handleSlotStatusChanged);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [
-    stationId,
-    stationName,
-    stationLocation,
-    stationImage,
-    user,
-    router,
-    loading,
-  ]);
+  }, []);
 
   const handleSlotSelect = (slotId: string) => {
     const slot = bikeSlots.find((s) => s.id === slotId);
@@ -573,20 +587,8 @@ function BikeSelectionPageContent() {
     }
   };
 
-  // Show loading state while authentication is being checked
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if no user after loading
-  if (!user) {
+  // Show error state if no user after loading (but allow page to render first)
+  if (!loading && !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -602,36 +604,14 @@ function BikeSelectionPageContent() {
     );
   }
 
-  // Check if required URL parameters are present
-  if (!stationId || !stationName || !stationLocation) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">
-            Invalid station information. Please go back and try again.
-          </p>
-          <button
-            onClick={() => router.push("/bicycles")}
-            className="mt-4 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Go Back to Stations
-          </button>
-        </div>
-      </div>
-    );
-  }
 
+  // Show loading state only if station data is not available
   if (!station) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Station not found</p>
-          <button
-            onClick={() => router.push("/bicycles")}
-            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Go Back to Stations
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading station data...</p>
         </div>
       </div>
     );
@@ -1065,18 +1045,25 @@ function BikeSelectionPageContent() {
   );
 }
 
+// Wrapper component to handle useSearchParams
+function BikeSelectionWrapper() {
+  const searchParams = useSearchParams();
+  
+  return <BikeSelectionPageContent searchParams={searchParams} />;
+}
+
 export default function BikeSelectionPage() {
   return (
     <ErrorBoundary>
       <Suspense fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading...</p>
           </div>
         </div>
       }>
-        <BikeSelectionPageContent />
+        <BikeSelectionWrapper />
       </Suspense>
     </ErrorBoundary>
   );

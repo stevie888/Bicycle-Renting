@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import APITestComponent from "@/components/APITestComponent";
 
 export default function DebugStoragePage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -45,6 +46,11 @@ export default function DebugStoragePage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Debug Storage</h1>
+
+        {/* API Test Component */}
+        <div className="mb-8">
+          <APITestComponent />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Users Section */}

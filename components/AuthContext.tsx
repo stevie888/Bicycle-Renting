@@ -50,17 +50,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  // Set mounted state
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Load user from localStorage on mount
   useEffect(() => {
-    if (!mounted) return;
-
     console.log("AuthContext - Loading user from localStorage...");
 
     const storedUser = localStorage.getItem("pedalnepal_current_user");
@@ -81,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Always set loading to false after attempting to load
     setLoading(false);
-  }, [mounted]);
+  }, []);
 
   const saveUser = (userObj: User) => {
     console.log("AuthContext - Saving user:", userObj);

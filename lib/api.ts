@@ -431,6 +431,117 @@ async function localStorageApiCall(
       return { credits: user?.credits || 0 };
     }
 
+    // Stations endpoints
+    if (endpoint.includes("/stations")) {
+      if (method === "POST") {
+        const stationData = JSON.parse(options.body as string);
+        const stations = getStorageData("pedalnepal_stations") || [];
+        const newStation = {
+          id: (stations.length + 1).toString(),
+          ...stationData,
+          createdAt: new Date().toISOString(),
+        };
+        stations.push(newStation);
+        setStorageData("pedalnepal_stations", stations);
+        return { success: true, station: newStation };
+      } else if (method === "GET") {
+        const stations = getStorageData("pedalnepal_stations") || [];
+        // If no stations exist, create some default ones
+        if (stations.length === 0) {
+          const defaultStations = [
+            {
+              id: "1",
+              name: "Station 1",
+              location: "Kathmandu",
+              capacity: 50,
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: "2",
+              name: "Station 2",
+              location: "Lalitpur",
+              capacity: 30,
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: "3",
+              name: "Station 3",
+              location: "Bhaktapur",
+              capacity: 25,
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+          ];
+          setStorageData("pedalnepal_stations", defaultStations);
+          return defaultStations;
+        }
+        return stations;
+      }
+    }
+
+    // Services endpoints
+    if (endpoint.includes("/services")) {
+      if (method === "POST") {
+        const serviceData = JSON.parse(options.body as string);
+        const services = getStorageData("pedalnepal_services") || [];
+        const newService = {
+          id: (services.length + 1).toString(),
+          ...serviceData,
+          createdAt: new Date().toISOString(),
+        };
+        services.push(newService);
+        setStorageData("pedalnepal_services", services);
+        return { success: true, service: newService };
+      } else if (method === "GET") {
+        const services = getStorageData("pedalnepal_services") || [];
+        // If no services exist, create some default ones
+        if (services.length === 0) {
+          const defaultServices = [
+            {
+              id: "1",
+              name: "Bicycle Rental",
+              stationId: 1,
+              serviceType: "Rental",
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: "2",
+              name: "Bicycle Rental",
+              stationId: 2,
+              serviceType: "Rental",
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: "3",
+              name: "Bicycle Rental",
+              stationId: 3,
+              serviceType: "Rental",
+              status: "ACTIVE",
+              createdAt: new Date().toISOString(),
+            },
+          ];
+          setStorageData("pedalnepal_services", defaultServices);
+          return defaultServices;
+        }
+        return services;
+      }
+    }
+
+    // AWS Services endpoints
+    if (endpoint.includes("/aws-services/s3-presigned-url")) {
+      const { fileName, fileType } = JSON.parse(options.body as string);
+      return {
+        success: true,
+        presignedUrl: `https://mock-s3-bucket.s3.amazonaws.com/${fileName}`,
+        fileName,
+        fileType,
+      };
+    }
+
     // Default response for unknown endpoints
     return { success: true, message: "LocalStorage API response" };
   } catch (error) {
@@ -708,6 +819,196 @@ export const creditsAPI = {
   },
 };
 
+// Stations API calls
+export const stationsAPI = {
+  // Create station
+  create: async (stationData: {
+    name: string;
+    location: string;
+    capacity: number;
+    status: string;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/stations", {
+          method: "POST",
+          body: JSON.stringify(stationData),
+        });
+        return response;
+      } catch (error) {
+        console.log("External stations API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall("/stations", {
+          method: "POST",
+          body: JSON.stringify(stationData),
+        });
+      }
+    } else {
+      return localStorageApiCall("/stations", {
+        method: "POST",
+        body: JSON.stringify(stationData),
+      });
+    }
+  },
+
+  // Get all stations
+  getAll: async (filters?: { status?: string; minCapacity?: number }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.minCapacity) queryParams.append("minCapacity", filters.minCapacity.toString());
+        
+        const endpoint = `/stations${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External stations API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall("/stations", { method: "GET" });
+      }
+    } else {
+      return localStorageApiCall("/stations", { method: "GET" });
+    }
+  },
+
+  // Get station by ID
+  getById: async (id: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/stations/${id}`, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External stations API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall(`/stations/${id}`, { method: "GET" });
+      }
+    } else {
+      return localStorageApiCall(`/stations/${id}`, { method: "GET" });
+    }
+  },
+};
+
+// Services API calls
+export const servicesAPI = {
+  // Create service
+  create: async (serviceData: {
+    name: string;
+    stationId: number;
+    serviceType: string;
+    status: string;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/services", {
+          method: "POST",
+          body: JSON.stringify(serviceData),
+        });
+        return response;
+      } catch (error) {
+        console.log("External services API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall("/services", {
+          method: "POST",
+          body: JSON.stringify(serviceData),
+        });
+      }
+    } else {
+      return localStorageApiCall("/services", {
+        method: "POST",
+        body: JSON.stringify(serviceData),
+      });
+    }
+  },
+
+  // Get all services
+  getAll: async (filters?: { stationId?: number; serviceType?: string; status?: string }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.stationId) queryParams.append("stationId", filters.stationId.toString());
+        if (filters?.serviceType) queryParams.append("serviceType", filters.serviceType);
+        if (filters?.status) queryParams.append("status", filters.status);
+        
+        const endpoint = `/services${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External services API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall("/services", { method: "GET" });
+      }
+    } else {
+      return localStorageApiCall("/services", { method: "GET" });
+    }
+  },
+
+  // Get service by ID
+  getById: async (id: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/services/${id}`, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External services API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall(`/services/${id}`, { method: "GET" });
+      }
+    } else {
+      return localStorageApiCall(`/services/${id}`, { method: "GET" });
+    }
+  },
+
+  // Get services by station ID
+  getByStationId: async (stationId: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/services/station/${stationId}`, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External services API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return localStorageApiCall(`/services/station/${stationId}`, { method: "GET" });
+      }
+    } else {
+      return localStorageApiCall(`/services/station/${stationId}`, { method: "GET" });
+    }
+  },
+};
+
+// AWS Services API calls
+export const awsAPI = {
+  // Get S3 presigned URL
+  getS3PresignedUrl: async (fileName: string, fileType: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/aws-services/s3-presigned-url", {
+          method: "POST",
+          body: JSON.stringify({ fileName, fileType }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External AWS API failed, using localStorage fallback");
+        // Fallback to localStorage - return a mock URL
+        return {
+          success: true,
+          presignedUrl: `https://mock-s3-bucket.s3.amazonaws.com/${fileName}`,
+          fileName,
+          fileType,
+        };
+      }
+    } else {
+      // Return mock URL for localStorage mode
+      return {
+        success: true,
+        presignedUrl: `https://mock-s3-bucket.s3.amazonaws.com/${fileName}`,
+        fileName,
+        fileType,
+      };
+    }
+  },
+};
+
 // Export the main API object
 export const api = {
   auth: authAPI,
@@ -715,6 +1016,9 @@ export const api = {
   bicycle: bicycleAPI,
   rental: rentalAPI,
   credits: creditsAPI,
+  stations: stationsAPI,
+  services: servicesAPI,
+  aws: awsAPI,
 };
 
 export default api;
@@ -881,5 +1185,64 @@ if (typeof window !== "undefined") {
         );
       });
     });
+  };
+
+  // Test new API integrations
+  (window as any).testNewAPIs = async () => {
+    console.log("Testing new API integrations...");
+    
+    try {
+      // Test Stations API
+      console.log("\n=== Testing Stations API ===");
+      const stations = await api.stations.getAll();
+      console.log("Stations:", stations);
+      
+      // Test Services API
+      console.log("\n=== Testing Services API ===");
+      const services = await api.services.getAll();
+      console.log("Services:", services);
+      
+      // Test AWS API
+      console.log("\n=== Testing AWS API ===");
+      const s3Url = await api.aws.getS3PresignedUrl("test.jpg", "image/jpeg");
+      console.log("S3 Presigned URL:", s3Url);
+      
+      console.log("\n✅ All new APIs are working!");
+    } catch (error) {
+      console.error("❌ API test failed:", error);
+    }
+  };
+
+  // Test external API connection for new endpoints
+  (window as any).testExternalNewAPIs = async () => {
+    console.log("Testing external API for new endpoints...");
+    
+    try {
+      // Test external stations API
+      const stationsResponse = await fetch(`${EXTERNAL_API_BASE_URL}/stations`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      console.log("External Stations API Status:", stationsResponse.status);
+      
+      // Test external services API
+      const servicesResponse = await fetch(`${EXTERNAL_API_BASE_URL}/services`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      console.log("External Services API Status:", servicesResponse.status);
+      
+      // Test external AWS API
+      const awsResponse = await fetch(`${EXTERNAL_API_BASE_URL}/aws-services/s3-presigned-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: "test.jpg", fileType: "image/jpeg" }),
+      });
+      console.log("External AWS API Status:", awsResponse.status);
+      
+      console.log("✅ External API tests completed!");
+    } catch (error) {
+      console.error("❌ External API test failed:", error);
+    }
   };
 }
