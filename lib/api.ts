@@ -7,6 +7,38 @@ const EXTERNAL_API_BASE_URL =
 // Configuration to enable/disable external API
 const USE_EXTERNAL_API = process.env.NEXT_PUBLIC_USE_EXTERNAL_API === "true"; // Set to false to use only localStorage
 
+// Data synchronization helper
+const syncUserData = async (userId: string) => {
+  if (USE_EXTERNAL_API) {
+    try {
+      // Try to get user data from external API
+      const externalUser = await externalApiCall(`/users/profile?userId=${userId}`, {
+        method: "GET",
+      });
+      
+      if (externalUser && externalUser.id) {
+        // Update localStorage with external data
+        const users = getStorageData("pedalnepal_users") || [];
+        const userIndex = users.findIndex((u: any) => u.id === userId);
+        
+        if (userIndex !== -1) {
+          users[userIndex] = { ...users[userIndex], ...externalUser };
+          setStorageData("pedalnepal_users", users);
+          console.log("✅ User data synchronized from external API");
+        }
+        
+        return externalUser;
+      }
+    } catch (error) {
+      console.log("External user sync failed, using localStorage data");
+    }
+  }
+  
+  // Fallback to localStorage
+  const users = getStorageData("pedalnepal_users") || [];
+  return users.find((u: any) => u.id === userId);
+};
+
 // Helper function to make external API calls
 async function externalApiCall(endpoint: string, options: RequestInit = {}) {
   try {
@@ -648,8 +680,15 @@ export const authAPI = {
 
 // User profile API calls
 export const userAPI = {
-  // Get user profile
+  // Get user profile with synchronization
   getProfile: async (userId: string) => {
+    // Try to sync data from external API first
+    const syncedUser = await syncUserData(userId);
+    if (syncedUser) {
+      return syncedUser;
+    }
+    
+    // Fallback to localStorage
     return localStorageApiCall(`/users/profile?userId=${userId}`, {
       method: "GET",
     });
@@ -1243,6 +1282,82 @@ if (typeof window !== "undefined") {
       console.log("✅ External API tests completed!");
     } catch (error) {
       console.error("❌ External API test failed:", error);
+    }
+  };
+
+  // Sync user data across devices
+  (window as any).syncUserData = async (userId: string) => {
+    try {
+      console.log("Syncing user data for user ID:", userId);
+      const syncedUser = await syncUserData(userId);
+      
+      if (syncedUser) {
+        console.log("✅ User data synced successfully:", syncedUser);
+        alert(`User data synced! Credits: ${syncedUser.credits}`);
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        console.log("❌ Failed to sync user data");
+        alert("Failed to sync user data. Check console for details.");
+      }
+    } catch (error) {
+      console.error("❌ User data sync failed:", error);
+      alert("Failed to sync user data. Check console for details.");
+    }
+  };
+
+  // Fix credit synchronization issue
+  (window as any).fixCreditSync = async () => {
+    try {
+      console.log("Fixing credit synchronization...");
+      
+      // Get current user from localStorage
+      const currentUser = JSON.parse(localStorage.getItem("pedalnepal_current_user") || "{}");
+      if (!currentUser.id) {
+        alert("No current user found. Please log in first.");
+        return;
+      }
+      
+      console.log("Current user:", currentUser);
+      
+      // Try to sync with external API
+      if (USE_EXTERNAL_API) {
+        try {
+          const externalUser = await externalApiCall(`/users/profile?userId=${currentUser.id}`, {
+            method: "GET",
+          });
+          
+          if (externalUser && externalUser.credits !== undefined) {
+            // Update localStorage with external credits
+            const users = getStorageData("pedalnepal_users") || [];
+            const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+            
+            if (userIndex !== -1) {
+              users[userIndex].credits = externalUser.credits;
+              setStorageData("pedalnepal_users", users);
+              
+              // Update current user
+              currentUser.credits = externalUser.credits;
+              localStorage.setItem("pedalnepal_current_user", JSON.stringify(currentUser));
+              
+              console.log("✅ Credits synced from external API:", externalUser.credits);
+              alert(`Credits synced! New balance: ${externalUser.credits}`);
+              window.location.reload();
+              return;
+            }
+          }
+        } catch (error) {
+          console.log("External API sync failed, using localStorage data");
+        }
+      }
+      
+      // If external sync fails, show current data
+      console.log("Current credits in localStorage:", currentUser.credits);
+      alert(`Current credits: ${currentUser.credits}`);
+      
+    } catch (error) {
+      console.error("❌ Credit sync failed:", error);
+      alert("Failed to sync credits. Check console for details.");
     }
   };
 }

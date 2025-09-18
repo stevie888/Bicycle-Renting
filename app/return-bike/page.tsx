@@ -163,12 +163,8 @@ function ReturnBikePage() {
   };
 
   const handleStationSelect = (station: Station) => {
-    console.log("🏪 Station selected:", station);
     setSelectedStation(station);
     setSelectedSlot(null);
-    
-    // Use the station parameter directly instead of relying on state
-    // This ensures we always use the correct station ID regardless of state update timing
     fetchAvailableSlots(station.id);
   };
 
@@ -176,28 +172,32 @@ function ReturnBikePage() {
     try {
       const slotsKey = `pedalnepal_slots_${stationId}`;
       
-      // Enhanced debugging for mobile issues
+      // Mobile-specific localStorage handling
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      console.log("🔍 === SLOT FETCHING DEBUG ===");
-      console.log("🔍 Mobile device:", isMobile);
+      console.log("🔍 Mobile device detected:", isMobile);
       console.log("🔍 Station ID:", stationId);
-      console.log("🔍 Slots key:", slotsKey);
       console.log("🔍 Current rental:", currentRental);
-      console.log("🔍 User agent:", navigator.userAgent);
       
-      // Check if localStorage is accessible
-      if (typeof localStorage === 'undefined') {
-        console.error("❌ localStorage not available");
-        return;
+      let allSlots = [];
+      
+      // Try to get slots from localStorage with mobile fallback
+      try {
+        const storedSlots = localStorage.getItem(slotsKey);
+        if (storedSlots) {
+          allSlots = JSON.parse(storedSlots);
+          console.log("✅ Retrieved slots from localStorage:", allSlots.length);
+        } else {
+          console.log("⚠️ No slots in localStorage, will create default");
+        }
+      } catch (localStorageError) {
+        console.error("❌ localStorage access failed:", localStorageError);
+        // Continue with empty array - we'll create default slots
+        allSlots = [];
       }
-      
-      let allSlots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
-      console.log("🔍 Raw localStorage data:", localStorage.getItem(slotsKey));
-      console.log("🔍 Parsed slots:", allSlots);
 
       // If no slots exist, create default slots for this station
       if (allSlots.length === 0) {
-        console.log("No slots found, creating default slots for station:", stationId);
+        console.log("🔧 Creating default slots for station:", stationId);
         allSlots = [];
         for (let i = 1; i <= 10; i++) {
           allSlots.push({
@@ -208,24 +208,34 @@ function ReturnBikePage() {
             notes: i >= 9 ? "Available for bike returns" : "Bike available for rental",
           });
         }
-        localStorage.setItem(slotsKey, JSON.stringify(allSlots));
-        console.log("Created default slots:", allSlots);
+        
+        // Try to save to localStorage, but don't fail if it doesn't work
+        try {
+          localStorage.setItem(slotsKey, JSON.stringify(allSlots));
+          console.log("✅ Saved default slots to localStorage");
+        } catch (saveError) {
+          console.warn("⚠️ Could not save to localStorage:", saveError);
+          // Continue anyway - we have the slots in memory
+        }
+        
+        console.log("🔧 Created default slots:", allSlots);
       }
 
       // Get slots that are available for return:
       // 1. User's original rental slot (where they rented from) - always available
       // 2. Reserved slots (slots 9-10) - always available for returns
       // 3. Active slots that are marked as available for returns
+      // 4. Active slots that have bikes returned to them (available for rental)
       const returnSlots = allSlots.filter((slot: Slot) => {
         // Always include the user's original rental slot
         if (currentRental && slot.slotNumber === currentRental.slotNumber) {
-          console.log(`✅ Including original rental slot: ${slot.slotNumber}`);
+          console.log(`Including original rental slot: ${slot.slotNumber}`);
           return true;
         }
 
         // Include reserved slots (slots 9-10) - these are always available for returns
         if (slot.status === "reserved") {
-          console.log(`✅ Including reserved slot: ${slot.slotNumber} (${slot.status})`);
+          console.log(`Including reserved slot: ${slot.slotNumber} (${slot.status})`);
           return true;
         }
 
@@ -235,25 +245,31 @@ function ReturnBikePage() {
           slot.notes?.includes("Available for bike returns")
         ) {
           console.log(
-            `✅ Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+            `Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+          );
+          return true;
+        }
+
+        // Include active slots that have bikes returned to them (these are available for rental, not return)
+        if (slot.status === "active" && slot.notes === "Bike returned") {
+          console.log(
+            `Including returned bike slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
           );
           return true;
         }
 
         console.log(
-          `❌ Excluding slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+          `Excluding slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
         );
         return false;
       });
 
-      console.log("🔍 Filtered return slots:", returnSlots);
-      console.log("🔍 Return slots count:", returnSlots.length);
-
       console.log("Available return slots:", returnSlots);
       
-      // If no return slots found, create at least the user's original slot and some default return slots
+      // MOBILE-SPECIFIC FALLBACK: Always ensure we have return slots
+      // This is critical for mobile devices where localStorage might fail
       if (returnSlots.length === 0) {
-        console.log("🚨 No return slots found, creating fallback slots");
+        console.log("🚨 No return slots found, creating MOBILE FALLBACK slots");
         const fallbackSlots = [];
         
         // Always include the user's original rental slot
@@ -265,10 +281,9 @@ function ReturnBikePage() {
             lastUpdated: new Date().toISOString(),
             notes: "Your original rental slot",
           });
-          console.log("✅ Added original rental slot:", currentRental.slotNumber);
         }
         
-        // Add some default return slots (9-10) - these are always available for returns
+        // Add guaranteed return slots (9-10) - these are ALWAYS available
         for (let i = 9; i <= 10; i++) {
           fallbackSlots.push({
             id: `${stationId}_slot_${i}`,
@@ -279,70 +294,43 @@ function ReturnBikePage() {
           });
         }
         
-        console.log("✅ Created fallback slots:", fallbackSlots);
+        console.log("🔧 MOBILE FALLBACK slots created:", fallbackSlots);
         setAvailableSlots(fallbackSlots);
-        
-        // For mobile devices, also try to save these slots to localStorage
-        if (isMobile) {
-          try {
-            localStorage.setItem(slotsKey, JSON.stringify(fallbackSlots));
-            console.log("📱 Saved fallback slots to localStorage for mobile");
-          } catch (error) {
-            console.warn("📱 Could not save to localStorage on mobile:", error);
-          }
-        }
       } else {
-        console.log("✅ Found existing return slots:", returnSlots);
+        console.log("✅ Using existing return slots:", returnSlots.length);
         setAvailableSlots(returnSlots);
       }
-      
-      // MOBILE FALLBACK: Always ensure we have at least some return slots
-      // This is a final safety net for mobile devices
-      const finalSlots = returnSlots.length > 0 ? returnSlots : [];
-      
-      if (finalSlots.length === 0) {
-        console.log("🚨 MOBILE FALLBACK: Force creating return slots");
-        const forceSlots = [];
-        
-        // Create slots 9-10 as guaranteed return slots
-        for (let i = 9; i <= 10; i++) {
-          forceSlots.push({
-            id: `${stationId}_slot_${i}`,
-            slotNumber: i,
-            status: "reserved" as const,
-            lastUpdated: new Date().toISOString(),
-            notes: "Available for bike returns",
-          });
-        }
-        
-        // If we have current rental, add that slot too
-        if (currentRental) {
-          forceSlots.push({
-            id: `${stationId}_slot_${currentRental.slotNumber}`,
-            slotNumber: currentRental.slotNumber,
-            status: "reserved" as const,
-            lastUpdated: new Date().toISOString(),
-            notes: "Your original rental slot",
-          });
-        }
-        
-        console.log("🚨 FORCE CREATED SLOTS:", forceSlots);
-        setAvailableSlots(forceSlots);
-      } else {
-        setAvailableSlots(finalSlots);
-      }
     } catch (error) {
-      console.error("Error fetching available slots:", error);
-      // If there's an error, at least show the user's original slot
+      console.error("❌ CRITICAL ERROR in fetchAvailableSlots:", error);
+      
+      // MOBILE EMERGENCY FALLBACK: Always provide return slots
+      // This ensures the app NEVER fails on mobile devices
+      const emergencySlots = [];
+      
+      // Always include the user's original rental slot
       if (currentRental) {
-        setAvailableSlots([{
+        emergencySlots.push({
           id: `${stationId}_slot_${currentRental.slotNumber}`,
           slotNumber: currentRental.slotNumber,
           status: "reserved" as const,
           lastUpdated: new Date().toISOString(),
           notes: "Your original rental slot",
-        }]);
+        });
       }
+      
+      // Add guaranteed return slots (9-10)
+      for (let i = 9; i <= 10; i++) {
+        emergencySlots.push({
+          id: `${stationId}_slot_${i}`,
+          slotNumber: i,
+          status: "reserved" as const,
+          lastUpdated: new Date().toISOString(),
+          notes: "Available for bike returns",
+        });
+      }
+      
+      console.log("🚨 EMERGENCY FALLBACK slots created:", emergencySlots);
+      setAvailableSlots(emergencySlots);
     }
   };
 
@@ -441,6 +429,16 @@ function ReturnBikePage() {
               status: "reserved" as const,
               lastUpdated: new Date().toISOString(),
               notes: "Available for bike returns",
+            };
+          }
+
+          // If returning to a reserved slot (9-10), mark it as having a bike returned
+          if (selectedSlot.slotNumber >= 9 && slot.slotNumber === selectedSlot.slotNumber) {
+            return {
+              ...slot,
+              status: "active" as const,
+              lastUpdated: new Date().toISOString(),
+              notes: "Bike returned",
             };
           }
 
@@ -730,12 +728,6 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                 <p className="text-sm text-gray-500 mt-2">
                   Please select another station.
                 </p>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    💡 <strong>Mobile Users:</strong> If you're on mobile and seeing this error, 
-                    try refreshing the page or selecting a different station.
-                  </p>
-                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
