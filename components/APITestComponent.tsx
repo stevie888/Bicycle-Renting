@@ -13,10 +13,10 @@ export default function APITestComponent() {
 
     try {
       const testResults = {
-        stations: null,
-        services: null,
-        aws: null,
-        error: null,
+        stations: null as any,
+        services: null as any,
+        aws: null as any,
+        error: null as string | null,
       };
 
       // Test Stations API
@@ -26,7 +26,7 @@ export default function APITestComponent() {
         console.log("✅ Stations API working:", stations);
       } catch (error) {
         console.error("❌ Stations API failed:", error);
-        testResults.error = error;
+        testResults.error = String(error);
       }
 
       // Test Services API
@@ -36,7 +36,7 @@ export default function APITestComponent() {
         console.log("✅ Services API working:", services);
       } catch (error) {
         console.error("❌ Services API failed:", error);
-        testResults.error = error;
+        testResults.error = String(error);
       }
 
       // Test AWS API
@@ -46,7 +46,7 @@ export default function APITestComponent() {
         console.log("✅ AWS API working:", s3Url);
       } catch (error) {
         console.error("❌ AWS API failed:", error);
-        testResults.error = error;
+        testResults.error = String(error);
       }
 
       setResults(testResults);

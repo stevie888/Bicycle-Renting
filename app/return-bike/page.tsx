@@ -171,14 +171,32 @@ function ReturnBikePage() {
   const fetchAvailableSlots = (stationId: string) => {
     try {
       const slotsKey = `pedalnepal_slots_${stationId}`;
-      const allSlots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
+      let allSlots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
 
       console.log("All slots:", allSlots);
       console.log("Current rental:", currentRental);
 
+      // If no slots exist, create default slots for this station
+      if (allSlots.length === 0) {
+        console.log("No slots found, creating default slots for station:", stationId);
+        allSlots = [];
+        for (let i = 1; i <= 10; i++) {
+          allSlots.push({
+            id: `${stationId}_slot_${i}`,
+            slotNumber: i,
+            status: i >= 9 ? "reserved" : "active", // Slots 9-10 are reserved for returns
+            lastUpdated: new Date().toISOString(),
+            notes: i >= 9 ? "Available for bike returns" : "Bike available for rental",
+          });
+        }
+        localStorage.setItem(slotsKey, JSON.stringify(allSlots));
+        console.log("Created default slots:", allSlots);
+      }
+
       // Get slots that are available for return:
-      // 1. User's original rental slot (where they rented from)
-      // 2. Empty slots (reserved slots or slots marked as available for returns)
+      // 1. User's original rental slot (where they rented from) - always available
+      // 2. Reserved slots (slots 9-10) - always available for returns
+      // 3. Active slots that are marked as available for returns
       const returnSlots = allSlots.filter((slot: Slot) => {
         // Always include the user's original rental slot
         if (currentRental && slot.slotNumber === currentRental.slotNumber) {
@@ -186,14 +204,19 @@ function ReturnBikePage() {
           return true;
         }
 
-        // Include empty slots (reserved or marked as available for returns)
+        // Include reserved slots (slots 9-10) - these are always available for returns
+        if (slot.status === "reserved") {
+          console.log(`Including reserved slot: ${slot.slotNumber} (${slot.status})`);
+          return true;
+        }
+
+        // Include active slots that are marked as available for returns
         if (
-          slot.status === "reserved" ||
-          (slot.status === "active" &&
-            slot.notes?.includes("Available for bike returns"))
+          slot.status === "active" &&
+          slot.notes?.includes("Available for bike returns")
         ) {
           console.log(
-            `Including empty slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+            `Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
           );
           return true;
         }
@@ -205,9 +228,50 @@ function ReturnBikePage() {
       });
 
       console.log("Available return slots:", returnSlots);
-      setAvailableSlots(returnSlots);
+      
+      // If no return slots found, create at least the user's original slot and some default return slots
+      if (returnSlots.length === 0) {
+        console.log("No return slots found, creating fallback slots");
+        const fallbackSlots = [];
+        
+        // Always include the user's original rental slot
+        if (currentRental) {
+          fallbackSlots.push({
+            id: `${stationId}_slot_${currentRental.slotNumber}`,
+            slotNumber: currentRental.slotNumber,
+            status: "reserved" as const,
+            lastUpdated: new Date().toISOString(),
+            notes: "Your original rental slot",
+          });
+        }
+        
+        // Add some default return slots (9-10)
+        for (let i = 9; i <= 10; i++) {
+          fallbackSlots.push({
+            id: `${stationId}_slot_${i}`,
+            slotNumber: i,
+            status: "reserved" as const,
+            lastUpdated: new Date().toISOString(),
+            notes: "Available for bike returns",
+          });
+        }
+        
+        setAvailableSlots(fallbackSlots);
+      } else {
+        setAvailableSlots(returnSlots);
+      }
     } catch (error) {
       console.error("Error fetching available slots:", error);
+      // If there's an error, at least show the user's original slot
+      if (currentRental) {
+        setAvailableSlots([{
+          id: `${stationId}_slot_${currentRental.slotNumber}`,
+          slotNumber: currentRental.slotNumber,
+          status: "reserved" as const,
+          lastUpdated: new Date().toISOString(),
+          notes: "Your original rental slot",
+        }]);
+      }
     }
   };
 
