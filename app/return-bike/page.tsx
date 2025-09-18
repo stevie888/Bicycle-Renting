@@ -163,18 +163,37 @@ function ReturnBikePage() {
   };
 
   const handleStationSelect = (station: Station) => {
+    console.log("🏪 Station selected:", station);
     setSelectedStation(station);
     setSelectedSlot(null);
+    
+    // Use the station parameter directly instead of relying on state
+    // This ensures we always use the correct station ID regardless of state update timing
     fetchAvailableSlots(station.id);
   };
 
   const fetchAvailableSlots = (stationId: string) => {
     try {
       const slotsKey = `pedalnepal_slots_${stationId}`;
+      
+      // Enhanced debugging for mobile issues
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      console.log("🔍 === SLOT FETCHING DEBUG ===");
+      console.log("🔍 Mobile device:", isMobile);
+      console.log("🔍 Station ID:", stationId);
+      console.log("🔍 Slots key:", slotsKey);
+      console.log("🔍 Current rental:", currentRental);
+      console.log("🔍 User agent:", navigator.userAgent);
+      
+      // Check if localStorage is accessible
+      if (typeof localStorage === 'undefined') {
+        console.error("❌ localStorage not available");
+        return;
+      }
+      
       let allSlots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
-
-      console.log("All slots:", allSlots);
-      console.log("Current rental:", currentRental);
+      console.log("🔍 Raw localStorage data:", localStorage.getItem(slotsKey));
+      console.log("🔍 Parsed slots:", allSlots);
 
       // If no slots exist, create default slots for this station
       if (allSlots.length === 0) {
@@ -231,7 +250,7 @@ function ReturnBikePage() {
       
       // If no return slots found, create at least the user's original slot and some default return slots
       if (returnSlots.length === 0) {
-        console.log("No return slots found, creating fallback slots");
+        console.log("🚨 No return slots found, creating fallback slots");
         const fallbackSlots = [];
         
         // Always include the user's original rental slot
@@ -243,9 +262,10 @@ function ReturnBikePage() {
             lastUpdated: new Date().toISOString(),
             notes: "Your original rental slot",
           });
+          console.log("✅ Added original rental slot:", currentRental.slotNumber);
         }
         
-        // Add some default return slots (9-10)
+        // Add some default return slots (9-10) - these are always available for returns
         for (let i = 9; i <= 10; i++) {
           fallbackSlots.push({
             id: `${stationId}_slot_${i}`,
@@ -256,8 +276,20 @@ function ReturnBikePage() {
           });
         }
         
+        console.log("✅ Created fallback slots:", fallbackSlots);
         setAvailableSlots(fallbackSlots);
+        
+        // For mobile devices, also try to save these slots to localStorage
+        if (isMobile) {
+          try {
+            localStorage.setItem(slotsKey, JSON.stringify(fallbackSlots));
+            console.log("📱 Saved fallback slots to localStorage for mobile");
+          } catch (error) {
+            console.warn("📱 Could not save to localStorage on mobile:", error);
+          }
+        }
       } else {
+        console.log("✅ Found existing return slots:", returnSlots);
         setAvailableSlots(returnSlots);
       }
     } catch (error) {
@@ -659,6 +691,12 @@ Thank you for using Pedal Nepal! 🚴‍♂️`);
                 <p className="text-sm text-gray-500 mt-2">
                   Please select another station.
                 </p>
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    💡 <strong>Mobile Users:</strong> If you're on mobile and seeing this error, 
+                    try refreshing the page or selecting a different station.
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
