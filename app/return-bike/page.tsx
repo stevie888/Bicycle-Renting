@@ -219,13 +219,13 @@ function ReturnBikePage() {
       const returnSlots = allSlots.filter((slot: Slot) => {
         // Always include the user's original rental slot
         if (currentRental && slot.slotNumber === currentRental.slotNumber) {
-          console.log(`Including original rental slot: ${slot.slotNumber}`);
+          console.log(`✅ Including original rental slot: ${slot.slotNumber}`);
           return true;
         }
 
         // Include reserved slots (slots 9-10) - these are always available for returns
         if (slot.status === "reserved") {
-          console.log(`Including reserved slot: ${slot.slotNumber} (${slot.status})`);
+          console.log(`✅ Including reserved slot: ${slot.slotNumber} (${slot.status})`);
           return true;
         }
 
@@ -235,16 +235,19 @@ function ReturnBikePage() {
           slot.notes?.includes("Available for bike returns")
         ) {
           console.log(
-            `Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+            `✅ Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
           );
           return true;
         }
 
         console.log(
-          `Excluding slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+          `❌ Excluding slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
         );
         return false;
       });
+
+      console.log("🔍 Filtered return slots:", returnSlots);
+      console.log("🔍 Return slots count:", returnSlots.length);
 
       console.log("Available return slots:", returnSlots);
       
@@ -291,6 +294,42 @@ function ReturnBikePage() {
       } else {
         console.log("✅ Found existing return slots:", returnSlots);
         setAvailableSlots(returnSlots);
+      }
+      
+      // MOBILE FALLBACK: Always ensure we have at least some return slots
+      // This is a final safety net for mobile devices
+      const finalSlots = returnSlots.length > 0 ? returnSlots : [];
+      
+      if (finalSlots.length === 0) {
+        console.log("🚨 MOBILE FALLBACK: Force creating return slots");
+        const forceSlots = [];
+        
+        // Create slots 9-10 as guaranteed return slots
+        for (let i = 9; i <= 10; i++) {
+          forceSlots.push({
+            id: `${stationId}_slot_${i}`,
+            slotNumber: i,
+            status: "reserved" as const,
+            lastUpdated: new Date().toISOString(),
+            notes: "Available for bike returns",
+          });
+        }
+        
+        // If we have current rental, add that slot too
+        if (currentRental) {
+          forceSlots.push({
+            id: `${stationId}_slot_${currentRental.slotNumber}`,
+            slotNumber: currentRental.slotNumber,
+            status: "reserved" as const,
+            lastUpdated: new Date().toISOString(),
+            notes: "Your original rental slot",
+          });
+        }
+        
+        console.log("🚨 FORCE CREATED SLOTS:", forceSlots);
+        setAvailableSlots(forceSlots);
+      } else {
+        setAvailableSlots(finalSlots);
       }
     } catch (error) {
       console.error("Error fetching available slots:", error);
