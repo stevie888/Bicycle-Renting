@@ -516,44 +516,46 @@ function AdminDashboard() {
 
   // Check if user is admin, if not redirect to home
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (!user) return; // Wait for user to load
+    
+    if (user.role !== "admin") {
       router.push("/");
       return;
     }
 
-    if (user && user.role === "admin") {
+    if (user.role === "admin") {
       fetchDashboardData();
     }
   }, [user, router]);
 
   // Refresh data periodically and when window gains focus
   useEffect(() => {
-    if (user && user.role === "admin") {
-      const interval = setInterval(() => {
-        try {
-          setLastRefresh(Date.now());
-          fetchDashboardData();
-        } catch (error) {
-          console.error("Error in interval refresh:", error);
-        }
-      }, 30000); // Refresh every 30 seconds
+    if (!user || user.role !== "admin") return;
+    
+    const interval = setInterval(() => {
+      try {
+        setLastRefresh(Date.now());
+        fetchDashboardData();
+      } catch (error) {
+        console.error("Error in interval refresh:", error);
+      }
+    }, 30000); // Refresh every 30 seconds
 
-      const handleFocus = (event: Event) => {
-        try {
-          setLastRefresh(Date.now());
-          fetchDashboardData();
-        } catch (error) {
-          console.error("Error in focus refresh:", error);
-        }
-      };
+    const handleFocus = () => {
+      try {
+        setLastRefresh(Date.now());
+        fetchDashboardData();
+      } catch (error) {
+        console.error("Error in focus refresh:", error);
+      }
+    };
 
-      window.addEventListener("focus", handleFocus);
+    window.addEventListener("focus", handleFocus);
 
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener("focus", handleFocus);
-      };
-    }
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [user]);
 
   // Handle URL parameters for tab navigation
@@ -567,6 +569,9 @@ function AdminDashboard() {
     }
   }, [searchParams]);
 
+  // Debug: Log user state
+  console.log("Admin page - User state:", { user, loading });
+
   // Show loading while checking user role
   if (!user) {
     return (
@@ -576,6 +581,12 @@ function AdminDashboard() {
           <p className="text-gray-600 text-lg font-medium">
             {t("admin.loadingDashboard")}
           </p>
+          <div className="mt-4 text-sm text-gray-500">
+            <p>If this continues, please:</p>
+            <p>1. <a href="/login" className="text-blue-600 hover:underline">Login first</a></p>
+            <p>2. Make sure you have admin access</p>
+            <p>3. Try refreshing the page</p>
+          </div>
         </div>
       </div>
     );
@@ -609,6 +620,7 @@ function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       console.log("Fetching dashboard data from localStorage...");
+      setLoading(true);
 
       // Ensure proper rental data exists
       ensureRentalData();
@@ -1004,6 +1016,7 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       // Get users from localStorage
       const allUsers = JSON.parse(
         localStorage.getItem("pedalnepal_users") || "[]",
@@ -1060,7 +1073,14 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
         );
       }
 
-      setUsers(filteredUsers);
+      // Sort users to put admin users first
+      const sortedUsers = [...filteredUsers].sort((a: any, b: any) => {
+        if (a.role === 'admin' && b.role !== 'admin') return -1;
+        if (a.role !== 'admin' && b.role === 'admin') return 1;
+        return 0;
+      });
+      
+      setUsers(sortedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
@@ -1294,9 +1314,6 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                   {t("admin.rides")}
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                  {t("admin.station")}
-                </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                   {t("admin.duration")}
                 </th>
@@ -1458,33 +1475,27 @@ function UsersManagement({ refreshTrigger }: { refreshTrigger: number }) {
                         </span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {totalRides}
+                        {user.role === 'admin' ? '-' : totalRides}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
-                        <span
-                          className="truncate block max-w-24"
-                          title={mostVisitedStation}
-                        >
-                          {mostVisitedStation}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {totalHours}h
+                        {user.role === 'admin' ? '-' : `${totalHours}h`}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-green-600">
-                        रू{user.credits || 0}
+                        {user.role === 'admin' ? '-' : `रू${user.credits || 0}`}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-red-600">
-                        रू{totalSpent}
+                        {user.role === 'admin' ? '-' : `रू${totalSpent}`}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
                         <div className="flex flex-wrap gap-1">
-                          <button
-                            onClick={() => openAddCreditsModal(user)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"
-                          >
-                            {t("admin.add")}
-                          </button>
+                          {user.role !== 'admin' && (
+                            <button
+                              onClick={() => openAddCreditsModal(user)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              {t("admin.add")}
+                            </button>
+                          )}
                           {user.role === "user" ? (
                             <button
                               onClick={() => promoteToAdmin(user.id)}
