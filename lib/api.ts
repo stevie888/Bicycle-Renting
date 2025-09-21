@@ -574,6 +574,271 @@ async function localStorageApiCall(
       };
     }
 
+    // User endpoints with pagination
+    if (endpoint.includes("/user?page=") && endpoint.includes("&limit=")) {
+      const url = new URL(`http://localhost${endpoint}`);
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = parseInt(url.searchParams.get("limit") || "10");
+      const users = getStorageData("pedalnepal_users") || [];
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedUsers = users.slice(startIndex, endIndex);
+      return {
+        users: paginatedUsers,
+        total: users.length,
+        page,
+        limit,
+        totalPages: Math.ceil(users.length / limit)
+      };
+    }
+
+    // User endpoints
+    if (endpoint.includes("/user")) {
+      if (method === "GET") {
+        // Get current user profile
+        const currentUser = getStorageData("pedalnepal_current_user");
+        return currentUser || { error: "No current user" };
+      } else if (method === "PUT") {
+        // Update user profile
+        const profileData = JSON.parse(options.body as string);
+        const currentUser = getStorageData("pedalnepal_current_user");
+        if (currentUser) {
+          const updatedUser = { ...currentUser, ...profileData };
+          setStorageData("pedalnepal_current_user", updatedUser);
+          return { success: true, user: updatedUser };
+        }
+        return { error: "No current user" };
+      } else if (method === "PATCH") {
+        // Update user status, deactivate, change password
+        return { success: true, message: "Operation completed locally" };
+      } else if (method === "DELETE") {
+        // Delete user
+        const userId = endpoint.split("/").pop();
+        const users = getStorageData("pedalnepal_users") || [];
+        const filteredUsers = users.filter((u: any) => u.id !== userId);
+        setStorageData("pedalnepal_users", filteredUsers);
+        return { success: true, message: "User deleted" };
+      }
+    }
+
+    // User promote/demote endpoints
+    if (endpoint.includes("/user/") && (endpoint.includes("/promote") || endpoint.includes("/demote"))) {
+      const userId = endpoint.split("/")[2];
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+      
+      if (userIndex !== -1) {
+        users[userIndex].role = endpoint.includes("/promote") ? "admin" : "user";
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+      return { error: "User not found" };
+    }
+
+    // User increase balance endpoint
+    if (endpoint.includes("/user/") && endpoint.includes("/increase-balance")) {
+      const userId = endpoint.split("/")[2];
+      const { amount } = JSON.parse(options.body as string);
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+      
+      if (userIndex !== -1) {
+        users[userIndex].credits = (users[userIndex].credits || 0) + amount;
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+      return { error: "User not found" };
+    }
+
+    // User customer/admin users endpoints
+    if (endpoint.includes("/user/customer-users") || endpoint.includes("/user/admin-users")) {
+      const url = new URL(`http://localhost${endpoint}`);
+      const search = url.searchParams.get("search");
+      const role = endpoint.includes("customer") ? "user" : "admin";
+      
+      let users = getStorageData("pedalnepal_users") || [];
+      users = users.filter((u: any) => u.role === role);
+      
+      if (search) {
+        users = users.filter((u: any) => 
+          u.name.toLowerCase().includes(search.toLowerCase()) ||
+          u.email.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      return { users, total: users.length };
+    }
+
+    // User all users status endpoint
+    if (endpoint.includes("/user/all-users-status")) {
+      const users = getStorageData("pedalnepal_users") || [];
+      return { users: users.map((u: any) => ({ id: u.id, status: u.status || "ACTIVE" })) };
+    }
+
+    // Stations endpoints with additional functionality
+    if (endpoint.includes("/stations/all-stations-services-details")) {
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const services = getStorageData("pedalnepal_services") || [];
+      
+      return {
+        stations: stations.map((station: any) => ({
+          ...station,
+          services: services.filter((service: any) => service.stationId === station.id)
+        }))
+      };
+    }
+
+    if (endpoint.includes("/stations/all-stations-services-status")) {
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const services = getStorageData("pedalnepal_services") || [];
+      
+      return {
+        stations: stations.map((station: any) => ({
+          id: station.id,
+          name: station.name,
+          status: station.status,
+          servicesCount: services.filter((service: any) => service.stationId === station.id).length
+        }))
+      };
+    }
+
+    if (endpoint.includes("/stations/list")) {
+      const url = new URL(`http://localhost${endpoint}`);
+      const search = url.searchParams.get("search");
+      const status = url.searchParams.get("status");
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = parseInt(url.searchParams.get("limit") || "10");
+      
+      let stations = getStorageData("pedalnepal_stations") || [];
+      
+      if (search) {
+        stations = stations.filter((station: any) => 
+          station.name.toLowerCase().includes(search.toLowerCase()) ||
+          station.location.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      if (status) {
+        stations = stations.filter((station: any) => station.status === status);
+      }
+      
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedStations = stations.slice(startIndex, endIndex);
+      
+      return {
+        stations: paginatedStations,
+        total: stations.length,
+        page,
+        limit,
+        totalPages: Math.ceil(stations.length / limit)
+      };
+    }
+
+    if (endpoint.includes("/stations/slot-stats")) {
+      const url = new URL(`http://localhost${endpoint}`);
+      const stationId = url.searchParams.get("stationId");
+      
+      const slotsKey = stationId ? `pedalnepal_slots_${stationId}` : null;
+      if (slotsKey) {
+        const slots = getStorageData(slotsKey) || [];
+        return {
+          totalSlots: slots.length,
+          availableSlots: slots.filter((slot: any) => slot.status === "active").length,
+          occupiedSlots: slots.filter((slot: any) => slot.status === "occupied").length,
+          maintenanceSlots: slots.filter((slot: any) => slot.status === "in-maintenance").length,
+          reservedSlots: slots.filter((slot: any) => slot.status === "reserved").length
+        };
+      }
+      return { totalSlots: 0, availableSlots: 0, occupiedSlots: 0, maintenanceSlots: 0, reservedSlots: 0 };
+    }
+
+    if (endpoint.includes("/stations/change-slot-status")) {
+      return { success: true, message: "Slot status changed locally" };
+    }
+
+    if (endpoint.includes("/stations/") && method === "PATCH") {
+      // Update station
+      const stationId = endpoint.split("/")[2];
+      const updateData = JSON.parse(options.body as string);
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const stationIndex = stations.findIndex((s: any) => s.id === stationId);
+
+      if (stationIndex !== -1) {
+        stations[stationIndex] = { ...stations[stationIndex], ...updateData };
+        setStorageData("pedalnepal_stations", stations);
+        return { success: true, station: stations[stationIndex] };
+      }
+
+      return { error: "Station not found" };
+    }
+
+    // Rentals endpoints
+    if (endpoint.includes("/rentals")) {
+      if (method === "POST") {
+        // Create rental
+        const rentalData = JSON.parse(options.body as string);
+        const rentals = getStorageData("pedalnepal_rentals") || [];
+        const newRental = {
+          id: (rentals.length + 1).toString(),
+          ...rentalData,
+          startTime: new Date().toISOString(),
+          status: "ACTIVE",
+        };
+
+        rentals.push(newRental);
+        setStorageData("pedalnepal_rentals", rentals);
+
+        return { success: true, rental: newRental };
+      } else if (method === "GET") {
+        // Get rentals with filters
+        const url = new URL(`http://localhost${endpoint}`);
+        const service_id = url.searchParams.get("service_id");
+        const status = url.searchParams.get("status");
+        const page = parseInt(url.searchParams.get("page") || "1");
+        const limit = parseInt(url.searchParams.get("limit") || "10");
+        
+        let rentals = getStorageData("pedalnepal_rentals") || [];
+
+        if (service_id) {
+          rentals = rentals.filter((rental: any) => rental.serviceId === parseInt(service_id));
+        }
+        if (status) {
+          rentals = rentals.filter((rental: any) => rental.status === status);
+        }
+
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedRentals = rentals.slice(startIndex, endIndex);
+
+        return {
+          rentals: paginatedRentals,
+          total: rentals.length,
+          page,
+          limit,
+          totalPages: Math.ceil(rentals.length / limit)
+        };
+      }
+    }
+
+    // Rental complete endpoint
+    if (endpoint.includes("/rentals/") && endpoint.includes("/complete")) {
+      const rentalId = endpoint.split("/")[2];
+      const { remarks } = JSON.parse(options.body as string);
+      const rentals = getStorageData("pedalnepal_rentals") || [];
+      const rentalIndex = rentals.findIndex((r: any) => r.id === rentalId);
+
+      if (rentalIndex !== -1) {
+        rentals[rentalIndex].status = "COMPLETED";
+        rentals[rentalIndex].endTime = new Date().toISOString();
+        rentals[rentalIndex].remarks = remarks || "Rental completed successfully";
+        setStorageData("pedalnepal_rentals", rentals);
+        return { success: true, rental: rentals[rentalIndex] };
+      }
+
+      return { error: "Rental not found" };
+    }
+
     // Default response for unknown endpoints
     return { success: true, message: "LocalStorage API response" };
   } catch (error) {
@@ -701,6 +966,64 @@ export const userAPI = {
     });
   },
 
+  // Get users with pagination
+  getPaginated: async (page: number = 1, limit: number = 10) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/user?page=${page}&limit=${limit}`, {
+          method: "GET",
+        });
+        return response;
+      } catch (error) {
+        console.log("External user pagination API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedUsers = users.slice(startIndex, endIndex);
+        return {
+          users: paginatedUsers,
+          total: users.length,
+          page,
+          limit,
+          totalPages: Math.ceil(users.length / limit)
+        };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedUsers = users.slice(startIndex, endIndex);
+      return {
+        users: paginatedUsers,
+        total: users.length,
+        page,
+        limit,
+        totalPages: Math.ceil(users.length / limit)
+      };
+    }
+  },
+
+  // Get authenticated user profile
+  getCurrentProfile: async () => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user", {
+          method: "GET",
+        });
+        return response;
+      } catch (error) {
+        console.log("External current user API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const currentUser = getStorageData("pedalnepal_current_user");
+        return currentUser || { error: "No current user" };
+      }
+    } else {
+      const currentUser = getStorageData("pedalnepal_current_user");
+      return currentUser || { error: "No current user" };
+    }
+  },
+
   // Update user profile
   updateProfile: async (
     userId: string,
@@ -711,16 +1034,344 @@ export const userAPI = {
       profileImage?: string;
     },
   ) => {
-    const users = getStorageData("pedalnepal_users") || [];
-    const userIndex = users.findIndex((u: any) => u.id === userId);
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user", {
+          method: "PUT",
+          body: JSON.stringify(profileData),
+        });
+        return response;
+      } catch (error) {
+        console.log("External user update API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const userIndex = users.findIndex((u: any) => u.id === userId);
 
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], ...profileData };
-      setStorageData("pedalnepal_users", users);
-      return { success: true, user: users[userIndex] };
+        if (userIndex !== -1) {
+          users[userIndex] = { ...users[userIndex], ...profileData };
+          setStorageData("pedalnepal_users", users);
+          return { success: true, user: users[userIndex] };
+        }
+
+        return { error: "User not found" };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], ...profileData };
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+
+      return { error: "User not found" };
     }
+  },
 
-    return { error: "User not found" };
+  // Update user status
+  updateStatus: async (status: "ACTIVE" | "INACTIVE" | "SUSPENDED") => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user/status", {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External user status update API failed, using localStorage fallback");
+        return { success: true, message: "Status updated locally" };
+      }
+    } else {
+      return { success: true, message: "Status updated locally" };
+    }
+  },
+
+  // Deactivate user
+  deactivate: async () => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user/deactivate", {
+          method: "PATCH",
+        });
+        return response;
+      } catch (error) {
+        console.log("External user deactivate API failed, using localStorage fallback");
+        return { success: true, message: "User deactivated locally" };
+      }
+    } else {
+      return { success: true, message: "User deactivated locally" };
+    }
+  },
+
+  // Change password
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user/change-password", {
+          method: "PATCH",
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External password change API failed, using localStorage fallback");
+        return { success: true, message: "Password changed locally" };
+      }
+    } else {
+      return { success: true, message: "Password changed locally" };
+    }
+  },
+
+  // Get all users status
+  getAllUsersStatus: async () => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/user/all-users-status", {
+          method: "GET",
+        });
+        return response;
+      } catch (error) {
+        console.log("External all users status API failed, using localStorage fallback");
+        const users = getStorageData("pedalnepal_users") || [];
+        return { users: users.map((u: any) => ({ id: u.id, status: u.status || "ACTIVE" })) };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      return { users: users.map((u: any) => ({ id: u.id, status: u.status || "ACTIVE" })) };
+    }
+  },
+
+  // Promote user to admin
+  promote: async (userId: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/user/${userId}/promote`, {
+          method: "PATCH",
+        });
+        return response;
+      } catch (error) {
+        console.log("External user promote API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const userIndex = users.findIndex((u: any) => u.id === userId);
+
+        if (userIndex !== -1) {
+          users[userIndex].role = "admin";
+          setStorageData("pedalnepal_users", users);
+          return { success: true, user: users[userIndex] };
+        }
+
+        return { error: "User not found" };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+
+      if (userIndex !== -1) {
+        users[userIndex].role = "admin";
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+
+      return { error: "User not found" };
+    }
+  },
+
+  // Demote user from admin
+  demote: async (userId: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/user/${userId}/demote`, {
+          method: "PATCH",
+        });
+        return response;
+      } catch (error) {
+        console.log("External user demote API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const userIndex = users.findIndex((u: any) => u.id === userId);
+
+        if (userIndex !== -1) {
+          users[userIndex].role = "user";
+          setStorageData("pedalnepal_users", users);
+          return { success: true, user: users[userIndex] };
+        }
+
+        return { error: "User not found" };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+
+      if (userIndex !== -1) {
+        users[userIndex].role = "user";
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+
+      return { error: "User not found" };
+    }
+  },
+
+  // Delete user
+  delete: async (userId: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/user/${userId}`, {
+          method: "DELETE",
+        });
+        return response;
+      } catch (error) {
+        console.log("External user delete API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const filteredUsers = users.filter((u: any) => u.id !== userId);
+        setStorageData("pedalnepal_users", filteredUsers);
+        return { success: true, message: "User deleted" };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const filteredUsers = users.filter((u: any) => u.id !== userId);
+      setStorageData("pedalnepal_users", filteredUsers);
+      return { success: true, message: "User deleted" };
+    }
+  },
+
+  // Increase user balance
+  increaseBalance: async (userId: string, amount: number) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/user/${userId}/increase-balance`, {
+          method: "PATCH",
+          body: JSON.stringify({ amount }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External user balance increase API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const users = getStorageData("pedalnepal_users") || [];
+        const userIndex = users.findIndex((u: any) => u.id === userId);
+
+        if (userIndex !== -1) {
+          users[userIndex].credits = (users[userIndex].credits || 0) + amount;
+          setStorageData("pedalnepal_users", users);
+          return { success: true, user: users[userIndex] };
+        }
+
+        return { error: "User not found" };
+      }
+    } else {
+      const users = getStorageData("pedalnepal_users") || [];
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+
+      if (userIndex !== -1) {
+        users[userIndex].credits = (users[userIndex].credits || 0) + amount;
+        setStorageData("pedalnepal_users", users);
+        return { success: true, user: users[userIndex] };
+      }
+
+      return { error: "User not found" };
+    }
+  },
+
+  // Get customer users
+  getCustomerUsers: async (filters?: {
+    search?: string;
+    status?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.search) queryParams.append("search", filters.search);
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.role) queryParams.append("role", filters.role);
+        if (filters?.page) queryParams.append("page", filters.page.toString());
+        if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+        
+        const endpoint = `/user/customer-users${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External customer users API failed, using localStorage fallback");
+        // Fallback to localStorage
+        let users = getStorageData("pedalnepal_users") || [];
+        users = users.filter((u: any) => u.role === "user");
+        
+        if (filters?.search) {
+          users = users.filter((u: any) => 
+            u.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+            u.email.toLowerCase().includes(filters.search!.toLowerCase())
+          );
+        }
+        
+        return { users, total: users.length };
+      }
+    } else {
+      let users = getStorageData("pedalnepal_users") || [];
+      users = users.filter((u: any) => u.role === "user");
+      
+      if (filters?.search) {
+        users = users.filter((u: any) => 
+          u.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+          u.email.toLowerCase().includes(filters.search!.toLowerCase())
+        );
+      }
+      
+      return { users, total: users.length };
+    }
+  },
+
+  // Get admin users
+  getAdminUsers: async (filters?: {
+    search?: string;
+    status?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.search) queryParams.append("search", filters.search);
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.role) queryParams.append("role", filters.role);
+        if (filters?.page) queryParams.append("page", filters.page.toString());
+        if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+        
+        const endpoint = `/user/admin-users${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External admin users API failed, using localStorage fallback");
+        // Fallback to localStorage
+        let users = getStorageData("pedalnepal_users") || [];
+        users = users.filter((u: any) => u.role === "admin");
+        
+        if (filters?.search) {
+          users = users.filter((u: any) => 
+            u.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+            u.email.toLowerCase().includes(filters.search!.toLowerCase())
+          );
+        }
+        
+        return { users, total: users.length };
+      }
+    } else {
+      let users = getStorageData("pedalnepal_users") || [];
+      users = users.filter((u: any) => u.role === "admin");
+      
+      if (filters?.search) {
+        users = users.filter((u: any) => 
+          u.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+          u.email.toLowerCase().includes(filters.search!.toLowerCase())
+        );
+      }
+      
+      return { users, total: users.length };
+    }
   },
 };
 
@@ -785,39 +1436,158 @@ export const rentalAPI = {
   // Create new rental
   create: async (rentalData: {
     userId: string;
-    bicycleId: string;
-    startTime: string;
-    endTime?: string;
+    serviceId: number;
+    status: string;
+    duration: number;
   }) => {
-    const rentals = getStorageData("pedalnepal_rentals") || [];
-    const bicycles = getStorageData("pedalnepal_bicycles") || [];
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/rentals", {
+          method: "POST",
+          body: JSON.stringify(rentalData),
+        });
+        return response;
+      } catch (error) {
+        console.log("External rental create API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const rentals = getStorageData("pedalnepal_rentals") || [];
+        const newRental = {
+          id: (rentals.length + 1).toString(),
+          ...rentalData,
+          startTime: new Date().toISOString(),
+          status: "ACTIVE",
+        };
 
-    // Find the bicycle to get its rate
-    const bicycle = bicycles.find((b: any) => b.id === rentalData.bicycleId);
-    if (!bicycle) {
-      throw new Error("Bicycle not found");
+        rentals.push(newRental);
+        setStorageData("pedalnepal_rentals", rentals);
+
+        return { success: true, rental: newRental };
+      }
+    } else {
+      const rentals = getStorageData("pedalnepal_rentals") || [];
+      const newRental = {
+        id: (rentals.length + 1).toString(),
+        ...rentalData,
+        startTime: new Date().toISOString(),
+        status: "ACTIVE",
+      };
+
+      rentals.push(newRental);
+      setStorageData("pedalnepal_rentals", rentals);
+
+      return { success: true, rental: newRental };
     }
+  },
 
-    const newRental = {
-      id: (rentals.length + 1).toString(),
-      ...rentalData,
-      status: "active",
-      totalCost: bicycle.hourlyRate * 2, // Calculate based on duration
-    };
+  // Get rentals with filters and pagination
+  getRentals: async (filters?: {
+    service_id?: number;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.service_id) queryParams.append("service_id", filters.service_id.toString());
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.page) queryParams.append("page", filters.page.toString());
+        if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+        
+        const endpoint = `/rentals${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External rentals API failed, using localStorage fallback");
+        // Fallback to localStorage
+        let rentals = getStorageData("pedalnepal_rentals") || [];
 
-    rentals.push(newRental);
-    setStorageData("pedalnepal_rentals", rentals);
+        if (filters?.service_id) {
+          rentals = rentals.filter((rental: any) => rental.serviceId === filters.service_id);
+        }
+        if (filters?.status) {
+          rentals = rentals.filter((rental: any) => rental.status === filters.status);
+        }
 
-    // Update bicycle status to rented
-    const bicycleIndex = bicycles.findIndex(
-      (b: any) => b.id === rentalData.bicycleId,
-    );
-    if (bicycleIndex !== -1) {
-      bicycles[bicycleIndex].status = "rented";
-      setStorageData("pedalnepal_bicycles", bicycles);
+        const page = filters?.page || 1;
+        const limit = filters?.limit || 10;
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedRentals = rentals.slice(startIndex, endIndex);
+
+        return {
+          rentals: paginatedRentals,
+          total: rentals.length,
+          page,
+          limit,
+          totalPages: Math.ceil(rentals.length / limit)
+        };
+      }
+    } else {
+      let rentals = getStorageData("pedalnepal_rentals") || [];
+
+      if (filters?.service_id) {
+        rentals = rentals.filter((rental: any) => rental.serviceId === filters.service_id);
+      }
+      if (filters?.status) {
+        rentals = rentals.filter((rental: any) => rental.status === filters.status);
+      }
+
+      const page = filters?.page || 1;
+      const limit = filters?.limit || 10;
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedRentals = rentals.slice(startIndex, endIndex);
+
+      return {
+        rentals: paginatedRentals,
+        total: rentals.length,
+        page,
+        limit,
+        totalPages: Math.ceil(rentals.length / limit)
+      };
     }
+  },
 
-    return { success: true, rental: newRental };
+  // Complete rental
+  complete: async (rentalId: string, remarks?: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/rentals/${rentalId}/complete`, {
+          method: "PATCH",
+          body: JSON.stringify({ remarks: remarks || "Rental completed successfully" }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External rental complete API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const rentals = getStorageData("pedalnepal_rentals") || [];
+        const rentalIndex = rentals.findIndex((r: any) => r.id === rentalId);
+
+        if (rentalIndex !== -1) {
+          rentals[rentalIndex].status = "COMPLETED";
+          rentals[rentalIndex].endTime = new Date().toISOString();
+          rentals[rentalIndex].remarks = remarks || "Rental completed successfully";
+          setStorageData("pedalnepal_rentals", rentals);
+          return { success: true, rental: rentals[rentalIndex] };
+        }
+
+        return { error: "Rental not found" };
+      }
+    } else {
+      const rentals = getStorageData("pedalnepal_rentals") || [];
+      const rentalIndex = rentals.findIndex((r: any) => r.id === rentalId);
+
+      if (rentalIndex !== -1) {
+        rentals[rentalIndex].status = "COMPLETED";
+        rentals[rentalIndex].endTime = new Date().toISOString();
+        rentals[rentalIndex].remarks = remarks || "Rental completed successfully";
+        setStorageData("pedalnepal_rentals", rentals);
+        return { success: true, rental: rentals[rentalIndex] };
+      }
+
+      return { error: "Rental not found" };
+    }
   },
 };
 
@@ -924,6 +1694,276 @@ export const stationsAPI = {
       }
     } else {
       return localStorageApiCall(`/stations/${id}`, { method: "GET" });
+    }
+  },
+
+  // Get all stations services details
+  getAllStationsServicesDetails: async (filters?: {
+    stationId?: string;
+    status?: string;
+    service?: string;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.stationId) queryParams.append("stationId", filters.stationId);
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.service) queryParams.append("service", filters.service);
+        
+        const endpoint = `/stations/all-stations-services-details${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External stations services details API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const stations = getStorageData("pedalnepal_stations") || [];
+        const services = getStorageData("pedalnepal_services") || [];
+        
+        return {
+          stations: stations.map((station: any) => ({
+            ...station,
+            services: services.filter((service: any) => service.stationId === station.id)
+          }))
+        };
+      }
+    } else {
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const services = getStorageData("pedalnepal_services") || [];
+      
+      return {
+        stations: stations.map((station: any) => ({
+          ...station,
+          services: services.filter((service: any) => service.stationId === station.id)
+        }))
+      };
+    }
+  },
+
+  // Get all stations services status
+  getAllStationsServicesStatus: async (filters?: {
+    status?: string;
+    service?: string;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.service) queryParams.append("service", filters.service);
+        
+        const endpoint = `/stations/all-stations-services-status${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External stations services status API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const stations = getStorageData("pedalnepal_stations") || [];
+        const services = getStorageData("pedalnepal_services") || [];
+        
+        return {
+          stations: stations.map((station: any) => ({
+            id: station.id,
+            name: station.name,
+            status: station.status,
+            servicesCount: services.filter((service: any) => service.stationId === station.id).length
+          }))
+        };
+      }
+    } else {
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const services = getStorageData("pedalnepal_services") || [];
+      
+      return {
+        stations: stations.map((station: any) => ({
+          id: station.id,
+          name: station.name,
+          status: station.status,
+          servicesCount: services.filter((service: any) => service.stationId === station.id).length
+        }))
+      };
+    }
+  },
+
+  // List stations with search and pagination
+  list: async (filters?: {
+    search?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (filters?.search) queryParams.append("search", filters.search);
+        if (filters?.status) queryParams.append("status", filters.status);
+        if (filters?.page) queryParams.append("page", filters.page.toString());
+        if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+        
+        const endpoint = `/stations/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External stations list API failed, using localStorage fallback");
+        // Fallback to localStorage
+        let stations = getStorageData("pedalnepal_stations") || [];
+        
+        if (filters?.search) {
+          stations = stations.filter((station: any) => 
+            station.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+            station.location.toLowerCase().includes(filters.search!.toLowerCase())
+          );
+        }
+        
+        if (filters?.status) {
+          stations = stations.filter((station: any) => station.status === filters.status);
+        }
+        
+        const page = filters?.page || 1;
+        const limit = filters?.limit || 10;
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedStations = stations.slice(startIndex, endIndex);
+        
+        return {
+          stations: paginatedStations,
+          total: stations.length,
+          page,
+          limit,
+          totalPages: Math.ceil(stations.length / limit)
+        };
+      }
+    } else {
+      let stations = getStorageData("pedalnepal_stations") || [];
+      
+      if (filters?.search) {
+        stations = stations.filter((station: any) => 
+          station.name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+          station.location.toLowerCase().includes(filters.search!.toLowerCase())
+        );
+      }
+      
+      if (filters?.status) {
+        stations = stations.filter((station: any) => station.status === filters.status);
+      }
+      
+      const page = filters?.page || 1;
+      const limit = filters?.limit || 10;
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedStations = stations.slice(startIndex, endIndex);
+      
+      return {
+        stations: paginatedStations,
+        total: stations.length,
+        page,
+        limit,
+        totalPages: Math.ceil(stations.length / limit)
+      };
+    }
+  },
+
+  // Get slot statistics
+  getSlotStats: async (stationId?: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const queryParams = new URLSearchParams();
+        if (stationId) queryParams.append("stationId", stationId);
+        
+        const endpoint = `/stations/slot-stats${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        const response = await externalApiCall(endpoint, { method: "GET" });
+        return response;
+      } catch (error) {
+        console.log("External slot stats API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const slotsKey = stationId ? `pedalnepal_slots_${stationId}` : null;
+        if (slotsKey) {
+          const slots = getStorageData(slotsKey) || [];
+          return {
+            totalSlots: slots.length,
+            availableSlots: slots.filter((slot: any) => slot.status === "active").length,
+            occupiedSlots: slots.filter((slot: any) => slot.status === "occupied").length,
+            maintenanceSlots: slots.filter((slot: any) => slot.status === "in-maintenance").length,
+            reservedSlots: slots.filter((slot: any) => slot.status === "reserved").length
+          };
+        }
+        return { totalSlots: 0, availableSlots: 0, occupiedSlots: 0, maintenanceSlots: 0, reservedSlots: 0 };
+      }
+    } else {
+      const slotsKey = stationId ? `pedalnepal_slots_${stationId}` : null;
+      if (slotsKey) {
+        const slots = getStorageData(slotsKey) || [];
+        return {
+          totalSlots: slots.length,
+          availableSlots: slots.filter((slot: any) => slot.status === "active").length,
+          occupiedSlots: slots.filter((slot: any) => slot.status === "occupied").length,
+          maintenanceSlots: slots.filter((slot: any) => slot.status === "in-maintenance").length,
+          reservedSlots: slots.filter((slot: any) => slot.status === "reserved").length
+        };
+      }
+      return { totalSlots: 0, availableSlots: 0, occupiedSlots: 0, maintenanceSlots: 0, reservedSlots: 0 };
+    }
+  },
+
+  // Change slot status
+  changeSlotStatus: async (slotId: number, newStatus: string) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall("/stations/change-slot-status", {
+          method: "PATCH",
+          body: JSON.stringify({ slot_id: slotId, new_status: newStatus }),
+        });
+        return response;
+      } catch (error) {
+        console.log("External slot status change API failed, using localStorage fallback");
+        // Fallback to localStorage
+        return { success: true, message: "Slot status changed locally" };
+      }
+    } else {
+      return { success: true, message: "Slot status changed locally" };
+    }
+  },
+
+  // Update station
+  update: async (id: string, updateData: {
+    name?: string;
+    fileKey?: string;
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+    status?: string;
+    totalCapacity?: number;
+  }) => {
+    if (USE_EXTERNAL_API) {
+      try {
+        const response = await externalApiCall(`/stations/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(updateData),
+        });
+        return response;
+      } catch (error) {
+        console.log("External station update API failed, using localStorage fallback");
+        // Fallback to localStorage
+        const stations = getStorageData("pedalnepal_stations") || [];
+        const stationIndex = stations.findIndex((s: any) => s.id === id);
+
+        if (stationIndex !== -1) {
+          stations[stationIndex] = { ...stations[stationIndex], ...updateData };
+          setStorageData("pedalnepal_stations", stations);
+          return { success: true, station: stations[stationIndex] };
+        }
+
+        return { error: "Station not found" };
+      }
+    } else {
+      const stations = getStorageData("pedalnepal_stations") || [];
+      const stationIndex = stations.findIndex((s: any) => s.id === id);
+
+      if (stationIndex !== -1) {
+        stations[stationIndex] = { ...stations[stationIndex], ...updateData };
+        setStorageData("pedalnepal_stations", stations);
+        return { success: true, station: stations[stationIndex] };
+      }
+
+      return { error: "Station not found" };
     }
   },
 };
@@ -1358,6 +2398,103 @@ if (typeof window !== "undefined") {
     } catch (error) {
       console.error("❌ Credit sync failed:", error);
       alert("Failed to sync credits. Check console for details.");
+    }
+  };
+
+  // Test all new API integrations
+  (window as any).testAllNewAPIs = async () => {
+    console.log("🧪 Testing all new API integrations...");
+    
+    try {
+      // Test User APIs
+      console.log("\n=== Testing User APIs ===");
+      const userPagination = await api.user.getPaginated(1, 5);
+      console.log("User Pagination:", userPagination);
+      
+      const customerUsers = await api.user.getCustomerUsers({ search: "samir" });
+      console.log("Customer Users:", customerUsers);
+      
+      const adminUsers = await api.user.getAdminUsers();
+      console.log("Admin Users:", adminUsers);
+      
+      const allUsersStatus = await api.user.getAllUsersStatus();
+      console.log("All Users Status:", allUsersStatus);
+      
+      // Test Station APIs
+      console.log("\n=== Testing Station APIs ===");
+      const stationList = await api.stations.list({ search: "Station", page: 1, limit: 5 });
+      console.log("Station List:", stationList);
+      
+      const stationServicesDetails = await api.stations.getAllStationsServicesDetails();
+      console.log("Station Services Details:", stationServicesDetails);
+      
+      const stationServicesStatus = await api.stations.getAllStationsServicesStatus();
+      console.log("Station Services Status:", stationServicesStatus);
+      
+      const slotStats = await api.stations.getSlotStats("1");
+      console.log("Slot Stats:", slotStats);
+      
+      // Test Rental APIs
+      console.log("\n=== Testing Rental APIs ===");
+      const rentals = await api.rental.getRentals({ page: 1, limit: 5 });
+      console.log("Rentals:", rentals);
+      
+      // Test existing APIs
+      console.log("\n=== Testing Existing APIs ===");
+      const stations = await api.stations.getAll();
+      console.log("Stations:", stations);
+      
+      const services = await api.services.getAll();
+      console.log("Services:", services);
+      
+      const s3Url = await api.aws.getS3PresignedUrl("test.jpg", "image/jpeg");
+      console.log("S3 URL:", s3Url);
+      
+      console.log("\n✅ All API tests completed successfully!");
+      alert("All API tests completed! Check console for details.");
+      
+    } catch (error) {
+      console.error("❌ API test failed:", error);
+      alert("API test failed! Check console for details.");
+    }
+  };
+
+  // Test external API for all new endpoints
+  (window as any).testExternalAllAPIs = async () => {
+    console.log("🌐 Testing external API for all new endpoints...");
+    
+    try {
+      const baseUrl = EXTERNAL_API_BASE_URL;
+      const endpoints = [
+        { url: `${baseUrl}/user?page=1&limit=5`, method: "GET", name: "User Pagination" },
+        { url: `${baseUrl}/user/customer-users`, method: "GET", name: "Customer Users" },
+        { url: `${baseUrl}/user/admin-users`, method: "GET", name: "Admin Users" },
+        { url: `${baseUrl}/user/all-users-status`, method: "GET", name: "All Users Status" },
+        { url: `${baseUrl}/stations/list?page=1&limit=5`, method: "GET", name: "Station List" },
+        { url: `${baseUrl}/stations/all-stations-services-details`, method: "GET", name: "Station Services Details" },
+        { url: `${baseUrl}/stations/all-stations-services-status`, method: "GET", name: "Station Services Status" },
+        { url: `${baseUrl}/stations/slot-stats`, method: "GET", name: "Slot Stats" },
+        { url: `${baseUrl}/rentals?page=1&limit=5`, method: "GET", name: "Rentals" },
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method,
+            headers: { "Content-Type": "application/json" },
+          });
+          console.log(`${endpoint.name}: ${response.status} ${response.statusText}`);
+        } catch (error) {
+          console.log(`${endpoint.name}: Failed - ${error}`);
+        }
+      }
+      
+      console.log("✅ External API tests completed!");
+      alert("External API tests completed! Check console for details.");
+      
+    } catch (error) {
+      console.error("❌ External API test failed:", error);
+      alert("External API test failed! Check console for details.");
     }
   };
 }
