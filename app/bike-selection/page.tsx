@@ -131,6 +131,17 @@ function BikeSelectionPageContent({ searchParams }: { searchParams: URLSearchPar
         }),
       );
       setBikeSlots(defaultSlots);
+      
+      // Also save to localStorage for consistency
+      const slotsKey = `pedalnepal_slots_${stationId}`;
+      const slotsToSave = defaultSlots.map(slot => ({
+        id: slot.id,
+        slotNumber: slot.slotNumber,
+        status: slot.status,
+        notes: slot.notes,
+        lastUpdated: new Date().toISOString(),
+      }));
+      localStorage.setItem(slotsKey, JSON.stringify(slotsToSave));
       return;
     }
 
@@ -186,6 +197,16 @@ function BikeSelectionPageContent({ searchParams }: { searchParams: URLSearchPar
   // Initialize bike slots data immediately
   useEffect(() => {
     updateBikeSlotsWithRealData();
+    
+    // Add debug function to window for troubleshooting
+    (window as any).debugSlots = () => {
+      const slotsKey = `pedalnepal_slots_${stationId}`;
+      const slots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
+      console.log("🔍 Current slots in localStorage:", slots);
+      console.log("🔍 Current bikeSlots state:", bikeSlots);
+      console.log("🔍 Available slots:", bikeSlots.filter(slot => slot.available));
+      return { slots, bikeSlots, availableSlots: bikeSlots.filter(slot => slot.available) };
+    };
   }, [stationName, stationLocation, stationId, stationImage]);
 
   // Authentication and rental checks (run after initial data is set)
@@ -349,6 +370,18 @@ function BikeSelectionPageContent({ searchParams }: { searchParams: URLSearchPar
     const slotsKey = `pedalnepal_slots_${stationId}`;
     let allSlots = JSON.parse(localStorage.getItem(slotsKey) || "[]");
 
+    // If no slots exist in localStorage, create them
+    if (allSlots.length === 0) {
+      allSlots = Array.from({ length: 10 }, (_, index) => ({
+        id: `${stationId}-slot-${index + 1}`,
+        slotNumber: index + 1,
+        status: index < 8 ? "active" : "reserved",
+        notes: index >= 8 ? "Reserved for bike returns" : "",
+        lastUpdated: new Date().toISOString(),
+      }));
+      localStorage.setItem(slotsKey, JSON.stringify(allSlots));
+    }
+
     // Ensure reserved slots (9-10) are always available for returns
     allSlots = allSlots.map((slot: any) => {
       if (slot.slotNumber >= 9) {
@@ -368,8 +401,9 @@ function BikeSelectionPageContent({ searchParams }: { searchParams: URLSearchPar
       const availableSlot = allSlots.find(
         (slot: any) =>
           slot.slotNumber <= 8 &&
-          slot.status === "active" &&
-          !slot.notes?.includes("Reserved for bike returns"),
+          (slot.status === "active" || slot.status === undefined) &&
+          !slot.notes?.includes("Reserved for bike returns") &&
+          !slot.notes?.includes("Bike rented"),
       );
 
       if (availableSlot) {

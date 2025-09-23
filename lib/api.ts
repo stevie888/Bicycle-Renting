@@ -1,11 +1,14 @@
 // LocalStorage-based API for persistent data storage
 
 // External API configuration
-const EXTERNAL_API_BASE_URL =
-  process.env.NEXT_PUBLIC_EXTERNAL_API_BASE_URL || "http://13.204.148.32";
+const EXTERNAL_API_BASE_URL = "/api/proxy"; // Use Next.js proxy to avoid CORS
 
 // Configuration to enable/disable external API
-const USE_EXTERNAL_API = process.env.NEXT_PUBLIC_USE_EXTERNAL_API === "true"; // Set to false to use only localStorage
+const USE_EXTERNAL_API = true; // Force external API usage
+
+// Check if we're in browser environment and handle CORS issues
+const isBrowser = typeof window !== "undefined";
+const shouldUseExternalAPI = USE_EXTERNAL_API && isBrowser;
 
 // Data synchronization helper
 const syncUserData = async (userId: string) => {
@@ -45,17 +48,57 @@ async function externalApiCall(endpoint: string, options: RequestInit = {}) {
     const url = `${EXTERNAL_API_BASE_URL}${endpoint}`;
     console.log("Making external API call to:", url);
 
+    // Get auth token from localStorage if available
+    const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json",
+        ...(authToken && { "Authorization": `Bearer ${authToken}` }),
         ...options.headers,
       },
-      // Add mode: 'cors' explicitly for better error handling
+      // Use cors mode and let the server handle CORS
       mode: "cors",
+      // Add credentials for authentication
+      credentials: "include",
     });
 
     if (!response.ok) {
+      // If 401, try without auth token for public endpoints
+      if (response.status === 401 && authToken) {
+        console.log("401 error with auth token, trying without token");
+        const retryResponse = await fetch(url, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            ...options.headers,
+          },
+          mode: "cors",
+          credentials: "include",
+        });
+        
+        if (retryResponse.ok) {
+          const data = await retryResponse.json();
+          console.log("External API response (no auth):", data);
+          return data;
+        }
+      }
+      
+      // For 401 errors, return the response instead of throwing
+      if (response.status === 401) {
+        const errorData = await response.text();
+        let errorJson;
+        try {
+          errorJson = JSON.parse(errorData);
+        } catch {
+          errorJson = { error: "Unauthorized", message: "Authentication required" };
+        }
+        return { success: false, error: errorJson, status: 401 };
+      }
+      
       throw new Error(
         `External API error: ${response.status} ${response.statusText}`,
       );
@@ -66,6 +109,12 @@ async function externalApiCall(endpoint: string, options: RequestInit = {}) {
     return data;
   } catch (error) {
     console.error("External API call failed:", error);
+    // Check if it's a CORS error
+    if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+      console.log("CORS error detected - server needs CORS headers");
+      throw new Error("CORS_ERROR");
+    }
+    // For live API usage, don't fall back to localStorage - throw the error
     throw error;
   }
 }
@@ -868,21 +917,9 @@ export const authAPI = {
 
         throw new Error("External login failed");
       } catch (externalError) {
-        console.log(
-          "External login failed, falling back to localStorage:",
-          externalError,
-        );
-
-        // Fallback to localStorage
-        try {
-          return await localStorageApiCall("/auth/login", {
-            method: "POST",
-            body: JSON.stringify({ mobile, password }),
-          });
-        } catch (localError) {
-          console.error("Both external and local login failed:", localError);
-          throw localError;
-        }
+        console.error("External login failed:", externalError);
+        // Don't fall back to localStorage - throw the error for live API usage
+        throw externalError;
       }
     } else {
       // Use only localStorage
@@ -906,7 +943,13 @@ export const authAPI = {
         console.log("Attempting external signup...");
         const externalResponse = await externalApiCall("/auth/register", {
           method: "POST",
-          body: JSON.stringify(userData),
+          body: JSON.stringify({
+            fullName: userData.name,
+            email: userData.email,
+            phone: userData.mobile,
+            password: userData.password,
+            role: "user"
+          }),
         });
 
         // If external API succeeds, return the response
@@ -917,21 +960,9 @@ export const authAPI = {
 
         throw new Error("External signup failed");
       } catch (externalError) {
-        console.log(
-          "External signup failed, falling back to localStorage:",
-          externalError,
-        );
-
-        // Fallback to localStorage
-        try {
-          return await localStorageApiCall("/auth/register", {
-            method: "POST",
-            body: JSON.stringify(userData),
-          });
-        } catch (localError) {
-          console.error("Both external and local signup failed:", localError);
-          throw localError;
-        }
+        console.error("External signup failed:", externalError);
+        // Don't fall back to localStorage - throw the error for live API usage
+        throw externalError;
       }
     } else {
       // Use only localStorage
@@ -976,6 +1007,10 @@ export const userAPI = {
         return response;
       } catch (error) {
         console.log("External user pagination API failed, using localStorage fallback");
+        // Check if it's a CORS error
+        if (error.message === "CORS_ERROR") {
+          console.log("CORS error detected, using localStorage fallback");
+        }
         // Fallback to localStorage
         const users = getStorageData("pedalnepal_users") || [];
         const startIndex = (page - 1) * limit;
@@ -1296,8 +1331,25 @@ export const userAPI = {
         return response;
       } catch (error) {
         console.log("External customer users API failed, using localStorage fallback");
+        // Check if it's a CORS error
+        if (error.message === "CORS_ERROR") {
+          console.log("CORS error detected, using localStorage fallback");
+        }
         // Fallback to localStorage
         let users = getStorageData("pedalnepal_users") || [];
+        
+        // If no users in localStorage, create some default data
+        if (users.length === 0) {
+          console.log("No users in localStorage, creating default data");
+          const defaultUsers = [
+            { id: "1", name: "Samir", email: "samir@example.com", role: "user", status: "ACTIVE" },
+            { id: "2", name: "John Doe", email: "john@example.com", role: "user", status: "ACTIVE" },
+            { id: "3", name: "Admin User", email: "admin@example.com", role: "admin", status: "ACTIVE" }
+          ];
+          setStorageData("pedalnepal_users", defaultUsers);
+          users = defaultUsers;
+        }
+        
         users = users.filter((u: any) => u.role === "user");
         
         if (filters?.search) {
@@ -1307,7 +1359,7 @@ export const userAPI = {
           );
         }
         
-        return { users, total: users.length };
+        return { users, total: users.length, success: true };
       }
     } else {
       let users = getStorageData("pedalnepal_users") || [];
@@ -1346,8 +1398,25 @@ export const userAPI = {
         return response;
       } catch (error) {
         console.log("External admin users API failed, using localStorage fallback");
+        // Check if it's a CORS error
+        if (error.message === "CORS_ERROR") {
+          console.log("CORS error detected, using localStorage fallback");
+        }
         // Fallback to localStorage
         let users = getStorageData("pedalnepal_users") || [];
+        
+        // If no users in localStorage, create some default data
+        if (users.length === 0) {
+          console.log("No users in localStorage, creating default data");
+          const defaultUsers = [
+            { id: "1", name: "Samir", email: "samir@example.com", role: "user", status: "ACTIVE" },
+            { id: "2", name: "John Doe", email: "john@example.com", role: "user", status: "ACTIVE" },
+            { id: "3", name: "Admin User", email: "admin@example.com", role: "admin", status: "ACTIVE" }
+          ];
+          setStorageData("pedalnepal_users", defaultUsers);
+          users = defaultUsers;
+        }
+        
         users = users.filter((u: any) => u.role === "admin");
         
         if (filters?.search) {
@@ -1357,7 +1426,7 @@ export const userAPI = {
           );
         }
         
-        return { users, total: users.length };
+        return { users, total: users.length, success: true };
       }
     } else {
       let users = getStorageData("pedalnepal_users") || [];
@@ -1444,7 +1513,12 @@ export const rentalAPI = {
       try {
         const response = await externalApiCall("/rentals", {
           method: "POST",
-          body: JSON.stringify(rentalData),
+          body: JSON.stringify({
+            user_id: rentalData.userId,
+            service_id: rentalData.serviceId,
+            status: rentalData.status,
+            duration: rentalData.duration
+          }),
         });
         return response;
       } catch (error) {
@@ -1641,7 +1715,14 @@ export const stationsAPI = {
       try {
         const response = await externalApiCall("/stations", {
           method: "POST",
-          body: JSON.stringify(stationData),
+          body: JSON.stringify({
+            name: stationData.name,
+            latitude: 27.7138, // Default Kathmandu coordinates
+            longitude: 85.3444,
+            address: stationData.location,
+            status: stationData.status,
+            totalCapacity: stationData.capacity
+          }),
         });
         return response;
       } catch (error) {
@@ -1981,7 +2062,16 @@ export const servicesAPI = {
       try {
         const response = await externalApiCall("/services", {
           method: "POST",
-          body: JSON.stringify(serviceData),
+          body: JSON.stringify({
+            stationId: serviceData.stationId,
+            slot_id: 1, // Default slot
+            serviceType: serviceData.serviceType,
+            status: serviceData.status,
+            brand: serviceData.name,
+            hourly_rate: 5.0,
+            daily_rate: 25.00,
+            description: `${serviceData.name} rental service`
+          }),
         });
         return response;
       } catch (error) {

@@ -224,8 +224,7 @@ function ReturnBikePage() {
       // Get slots that are available for return:
       // 1. User's original rental slot (where they rented from) - always available
       // 2. Reserved slots (slots 9-10) - always available for returns
-      // 3. Active slots that are marked as available for returns
-      // 4. Active slots that have bikes returned to them (available for rental)
+      // 3. Empty slots (slots 1-8 that are not occupied)
       const returnSlots = allSlots.filter((slot: Slot) => {
         // Always include the user's original rental slot
         if (currentRental && slot.slotNumber === currentRental.slotNumber) {
@@ -234,26 +233,20 @@ function ReturnBikePage() {
         }
 
         // Include reserved slots (slots 9-10) - these are always available for returns
-        if (slot.status === "reserved") {
+        if (slot.status === "reserved" && slot.slotNumber >= 9) {
           console.log(`Including reserved slot: ${slot.slotNumber} (${slot.status})`);
           return true;
         }
 
-        // Include active slots that are marked as available for returns
+        // Include empty slots (slots 1-8 that are not occupied)
         if (
+          slot.slotNumber <= 8 &&
           slot.status === "active" &&
-          slot.notes?.includes("Available for bike returns")
+          !slot.notes?.includes("Bike rented") &&
+          !slot.notes?.includes("Occupied")
         ) {
           console.log(
-            `Including active return slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
-          );
-          return true;
-        }
-
-        // Include active slots that have bikes returned to them (these are available for rental, not return)
-        if (slot.status === "active" && slot.notes === "Bike returned") {
-          console.log(
-            `Including returned bike slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
+            `Including empty slot: ${slot.slotNumber} (${slot.status}, ${slot.notes})`,
           );
           return true;
         }
