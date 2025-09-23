@@ -35,7 +35,7 @@ export default function LoginPage() {
                 </span>
               </h1>
               <p className="text-xl text-white/90 leading-relaxed">
-                Ready to explore the beautiful valleys of samir? Sign in to
+                Ready to explore the beautiful valleys of Nepal? Sign in to
                 continue your adventure.
               </p>
             </div>
