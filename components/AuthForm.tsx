@@ -18,8 +18,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "./AuthContext";
 import { useLanguage } from "./LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -30,78 +30,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "sagarsubedi1@gmail.com",
+    password: "root2055",
     name: "",
-    mobile: "",
+    mobile: "sagarsubedi1@gmail.com",
   });
+
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileUploaded, setFileUploaded] = useState(false);
 
-  const { login, register } = useAuth();
-  const router = useRouter();
+  const { login,data,error:loginError,loading } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent,mode:"login" | "signup") => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      if (mode === "login") {
-        // Use AuthContext for login
-        const success = await login(formData.mobile, formData.password);
-
-        if (success) {
-          setSuccess("Login successful! Redirecting...");
-          // Redirect to home page after successful login
-          setTimeout(() => {
-            router.push("/");
-            router.refresh(); // Refresh to ensure auth state is updated
-          }, 1000);
-        } else {
-          throw new Error("Invalid mobile number or password");
-        }
-      } else {
-        // For signup, we'll use localStorage only for now since external API has file upload requirements
-        // Note: File upload is currently for demonstration purposes only
-        // In production, you would integrate with a file storage service
-        if (!selectedFile) {
-          setError("Please upload your ID document for verification");
-          setIsLoading(false);
-          return;
-        }
-
-        // Use AuthContext for signup
-        const success = await register({
-          mobile: formData.mobile,
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-        });
-
-        if (success) {
-          setSuccess(
-            "Account created successfully! Your ID will be verified within 24 hours.",
-          );
-          // Redirect to home page after successful registration
-          setTimeout(() => {
-            router.push("/");
-            router.refresh(); // Refresh to ensure auth state is updated
-          }, 2000);
-        } else {
-          throw new Error("Registration failed");
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setIsLoading(false);
+    if(mode === "login"){
+      await login({email: formData.mobile, password: formData.password});
     }
   };
-
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -112,7 +59,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -124,7 +70,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError("File size must be less than 5MB");
         return;
@@ -144,7 +89,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   return (
     <div className="space-y-6">
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e,mode)} className="space-y-4">
         {/* Form Header - Only for signup */}
         {mode === "signup" && (
           <div className="text-center mb-6">
@@ -349,15 +294,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
         )}
 
         {/* Error/Success Messages */}
-        {error && (
+        {loginError && (
           <div className="bg-warning-50 border border-warning-200 text-warning-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
-            {error}
+          Login failed...
           </div>
         )}
-
-        {success && (
+        {data?.access_token && (
           <div className="bg-primary-50 border border-primary-200 text-primary-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
-            {success}
+            Login successful! Redirecting...
           </div>
         )}
 

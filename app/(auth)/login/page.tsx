@@ -5,6 +5,11 @@ import AuthForm from "@/components/AuthForm";
 
 export default function LoginPage() {
   const { t } = useLanguage();
+  // const { login, logout } = useAuth();
+  // const handleLogin = (phoneNumber: string, password: string) => {
+  //   login(phoneNumber, password);
+  // };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 relative overflow-hidden">
       {/* Subtle Background Elements */}
