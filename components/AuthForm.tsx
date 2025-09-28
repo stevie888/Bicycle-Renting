@@ -40,12 +40,44 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileUploaded, setFileUploaded] = useState(false);
 
-  const { login,data,error:loginError,loading } = useAuth();
+  const { login, register, data, error: loginError, loading } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent,mode:"login" | "signup") => {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent, mode: "login" | "signup") => {
     e.preventDefault();
-    if(mode === "login"){
-      await login({email: formData.mobile, password: formData.password});
+    setIsLoading(true);
+    setError(""); // Clear previous errors
+    
+    try {
+      let success = false;
+      
+      if (mode === "login") {
+        success = await login({ email: formData.mobile, password: formData.password });
+      } else if (mode === "signup") {
+        success = await register({
+          name: formData.name,
+          email: formData.email,
+          mobile: formData.mobile,
+          password: formData.password,
+        });
+      }
+      
+      // Only navigate if successful
+      if (success) {
+        console.log("✅ Auth successful, redirecting to home page");
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } else {
+        console.log("❌ Auth failed, staying on current page");
+        setError("Authentication failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -294,6 +326,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
         )}
 
         {/* Error/Success Messages */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
+            {error}
+          </div>
+        )}
         {loginError && (
           <div className="bg-warning-50 border border-warning-200 text-warning-700 px-4 py-3 rounded-lg text-sm animate-slide-up">
           Login failed...
@@ -309,7 +346,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <div className="pt-2">
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || loading}
             className="group relative w-full bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-600 hover:from-primary-700 hover:via-primary-600 hover:to-secondary-700 text-white py-4 px-6 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none overflow-hidden"
           >
             {/* Background Animation */}

@@ -7,7 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { api } from "@/lib/api";
+import { authAPI, userAPI } from "@/lib/api";
 
 interface User {
   id: string;
@@ -51,34 +51,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage or external API on mount
   useEffect(() => {
-    console.log("AuthContext - Loading user from localStorage...");
-
-    const storedUser = localStorage.getItem("pedalnepal_current_user");
-    console.log("AuthContext - Stored user data:", storedUser);
-
-    if (storedUser) {
+    console.log("AuthContext - Loading user...");
+    
+    // Try to get current user from localStorage first
+    const loadCurrentUser = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        console.log("AuthContext - Parsed user:", parsedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("pedalnepal_current_user");
-      }
-    } else {
-      console.log("AuthContext - No stored user found");
-    }
+        // Check localStorage first
+        const localUser = localStorage.getItem('user');
+        if (localUser) {
+          const userData = JSON.parse(localUser);
+          console.log("AuthContext - User found in localStorage:", userData);
+          setUser(userData);
+          setLoading(false);
+          return;
+        }
 
-    // Always set loading to false after attempting to load
+        // If no local user, try external API
+        const response = await userAPI.getCurrent();
+        if (response && response.id) {
+          console.log("AuthContext - Current user from API:", response);
+          setUser(response);
+        } else {
+          console.log("AuthContext - No current user found");
+        }
+      } catch (error) {
+        console.log("AuthContext - No current user or API not available:", error);
+      }
+    };
+
+    loadCurrentUser();
     setLoading(false);
   }, []);
 
   const saveUser = (userObj: User) => {
     console.log("AuthContext - Saving user:", userObj);
     setUser(userObj);
-    localStorage.setItem("pedalnepal_current_user", JSON.stringify(userObj));
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('user', JSON.stringify(userObj));
     console.log("AuthContext - User saved to localStorage");
 
     // Track user session for real-time active user monitoring
@@ -86,34 +98,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserSession = (userId: string) => {
-    const activeSessions = JSON.parse(
-      localStorage.getItem("pedalnepal_active_sessions") || "[]",
-    );
-    const now = new Date().toISOString();
-
-    // Remove old session for this user if exists
-    const filteredSessions = activeSessions.filter(
-      (session: any) => session.userId !== userId,
-    );
-
-    // Add new session
-    const newSession = {
-      userId,
-      lastActivity: now,
-      sessionId: `${userId}_${Date.now()}`,
-    };
-
-    localStorage.setItem(
-      "pedalnepal_active_sessions",
-      JSON.stringify([...filteredSessions, newSession]),
-    );
+    // Session tracking removed - using external API only
+    console.log("AuthContext - Session tracking disabled (external API only)");
   };
 
   // Login with mobile number and password
   const login = async (mobile: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await api.auth.login(mobile, password);
+      const response = await authAPI.login(mobile, password);
       if (response.success && response.user) {
         saveUser(response.user);
         return true;
@@ -136,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await api.auth.signup(userData);
+      const response = await authAPI.signup(userData);
       if (response.success && response.user) {
         saveUser(response.user);
         return true;
@@ -151,37 +144,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    if (user) {
-      // Remove user session when logging out and mark as immediately inactive
-      const activeSessions = JSON.parse(
-        localStorage.getItem("pedalnepal_active_sessions") || "[]",
-      );
-      const filteredSessions = activeSessions.filter(
-        (session: any) => session.userId !== user.id,
-      );
-      localStorage.setItem(
-        "pedalnepal_active_sessions",
-        JSON.stringify(filteredSessions),
-      );
-
-      // Add to inactive sessions to ensure they show as inactive immediately
-      const inactiveSessions = JSON.parse(
-        localStorage.getItem("pedalnepal_inactive_sessions") || "[]",
-      );
-      const now = new Date().toISOString();
-      const inactiveSession = {
-        userId: user.id,
-        loggedOutAt: now,
-        sessionId: `${user.id}_${Date.now()}`,
-      };
-      localStorage.setItem(
-        "pedalnepal_inactive_sessions",
-        JSON.stringify([...inactiveSessions, inactiveSession]),
-      );
-    }
-
+    console.log("AuthContext - Logging out user");
     setUser(null);
-    localStorage.removeItem("pedalnepal_current_user");
+    
+    // Clear localStorage
+    localStorage.removeItem('user');
+    console.log("AuthContext - User logged out and cleared from localStorage");
   };
 
   const updateProfile = async (profile: {
@@ -194,7 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setLoading(true);
-      const response = await api.user.updateProfile(user.id, profile);
+      const response = await userAPI.update(user.id, profile);
       if (response.success && response.user) {
         saveUser(response.user);
         return true;
@@ -215,12 +183,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     try {
       setLoading(true);
-      // Call a backend endpoint for password change (to be implemented)
-      const response = await api.user.updateProfile(user.id, {
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-      });
+      // Call a backend endpoint for password change
+      const response = await userAPI.changePassword(user.id, oldPassword, newPassword);
       if (response.success) {
         return true;
       }
